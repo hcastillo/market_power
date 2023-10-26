@@ -26,7 +26,8 @@ class Statistics:
     def debug_firm(self, firm):
         text = f" {firm.__str__()} K={Log.__format_number__(firm.K)}"
         text += f" | A={Log.__format_number__(firm.A)} L={Log.__format_number__(firm.L)}"
-        text += f",  Φ={Log.__format_number__(firm.phi)}"
+        text += f",  dK={Log.__format_number__(firm.dK)}"
+        text += f",  dL/oL={Log.__format_number__(firm.desiredL)}/{Log.__format_number__(firm.obtainedL)}"
         if firm.failed:
             text += f" FAILED "
         self.model.log.debug(text)
@@ -102,4 +103,4 @@ class Statistics:
                                    "\n")
 
     def plot(self):
-        pass  # TODO ste -> what do you need to plot
+        pass  # TODO

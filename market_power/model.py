@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-ABM model
+ABM model: It contains the firms and the logic to execute the simulation
 
 @author: hector@bith.net
 """
@@ -14,16 +14,12 @@ import random
 
 
 class Model:
-    """
-    It contains the firms and the logic to execute the simulation
-    """
     firms = []
     t: int = 0  # current value of time, t = 0..Model.config.T
     bank_sector: BankSector
     bankruptcies = []
 
     test = False  # it's true when we are inside a test
-    debug = None  # if not None, we will debug at this instant i, entering in interactive mode
     log = None
     statistics = None
     config = None
@@ -62,48 +58,21 @@ class Model:
         self.export_description = str(self.config) if export_description is None else export_description
         self.firms = []
         for i in range(self.config.N):
-            self.firms.append( self.firm_class(new_id=i, its_model=self))
+            self.firms.append(self.firm_class(new_id=i, its_model=self))
         self.bank_sector = BankSector(self)
 
-
-    def removeBankruptedFirms(self):     #TODO: please Hector tell me if this method is good or not for removing defaulted firms
-        i = 0                       # counter for defaulted firms
-        self.bank_sector.B = 0.0
-        for firm in self.firms:
-            if firm.A < 0:
-                bankrupted_id = firm.id
-                if firm.L > (self.config.fire_sale * firm.K):
-                    self.bank_sector.B += (firm.L - (self.config.fire_sale * firm.K))
-                    self.bank_sector.A -= self.bank_sector.B
-                    self.bank_sector.D = (self.bank_sector.L - self.bank_sector.A)
-                else:
-                    self.bank_sector.B += 0
-                self.firms.remove(firm)
-                i += 1
-                new_firm = self.firm_class(new_id = bankrupted_id, its_model = self)    # it creates a new firm with the same ID as you prefer
-                self.firms.append(new_firm)
-        self.bankruptcies.append(i)     # I created a list to take into account all the bankruptcies that happen during the time
-        return i
-
-
     def do_step(self):
-        self.bank_sector.cs = self.bank_sector.determineCreditSupply()  # firstly, I must determine the credit supply
-        # of the bank and later I can perform the operations related to firms
+        self.bank_sector.cs = self.bank_sector.determine_new_step_credit_suppy()
         for firm in self.firms:
             firm.do_step()
-            # self.log.info("initialize_step")
-            # self.log.debug("hello, this is a debug")
-            self.bank_sector.cs -= firm.L  # TODO: we need to introduce a control by which if the bank's credit
-                                           # supply finishes, the firms cannot ask for a loan
         self.bank_sector.do_step()
-        self.removeBankruptedFirms()        #TODO: Hector do you think this is an appropriate function for removing and adding firms?
 
-
-
-
-    def finish_step(self):
         self.log.info(self.statistics.current_status_save())
         self.statistics.debug_firms()
+        for firm in self.firms:
+            if firm.failed:
+                firm.execute_bankruptcy()
+
 
     def finish_model(self):
         if not self.test:
@@ -111,9 +80,8 @@ class Model:
             self.statistics.plot()
         self.log.info(f" Finish: model T={self.config.T}  N={self.config.N}")
 
-    def run(self,export_datafile=None):
+    def run(self, export_datafile=None):
         self.initialize_model(export_datafile=export_datafile)
         for self.t in range(self.config.T):
             self.do_step()
-            self.finish_step()
         self.finish_model()

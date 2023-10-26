@@ -27,7 +27,7 @@ class Config:
     b: float = 1
     beta: float = 0.02  # β
     m: float = 0.03
-    c: float = 1  # bankruptcy costs' equation
+    c: float = 1  # set_failed costs' equation
     xi: float = 0.003  # ξ : increase in the productivity of the firms
     rho: float = 0.3  # ρ : parameter for the determination of Bank's expected profits
     share_k: float = 0.5  # this is a parameter that helps to maintain the capital upper a certain threshold
@@ -40,11 +40,6 @@ class Config:
     firms_L_i0: float = 4
     phi: float = 1.1  # Φ -> this parameter is estimated #todo
     r: float = 0.02  # initial rate of interest charged to firms
-    bank_sector_profits : float = 0.0
-    bank_sector_B_i0 : float = 0.0
-
-    # there are two models in this code, using False will be without green firms:
-    model_green = False
 
     # seed used:
     default_seed = 20579
