@@ -11,9 +11,9 @@ import typer
 
 def run_interactive(log: str = typer.Option('ERROR', help="Log level messages (ERROR,DEBUG,INFO...)"),
                     logfile: str = typer.Option(None, help="File to send logs to"),
-                    save: str = typer.Option(None, help=f"Saves the output of this execution"),
-                    n: int = typer.Option(Config.N, help=f"Number of firms"),
-                    t: int = typer.Option(Config.T, help=f"Time repetitions")):
+                    save: str = typer.Option(None, help="Saves the output of this execution"),
+                    n: int = typer.Option(Config.N, help="Number of firms"),
+                    t: int = typer.Option(Config.T, help="Time repetitions")):
     global model
     if t != model.config.T:
         model.config.T = t

@@ -45,7 +45,7 @@ class Log:
         self.logger.error(f"t={self.model.t:03} {text}")
 
     def define_log(self, log: str, logfile: str = ''):
-        formatter = logging.Formatter('%(levelname)s%(message)s')
+        formatter = logging.Formatter('%(levelname)s %(message)s')
         self.logLevel = Log.get_level(log.upper())
         self.logger.setLevel(self.logLevel)
         if logfile:

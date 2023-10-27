@@ -1,54 +1,47 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-ABM model
+ABM model: Configuration parameters
 
 @author: hector@bith.net
 """
 import sys
 
+
 class Config:
-    """
-        Configuration parameters for the ABM
-        """
-    T: int = 1000  # time (1000)
-    N: int = 100  # number of firms (100)
-    eta: float = 0.25  # ŋ inverse elasticity: ŋ=1/10000 -> perfect competition, ŋ=1/4     -> high market power
-    sigma = 0.0  # σ : parameter for the R&D
-    sigma_values = []  # list of σ : parameters for the R&D
-    alfa: float = 0.08  # α : Basilea's parameter
-    mark_up_bank = 0.25  # μ : the mark-up of the bank (μ = 0.0001 for PC; μ = 0.25 for Monopolistic Competition)
+    T: int = 1000         # Time (1000)
+    N: int = 100          # Number of firms (100)
+    eta: float = 0.25     # ŋ Inverse elasticity: ŋ=1/10000 -> perfect competition, ŋ=1/4 -> high market power
+    alfa: float = 0.08    # α Basilea's parameter (ratio equity/loan)
 
-    g: float = 1.1
-    w: float = 0.005
-    k: float = 1
+    g: float = 1.1        # cost per unit of capital
+    w: float = 0.005      # markdown interest rate (the higher it is, the monopolistic power of bank sector)
+    k: float = 1          # capital intensity rate K/N
 
-    delta: float = 2  # δ
-    b: float = 1
-    beta: float = 0.02  # β
-    m: float = 0.03
-    c: float = 1  # set_failed costs' equation
-    xi: float = 0.003  # ξ : increase in the productivity of the firms
-    rho: float = 0.3  # ρ : parameter for the determination of Bank's expected profits
-    share_k: float = 0.5  # this is a parameter that helps to maintain the capital upper a certain threshold
-    teta : float = 1 # θ : parameter for the profits of the bank
-    fire_sale : float = 1.0 # parameter in order to take into account when selling the firm's own capital in order to repay debts
+    delta: float = 2      # δ
+    b: float = 1          # parameter of bankruptcy cost (b>0)
+    beta: float = 0.02    # β skewness parameter -1 ... 1
+    m: float = 0.03       # percentage of K that should be in cash
 
-    # firms and bankSector parameters:
-    firms_K_i0: float = 5
-    firms_A_i0: float = 1
-    firms_L_i0: float = 4
-    phi: float = 1.1  # Φ -> this parameter is estimated #todo
-    r: float = 0.02  # initial rate of interest charged to firms
+    # firms:
+    # balance sheet => K = A + L
+    firms_K_i0: float = 5  # capital
+    firms_A_i0: float = 1  # assets
+    firms_L_i0: float = 4  # loans (from bank sector)
+    phi: float = 1.1       # Φ capital productivity: constant in this model without R&D
+
+    # bank sector:
+    # balance sheet => L = A + D
+    bank_sector_A_i0: float = 32   # net worth or assets
+    r_i0: float = 0.02             # initial rate of interest charged to firms by loans
 
     # seed used:
-    default_seed = 20579
+    default_seed: int = 20579
 
     def __init__(self):
         # parameters that come from another values:
-        self.gamma: float = ((self.w / self.k) + (self.g * self.r))  # γ : operating cost per unit of capital
+        self.gamma: float = ((self.w / self.k) + (self.g * self.r_i0))  # γ : operating cost per unit of capital
         self.bank_sector_L_i0 = self.firms_L_i0 * self.N
-        self.bank_sector_A_i0 = (self.N * self.firms_L_i0 * self.alfa)
         self.bank_sector_D_i0 = self.bank_sector_L_i0 - self.bank_sector_A_i0
 
     def __str__(self):

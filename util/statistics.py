@@ -24,21 +24,17 @@ class Statistics:
             self.debug_firm(firm)
 
     def debug_firm(self, firm):
-        text = f" {firm.__str__()} K={Log.__format_number__(firm.K)}"
+        text = f"{firm.__str__()} K={Log.__format_number__(firm.K)}"
         text += f" | A={Log.__format_number__(firm.A)} L={Log.__format_number__(firm.L)}"
         text += f",  dK={Log.__format_number__(firm.dK)}"
         text += f",  dL/oL={Log.__format_number__(firm.desiredL)}/{Log.__format_number__(firm.obtainedL)}"
-        if firm.failed:
-            text += f" FAILED "
         self.model.log.debug(text)
 
     def current_status_save(self):
         # it returns also a string with the status
         result = ""
 
-        failures = sum(int(firm.failed) for firm in self.model.firms)
-        self.failures[self.model.t] = failures
-        result += f" fails={failures:3}"
+        result += f"step fails={self.failures[self.model.t]:3}"
 
         firmsK = sum(float(firm.K) for firm in self.model.firms)
         self.firmsK[self.model.t] = firmsK
@@ -53,7 +49,7 @@ class Statistics:
         result += f" firmsL={firmsL:10.2f}"
 
         self.bankA[self.model.t] = self.model.bank_sector.A
-        result += f"\n\t\t\t\t   bankA={self.model.bank_sector.A:10.2f}"
+        result += f"\n                           bankA={self.model.bank_sector.A:10.2f}"
 
         self.bankL[self.model.t] = self.model.bank_sector.L
         result += f"  bankL={self.model.bank_sector.L:10.2f}"

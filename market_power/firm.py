@@ -6,7 +6,6 @@ ABM model
 @author: hector@bith.net
 """
 import random
-import numpy as np
 
 
 class Firm:
@@ -27,12 +26,12 @@ class Firm:
         self.K = self.model.config.firms_K_i0
         self.A = self.model.config.firms_A_i0
         self.L = self.model.config.firms_L_i0
-        self.r = self.model.config.r
+        self.r = self.model.config.r_i0
         self.gamma = self.model.config.gamma
         self.phi = self.model.config.phi
+        self.profits = 0
 
     def do_step(self):
-        self.failed = False
         self.gamma = self.determine_cost_per_unit_of_capital()
         self.c = self.determine_marginal_operating_cost()
         self.output = self.determine_output()
@@ -42,19 +41,12 @@ class Firm:
         self.dK = self.determine_desired_capital()
         self.I = self.determine_investment()
 
-        if self.check_loses_are_covered_by_m():
-            self.deplete_m()
-        else:
-            if self.check_loses_are_bankruptcy():
-                self.model.bank_sector.bankrupted_firm(self.set_failed())
-
-        if not self.failed:
-            self.desiredL = self.determine_loan()
-            self.obtainedL = self.model.bank_sector.determine_capacity_loan(self.A)
-            if self.desiredL > self.obtainedL:
-                self.lack_of_loan_gap(self.desiredL - self.obtainedL)
-            self.balance_firm()
-            self.phi = self.determine_phi()
+        self.desiredL = self.determine_loan()
+        self.obtainedL = self.model.bank_sector.determine_capacity_loan(self.A)
+        if self.desiredL > self.obtainedL:
+            self.lack_of_loan_gap(self.desiredL - self.obtainedL)
+        self.balance_firm()
+        self.phi = self.determine_phi()
 
     def determine_cost_per_unit_of_capital(self):
         # (Before equation 2)  gamma
@@ -91,7 +83,8 @@ class Firm:
         return self.L + (1 + self.model.config.m) * self.I - self.profits
 
     def u(self):
-        return random.random()
+        # stochastic demand [0,2]
+        return random.uniform(0, 2)
 
     def determine_output(self):
         # (Equation 21)
@@ -100,8 +93,9 @@ class Firm:
             self.phi / (2 * self.gamma) * self.A
 
     def determine_profits(self):
-        # (Equation 5)
-        return self.u() * self.output ** (1 - self.model.config.eta) - self.c * self.output
+        # (Equation 24)
+        return self.u() * (self.model.config.eta + (1 - self.model.config.eta)*self.output) - \
+                 self.c * self.output
 
     def determine_assets(self):
         # (Equation 8)
@@ -110,30 +104,15 @@ class Firm:
     def determine_phi(self):
         return self.phi
 
-    def determine_output(self):
-        # (Before equation 2)
-        # Y, output is equal to capital productivity * capital
-        return self.K * self.phi
-
     def check_loses_are_covered_by_m(self):
-        return self.profits < 0 and (-self.profits) <= self.A
+        return (self.profits < 0) and (self.K * self.model.config.m + self.profits) >= 0
 
-    def check_loses_are_bankruptcy(self):
-        return self.profits < 0 and (-self.profits) <= self.A
-
-    def deplete_m(self):
-        # profits are loses (so they are negative)
-        self.K += self.profits
+    def is_bankrupted(self):
+        return (self.profits + self.A) < 0
 
     def set_failed(self):
-        self.failed = True
-        return self.K
-
-    def execute_bankruptcy(self):
-        if self.failed:
-            self.failed = False
-            self.failures += 1
-            self.__assign_defaults__()
+        self.failures += 1
+        self.__assign_defaults__()
 
     def balance_firm(self):
         # balance sheet adjustment

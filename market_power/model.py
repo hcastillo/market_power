@@ -62,23 +62,30 @@ class Model:
         self.bank_sector = BankSector(self)
 
     def do_step(self):
-        self.bank_sector.cs = self.bank_sector.determine_new_step_credit_suppy()
+        self.remove_bankrupted_firms()
+        self.bank_sector.set_new_credit_suppy()
         for firm in self.firms:
             firm.do_step()
-        self.bank_sector.do_step()
-
+        self.bank_sector.get_profits_and_balance()
         self.log.info(self.statistics.current_status_save())
         self.statistics.debug_firms()
-        for firm in self.firms:
-            if firm.failed:
-                firm.execute_bankruptcy()
 
+    def remove_bankrupted_firms(self):
+        self.bank_sector.bad_debt = 0
+        num_failures = 0
+        for firm in self.firms:
+            if firm.is_bankrupted():
+                if firm.L - firm.K < 0:
+                    self.bank_sector.bad_debt += (firm.L - firm.K)
+                firm.set_failed()
+                num_failures += 1
+        self.statistics.failures[self.t] = num_failures
 
     def finish_model(self):
         if not self.test:
             self.statistics.export_data(self.export_datafile, self.export_description)
             self.statistics.plot()
-        self.log.info(f" Finish: model T={self.config.T}  N={self.config.N}")
+        self.log.info(f"finish: model T={self.config.T} N={self.config.N}")
 
     def run(self, export_datafile=None):
         self.initialize_model(export_datafile=export_datafile)

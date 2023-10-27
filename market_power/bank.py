@@ -5,65 +5,56 @@ ABM model
 
 @author: hector@bith.net
 """
-
+import functools
 
 class BankSector:
     def __init__(self, its_model):
         self.model = its_model
-        self.__assign_defaults__()
-        self.cs = 0
+        self.credit_supply = 0
+        self.bad_debt = 0.0
+        self.profits = 0.0
+        self.A = self.model.config.bank_sector_A_i0
+        self.L = self.model.config.bank_sector_L_i0
+        self.D = self.model.config.bank_sector_D_i0
 
     def determine_deposits(self):
         return self.L - self.A
 
     def determine_profits(self):
         # (Equation 34)
-        profits = 0.0
+        profits_loans = 0.0
         for firm in self.model.firms:
-            if not firm.failed:
-                profits += firm.r * firm.L
-        avg_r = self.determine_average_interest_rate()
-        profits -= avg_r*(self.D + self.A)
-        return profits
+            profits_loans += firm.r * firm.L
 
+        remunerations_of_deposits_and_networth = self.determine_average_interest_rate() * (self.D + self.A)
+
+        return profits_loans - remunerations_of_deposits_and_networth
 
     def determine_average_interest_rate(self):
         r = 0
-        num_firms = 0
         for firm in self.model.firms:
-            if not firm.failed:
-                num_firms += 1
-                r += firm.r
-        return r/num_firms
+            r += firm.r
+        avg_r = r/len(self.model.firms)
+        return avg_r if avg_r > self.model.config.r_i0 else self.model.config.r_i0
 
     def determine_equity(self):
         # (Equation 35)
-        return self.A + self.profits - self.BD
+        return self.A + self.profits - self.bad_debt
 
     def __str__(self):
-        return f"bankSector"
+        return f"bankSector L={self.L:8.3} A={self.A:8.3} D={self.D:8.3}"
 
-    def do_step(self):
+    def get_profits_and_balance(self):
         self.profits = self.determine_profits()
         self.A = self.determine_equity()
         self.D = self.determine_deposits()
-        self.BD = 0
-
-    def __assign_defaults__(self):
-        self.A = self.model.config.bank_sector_A_i0
-        self.L = self.model.config.bank_sector_L_i0
-        self.D = self.model.config.bank_sector_D_i0
-        self.BD = 0.0
-
-    def bankrupted_firm(self, amount_lost_L):
-        self.BD += amount_lost_L
 
     def determine_capacity_loan(self, firm_A):
-        capacity = firm_A / self.A * 100
-        self.cs -= capacity
-        if self.cs < 0:
-            capacity += self.cs
+        capacity = firm_A / self.A
+        self.credit_supply -= capacity
+        if self.credit_supply < 0:
+            capacity += self.credit_supply
         return capacity
 
-    def determine_new_step_credit_suppy(self):
-        return self.A / self.model.config.alfa
+    def set_new_credit_suppy(self):
+        self.credit_supply = self.A / self.model.config.alfa
