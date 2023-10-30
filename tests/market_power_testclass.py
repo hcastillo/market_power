@@ -13,7 +13,9 @@ class MarketPowerTest(unittest.TestCase):
     shocks = []
     model = None
 
-    def configureTest(self, shocks: list = None, N: int = None, T: int = None, model=None):
+    def configureTest(self, shocks: list = None, N: int = None, T: int = None,
+                      bankA_i0: float = None, firmA_i0: float = None, firmK_i0: float = None,
+                      firmL_i0: float = None, model=None):
         self.model = Model() if not model else model
         self.model.test = True
         MarketPowerTest.shocks = shocks

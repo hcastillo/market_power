@@ -7,6 +7,7 @@ ABM model
 """
 import functools
 
+
 class BankSector:
     def __init__(self, its_model):
         self.model = its_model
@@ -15,7 +16,8 @@ class BankSector:
         self.profits = 0.0
         self.A = self.model.config.bank_sector_A_i0
         self.L = self.model.config.bank_sector_L_i0
-        self.D = self.model.config.bank_sector_D_i0
+        #self.D = self.model.config.bank_sector_D_i0
+        self.D = self.determine_deposits()
 
     def determine_deposits(self):
         return self.L - self.A
@@ -34,7 +36,7 @@ class BankSector:
         r = 0
         for firm in self.model.firms:
             r += firm.r
-        avg_r = r/len(self.model.firms)
+        avg_r = r / len(self.model.firms)
         return avg_r if avg_r > self.model.config.r_i0 else self.model.config.r_i0
 
     def determine_equity(self):
@@ -58,3 +60,4 @@ class BankSector:
 
     def set_new_credit_suppy(self):
         self.credit_supply = self.A / self.model.config.alfa
+        self.model.log.debug(f"new credit supply={self.credit_supply}")

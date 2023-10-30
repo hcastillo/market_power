@@ -18,9 +18,9 @@ class Firm:
     def __str__(self, short: bool = False):
         init = "firm#" if not short else "#"
         if self.failures > 0:
-            return f"{init}{self.id}.{self.failures}"
+            return f"{init}{self.id}.{self.failures:<2}"
         else:
-            return f"{init}{self.id}"
+            return f"{init}{self.id}   "
 
     def __assign_defaults__(self):
         self.K = self.model.config.firms_K_i0
@@ -29,14 +29,15 @@ class Firm:
         self.r = self.model.config.r_i0
         self.gamma = self.model.config.gamma
         self.phi = self.model.config.phi
-        self.profits = 0
+        self.pi = 0
+        self.Y = 0
 
     def do_step(self):
         self.gamma = self.determine_cost_per_unit_of_capital()
         self.c = self.determine_marginal_operating_cost()
-        self.output = self.determine_output()
+        self.Y = self.determine_output()
         # self.Pb     = self.determine_prob_bankruptcy()
-        self.profits = self.determine_profits()
+        self.pi = self.determine_profits()
         self.r = self.determine_interest_rate()
         self.dK = self.determine_desired_capital()
         self.I = self.determine_investment()
@@ -80,7 +81,7 @@ class Firm:
 
     def determine_loan(self):
         # (Over equation 33)
-        return self.L + (1 + self.model.config.m) * self.I - self.profits
+        return self.L + (1 + self.model.config.m) * self.I - self.pi
 
     def u(self):
         # stochastic demand [0,2]
@@ -94,21 +95,21 @@ class Firm:
 
     def determine_profits(self):
         # (Equation 24)
-        return self.u() * (self.model.config.eta + (1 - self.model.config.eta)*self.output) - \
-                 self.c * self.output
+        return self.u() * (self.model.config.eta + (1 - self.model.config.eta) * self.Y) - \
+                 self.c * self.Y
 
     def determine_assets(self):
         # (Equation 8)
-        return self.A + self.profits
+        return self.A + self.pi
 
     def determine_phi(self):
         return self.phi
 
     def check_loses_are_covered_by_m(self):
-        return (self.profits < 0) and (self.K * self.model.config.m + self.profits) >= 0
+        return (self.pi < 0) and (self.K * self.model.config.m + self.pi) >= 0
 
     def is_bankrupted(self):
-        return (self.profits + self.A) < 0
+        return (self.pi + self.A) < 0
 
     def set_failed(self):
         self.failures += 1
@@ -116,7 +117,7 @@ class Firm:
 
     def balance_firm(self):
         # balance sheet adjustment
-        if self.profits >= 0:
+        if self.pi >= 0:
             if self.K < (self.A + self.L):
                 self.K = (self.A + self.L)
         else:

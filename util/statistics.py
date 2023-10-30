@@ -27,35 +27,37 @@ class Statistics:
         text = f"{firm.__str__()} K={Log.__format_number__(firm.K)}"
         text += f" | A={Log.__format_number__(firm.A)} L={Log.__format_number__(firm.L)}"
         text += f",  dK={Log.__format_number__(firm.dK)}"
-        text += f",  dL/oL={Log.__format_number__(firm.desiredL)}/{Log.__format_number__(firm.obtainedL)}"
+        text += f"  dL/oL={Log.__format_number__(firm.desiredL)}/{Log.__format_number__(firm.obtainedL)}"
+        text += f"  Y={Log.__format_number__(firm.Y)}"
+        text += f"  π={Log.__format_number__(firm.pi)}"
         self.model.log.debug(text)
 
     def current_status_save(self):
         # it returns also a string with the status
         result = ""
 
-        result += f"step fails={self.failures[self.model.t]:3}"
+        self.firmsK[self.model.t] = sum(float(firm.K) for firm in self.model.firms)
+        result += f"firms ∑K={self.firmsK[self.model.t]:10.2f}"
 
-        firmsK = sum(float(firm.K) for firm in self.model.firms)
-        self.firmsK[self.model.t] = firmsK
-        result += f" firmsK={firmsK:10.2f}"
+        self.firmsA[self.model.t] = sum(float(firm.A) for firm in self.model.firms)
+        result += f" ∑A={self.firmsA[self.model.t]:10.2f}"
 
-        firmsA = sum(float(firm.A) for firm in self.model.firms)
-        self.firmsA[self.model.t] = firmsA
-        result += f" firmsA={firmsA:10.2f}"
+        self.firmsL[self.model.t] = sum(float(firm.L) for firm in self.model.firms)
+        result += f" ∑L={self.firmsL[self.model.t]:10.2f}"
 
-        firmsL = sum(float(firm.L) for firm in self.model.firms)
-        self.firmsL[self.model.t] = firmsL
-        result += f" firmsL={firmsL:10.2f}"
+        self.firmsY[self.model.t] = sum(float(firm.Y) for firm in self.model.firms)
+        result += f" ∑Y={self.firmsY[self.model.t]:10.2f}"
+
+        result += f" fails={self.failures[self.model.t]:<2}"
 
         self.bankA[self.model.t] = self.model.bank_sector.A
-        result += f"\n                           bankA={self.model.bank_sector.A:10.2f}"
-
-        self.bankL[self.model.t] = self.model.bank_sector.L
-        result += f"  bankL={self.model.bank_sector.L:10.2f}"
+        result += f"\n            banks ∑A={self.model.bank_sector.A:10.2f}"
 
         self.bankD[self.model.t] = self.model.bank_sector.D
-        result += f"  bankD={self.model.bank_sector.D:10.2f}"
+        result += f" ∑D={self.model.bank_sector.D:10.2f}"
+
+        self.bankL[self.model.t] = self.model.bank_sector.L
+        result += f" ∑L={self.model.bank_sector.L:10.2f}"
 
         return result
 
@@ -64,6 +66,7 @@ class Statistics:
         self.firmsK = np.zeros(self.model.config.T, dtype=float)
         self.firmsA = np.zeros(self.model.config.T, dtype=float)
         self.firmsL = np.zeros(self.model.config.T, dtype=float)
+        self.firmsY = np.zeros(self.model.config.T, dtype=float)
         self.bankA = np.zeros(self.model.config.T, dtype=float)
         self.bankL = np.zeros(self.model.config.T, dtype=float)
         self.bankD = np.zeros(self.model.config.T, dtype=float)

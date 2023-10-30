@@ -42,7 +42,7 @@ class Config:
         # parameters that come from another values:
         self.gamma: float = ((self.w / self.k) + (self.g * self.r_i0))  # γ : operating cost per unit of capital
         self.bank_sector_L_i0 = self.firms_L_i0 * self.N
-        self.bank_sector_D_i0 = self.bank_sector_L_i0 - self.bank_sector_A_i0
+        # self.bank_sector_D_i0 = self.bank_sector_L_i0 - self.bank_sector_A_i0
 
     def __str__(self):
         description = sys.argv[0]

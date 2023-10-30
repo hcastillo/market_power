@@ -67,8 +67,8 @@ class Model:
         for firm in self.firms:
             firm.do_step()
         self.bank_sector.get_profits_and_balance()
-        self.log.info(self.statistics.current_status_save())
         self.statistics.debug_firms()
+        self.log.info(self.statistics.current_status_save())
 
     def remove_bankrupted_firms(self):
         self.bank_sector.bad_debt = 0
