@@ -88,7 +88,7 @@ class Model:
             self.statistics.export_data(self.export_datafile, self.export_description)
             self.statistics.plot()
         self.log.info(f"finish: model T={self.config.T} N={self.config.N}")
-
+        self.statistics.export_data(export_datafile=self.export_datafile,export_description=self.export_description)
     def run(self, export_datafile=None):
         self.initialize_model(export_datafile=export_datafile)
         for self.t in range(self.config.T):

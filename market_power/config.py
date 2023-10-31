@@ -11,7 +11,7 @@ import sys
 class Config:
     T: int = 1000         # Time (1000)
     N: int = 100          # Number of firms (100)
-    eta: float = 0.25     # ŋ Inverse elasticity: ŋ=1/10000 -> perfect competition, ŋ=1/4 -> high market power
+    eta: float = 0.00001  # ŋ Inverse elasticity: ŋ=1/10000 -> perfect competition, ŋ=1/4 -> high market power
     alfa: float = 0.08    # α Basilea's parameter (ratio equity/loan)
 
     g: float = 1.1        # cost per unit of capital

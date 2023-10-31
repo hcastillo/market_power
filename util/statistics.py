@@ -6,7 +6,8 @@ ABM model auxiliary file: to have statistics and plot
 """
 import numpy as np
 from util.log import Log
-from util.statsarray import StatsArray
+from util.stats_array import StatsFirms, StatsBankSector
+
 
 class Statistics:
     OUTPUT_DIRECTORY = "output"
@@ -14,6 +15,7 @@ class Statistics:
     # This time the idea is to use pandas to store the statistics
     def __init__(self, its_model):
         self.model = its_model
+        self.data = {}
         import os
         if not os.path.isdir(self.OUTPUT_DIRECTORY):
             os.mkdir(self.OUTPUT_DIRECTORY)
@@ -37,50 +39,27 @@ class Statistics:
 
     def current_status_save(self):
         # it returns also a string with the status
-        result = " firms   "+self.firmsK.store_statistics_firms("K")
-
-        result += " |"+self.firmsA.store_statistics_firms("A")
-
-        result += self.firmsL.store_statistics_firms("L")
-
-        result += ","+self.firmsY.store_statistics_firms("Y")
-
-        result += self.profits.store_statistics_firms("pi")
-
-        result += " "+self.firmsY.store_statistics_firms("is_bankrupted")
-
-        result += "\n             banks    "+self.bankD.store_statistics_bank("D")
-
-        result += "   "+self.bankA.store_statistics_bank("A")
-
-        result += "|"+self.bankL.store_statistics_bank("L")
-
-        result += " "+self.bad_debt.store_statistics_bank("bad_debt")
-
-        result += " "+self.bank_profits.store_statistics_bank("profits")
-
-        result += " "+self.credit_supply.store_statistics_bank("credit_supply")
-
+        result = ""
+        for item in self.data:
+            result += self.data[item].store_statistics()
         return result
 
     def reset(self):
-
-        self.failures = StatsArray(self.model,int,"Failures","fail")
-        self.firmsK = StatsArray(self.model,float,"Firms K","K")
-        self.firmsL = StatsArray(self.model,float,"Firms L","L")
-        self.firmsY = StatsArray(self.model,float,"Firms Y","Y")
-        self.firmsA = StatsArray(self.model,float,"Firms A","A")
-        self.profits = StatsArray(self.model,float,"Firms profits","π")
-        self.bankA = StatsArray(self.model,float,"BankSector A","A")
-        self.bankL = StatsArray(self.model,float,"BankSector L","L")
-        self.bankD = StatsArray(self.model,float,"BankSector A","D")
-        self.bank_profits = StatsArray(self.model,float,"BankSector profits","π")
-        self.bad_debt = StatsArray(self.model,float,"BankSector bad debt","bd")
-        self.credit_supply = StatsArray(self.model,float,"BankSector credit supply","cs")
-
-    def export_data(self, export_datafile=None, export_description=None):
-        if export_datafile:
-            self.save_data(export_datafile, export_description)
+        self.data["firmsK"] = StatsFirms(self.model, float, "Firms K", "K", prepend=" firms   ")
+        self.data["firmsA"] = StatsFirms(self.model, float, "Firms A", "A", prepend=" |")
+        self.data["firmsL"] = StatsFirms(self.model, float, "Firms L", "L")
+        self.data["firmsY"] = StatsFirms(self.model, float, "Firms Y", "Y", prepend=",")
+        self.data["profits"] = StatsFirms(self.model, float, "Firms profits", "π", property="pi")
+        self.data["failures"] = StatsFirms(self.model, int, "Failures", "fail", prepend=" ", property="is_bankrupted")
+        self.data["bankD"] = StatsBankSector(self.model, float, "BankSector D", "D", prepend="\n             banks    ")
+        self.data["bankA"] = StatsBankSector(self.model, float, "BankSector A", "A", prepend="   ", plot=False)
+        self.data["bankL"] = StatsBankSector(self.model, float, "BankSector L", "L", prepend="|")
+        self.data["bad_debt"] = StatsBankSector(self.model, float, "BankSector bad debt", "bd", prepend=" ",
+                                                property="bad_debt")
+        self.data["bank_profits"] = StatsBankSector(self.model, float, "BankSector profits", "π", prepend=" ",
+                                                    property="profits")
+        self.data["credit_supply"] = StatsBankSector(self.model, float, "BankSector credit supply", "cs", prepend=" ",
+                                                     property="credit_supply")
 
     @staticmethod
     def get_export_path(filename):
@@ -88,25 +67,23 @@ class Statistics:
             filename = f"{Statistics.OUTPUT_DIRECTORY}/{filename}"
         return filename if filename.endswith('.txt') else f"{filename}.txt"
 
-    def save_data(self, export_datafile=None, export_description=None):
+    def export_data(self, export_datafile=None, export_description=None):
         if export_datafile:
             with open(Statistics.get_export_path(export_datafile), 'w', encoding="utf-8") as savefile:
-                savefile.write('# t\tpolicy\tfitness           \tC                    \tir         \t' +
-                               'bankrupts\tbestLenderID\tbestLenderClients\tcreditChannels\n')
                 if export_description:
                     savefile.write(f"# {export_description}\n")
                 else:
-
                     savefile.write(f"# {__name__} T={self.model.config.T} N={self.model.config.N}\n")
+                header = "# t"
+                for item in self.data:
+                    header += "\t"+self.data[item].__str__()
+                savefile.write(header+"\n")
                 for i in range(self.model.config.T):
-                    savefile.write(f"{i:3}\t{self.policy[i]:3}\t{self.fitness[i]:19}\t{self.liquidity[i]:19}" +
-                                   f"\t{self.interest_rate[i]:20}\t{self.failures[i]:3}" +
-                                   f"\t{self.best_lender[i] / self.model.config.N:20}" +
-                                   f"\t{self.best_lender_clients[i] / self.model.config.N:20}" +
-                                   f"\t{self.credit_channels[i]:3}" +
-                                   f"\t{self.rationing[i]:20}" +
-                                   f"\t{self.leverage[i]:20}" +
-                                   "\n")
+                    line = f"{i:3}"
+                    for item in self.data:
+                        line += "\t" + self.data[item][i]
+                    savefile.write(line + "\n")
 
     def plot(self):
-        pass  # TODO
+        for item in self.data:
+            self.data[item].plot()
