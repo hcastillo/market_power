@@ -129,3 +129,5 @@ class Firm:
         else:
             if self.K > (self.A + self.L):
                 self.K = (self.A + self.L)
+        if self.A+self.L<self.K:
+            self.A = self.K - self.L

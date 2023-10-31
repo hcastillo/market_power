@@ -45,7 +45,7 @@ class BankSector:
 
     def determine_loans(self):
         return sum(float(firm.L) for firm in self.model.firms)
-    
+
     def __str__(self):
         return f"bankSector L={self.L:8.3} A={self.A:8.3} D={self.D:8.3}"
 
