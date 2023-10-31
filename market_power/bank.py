@@ -51,12 +51,12 @@ class BankSector:
         self.A = self.determine_equity()
         self.D = self.determine_deposits()
 
-    def determine_capacity_loan(self, firm_A):
-        capacity = firm_A / self.A
-        self.credit_supply -= capacity
-        if self.credit_supply < 0:
-            capacity += self.credit_supply
-        return capacity
+    def determine_capacity_loan(self, firm):
+        #TODO we determine % of L depending of A size respect to the total
+        #     if that L is lower than desired, then a reduced L is given, else the desired
+        totalA = sum(float(firm.A) for firm in self.model.firms)
+        possibleL = firm.A / totalA * self.credit_supply
+        return firm.desiredL if firm.desiredL > possibleL else possibleL
 
     def set_new_credit_suppy(self):
         self.credit_supply = self.A / self.model.config.alfa

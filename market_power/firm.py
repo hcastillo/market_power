@@ -29,8 +29,9 @@ class Firm:
         self.r = self.model.config.r_i0
         self.gamma = self.model.config.gamma
         self.phi = self.model.config.phi
-        self.pi = 0
-        self.Y = 0
+        self.pi = 0.0
+        self.Y = 0.0
+        self.desiredK = self.desiredL = self.obtainedL = 0.0
 
     def do_step(self):
         self.gamma = self.determine_cost_per_unit_of_capital()
@@ -39,13 +40,16 @@ class Firm:
         # self.Pb     = self.determine_prob_bankruptcy()
         self.pi = self.determine_profits()
         self.r = self.determine_interest_rate()
-        self.dK = self.determine_desired_capital()
+        self.desiredK = self.determine_desired_capital()
         self.I = self.determine_investment()
 
-        self.desiredL = self.determine_loan()
-        self.obtainedL = self.model.bank_sector.determine_capacity_loan(self.A)
+        self.desiredL = self.determine_new_loan()
+        self.obtainedL = self.model.bank_sector.determine_capacity_loan(self)
         if self.desiredL > self.obtainedL:
-            self.lack_of_loan_gap(self.desiredL - self.obtainedL)
+            self.A -= (self.desiredL - self.obtainedL)
+            self.L += self.obtainedL
+        else:
+            self.L += self.desiredL
         self.balance_firm()
         self.phi = self.determine_phi()
 
@@ -77,9 +81,9 @@ class Firm:
 
     def determine_investment(self):
         # (Below equation 33)
-        return self.dK - self.K
+        return self.desiredK - self.K
 
-    def determine_loan(self):
+    def determine_new_loan(self):
         # (Over equation 33)
         return self.L + (1 + self.model.config.m) * self.I - self.pi
 
@@ -109,13 +113,15 @@ class Firm:
         return (self.pi < 0) and (self.K * self.model.config.m + self.pi) >= 0
 
     def is_bankrupted(self):
-        return (self.pi + self.A) < 0
+        return (self.A + self.pi) < 0
 
     def set_failed(self):
         self.failures += 1
         self.__assign_defaults__()
 
     def balance_firm(self):
+        if self.L < 0:
+            self.L = 0.0
         # balance sheet adjustment
         if self.pi >= 0:
             if self.K < (self.A + self.L):

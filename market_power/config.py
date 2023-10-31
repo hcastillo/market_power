@@ -16,19 +16,19 @@ class Config:
 
     g: float = 1.1        # cost per unit of capital
     w: float = 0.005      # markdown interest rate (the higher it is, the monopolistic power of bank sector)
-    k: float = 1          # capital intensity rate K/N
+    k: float = 1.0        # capital intensity rate K/N
 
-    delta: float = 2      # δ
-    b: float = 1          # parameter of bankruptcy cost (b>0)
+    delta: float = 2.0    # δ
+    b: float = 1.0        # parameter of bankruptcy cost (b>0)
     beta: float = 0.02    # β skewness parameter -1 ... 1
     m: float = 0.03       # percentage of K that should be in cash
 
     # firms:
     # balance sheet => K = A + L
-    firms_K_i0: float = 5  # capital
-    firms_A_i0: float = 1  # assets
-    firms_L_i0: float = 4  # loans (from bank sector)
-    phi: float = 1.1       # Φ capital productivity: constant in this model without R&D
+    firms_K_i0: float = 5.0  # capital
+    firms_A_i0: float = 1.0  # assets
+    firms_L_i0: float = 4.0  # loans (from bank sector)
+    phi: float = 1.1         # Φ capital productivity: constant in this model without R&D
 
     # bank sector:
     # balance sheet => L = A + D

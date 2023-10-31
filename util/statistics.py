@@ -19,45 +19,49 @@ class Statistics:
             os.mkdir(self.OUTPUT_DIRECTORY)
         self.reset()
 
-    def debug_firms(self):
+    def debug_firms(self, before_start=False):
         for firm in self.model.firms:
-            self.debug_firm(firm)
+            self.debug_firm(firm, before_start=before_start)
 
-    def debug_firm(self, firm):
-        text = f"{firm.__str__()} K={Log.__format_number__(firm.K)}"
-        text += f" | A={Log.__format_number__(firm.A)} L={Log.__format_number__(firm.L)}"
-        text += f",  dK={Log.__format_number__(firm.dK)}"
-        text += f"  dL/oL={Log.__format_number__(firm.desiredL)}/{Log.__format_number__(firm.obtainedL)}"
-        text += f"  Y={Log.__format_number__(firm.Y)}"
-        text += f"  π={Log.__format_number__(firm.pi)}"
-        self.model.log.debug(text)
+    def debug_firm(self, firm, before_start=False):
+        text = f"{firm.__str__()} K={Log.format(firm.K)}"
+        text += f" | A={Log.format(firm.A)} L={Log.format(firm.L)}"
+        if not before_start:
+            text += f",  dK={Log.format(firm.desiredK)}"
+            text += f"  dL/oL={Log.format(firm.desiredL)}/{Log.format(firm.obtainedL)}"
+            text += f"  Y={Log.format(firm.Y)}"
+            text += f"  π={Log.format(firm.pi)}"
+            if firm.is_bankrupted():
+                text += "  bankrupted"
+        self.model.log.debug(text, before_start)
 
     def current_status_save(self):
         # it returns also a string with the status
         result = ""
 
         self.firmsK[self.model.t] = sum(float(firm.K) for firm in self.model.firms)
-        result += f"firms ∑K={self.firmsK[self.model.t]:10.2f}"
+        result += f"firms    ∑K={Log.format(self.firmsK[self.model.t])}"
 
         self.firmsA[self.model.t] = sum(float(firm.A) for firm in self.model.firms)
-        result += f" ∑A={self.firmsA[self.model.t]:10.2f}"
+        result += f" |  ∑A={Log.format(self.firmsA[self.model.t])}"
 
         self.firmsL[self.model.t] = sum(float(firm.L) for firm in self.model.firms)
-        result += f" ∑L={self.firmsL[self.model.t]:10.2f}"
+        result += f" ∑L={Log.format(self.firmsL[self.model.t])}"
 
         self.firmsY[self.model.t] = sum(float(firm.Y) for firm in self.model.firms)
-        result += f" ∑Y={self.firmsY[self.model.t]:10.2f}"
+        result += f" ∑Y={Log.format(self.firmsY[self.model.t])}"
 
-        result += f" fails={self.failures[self.model.t]:<2}"
+        self.failures[self.model.t] = sum(int(firm.is_bankrupted()) for firm in self.model.firms)
+        result += f" fails={Log.format(self.failures[self.model.t])}"
 
         self.bankA[self.model.t] = self.model.bank_sector.A
-        result += f"\n            banks ∑A={self.model.bank_sector.A:10.2f}"
+        result += f"\n            banks    ∑A={Log.format(self.model.bank_sector.A)}"
 
         self.bankD[self.model.t] = self.model.bank_sector.D
-        result += f" ∑D={self.model.bank_sector.D:10.2f}"
+        result += f" ∑D={Log.format(self.model.bank_sector.D)}"
 
         self.bankL[self.model.t] = self.model.bank_sector.L
-        result += f" ∑L={self.model.bank_sector.L:10.2f}"
+        result += f" ∑L={Log.format(self.model.bank_sector.L)}"
 
         return result
 

@@ -60,6 +60,7 @@ class Model:
         for i in range(self.config.N):
             self.firms.append(self.firm_class(new_id=i, its_model=self))
         self.bank_sector = BankSector(self)
+        self.statistics.debug_firms(before_start=True)
 
     def do_step(self):
         self.remove_bankrupted_firms()
@@ -72,14 +73,16 @@ class Model:
 
     def remove_bankrupted_firms(self):
         self.bank_sector.bad_debt = 0
-        num_failures = 0
         for firm in self.firms:
             if firm.is_bankrupted():
                 if firm.L - firm.K < 0:
                     self.bank_sector.bad_debt += (firm.L - firm.K)
                 firm.set_failed()
                 num_failures += 1
-        self.statistics.failures[self.t] = num_failures
+            else:
+                firm.A += firm.pi
+                firm.pi = 0
+
 
     def finish_model(self):
         if not self.test:

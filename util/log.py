@@ -5,6 +5,7 @@ ABM model auxiliary file: logging facilities
 @author: hector@bith.net
 """
 import logging
+import numpy as np
 
 
 class Log:
@@ -19,12 +20,15 @@ class Log:
         self.model = its_model
 
     @staticmethod
-    def __format_number__(number):
-        result = f"{number:5.2f}"
-        while len(result) > 5 and result[-1] == "0":
-            result = result[:-1]
-        while len(result) > 5 and result.find('.') > 0:
-            result = result[:-1]
+    def format(number):
+        if isinstance(number, int) or isinstance(number, np.int32):
+            result = f"{number:3}"
+        else:
+            result = f"{number:5.2f}"
+            while len(result) > 5 and result[-1] == "0":
+                result = result[:-1]
+            while len(result) > 5 and result.find('.') >= 0:
+                result = result[:-1]
         return result
 
     @staticmethod
@@ -35,8 +39,9 @@ class Log:
             logging.error(f" '--log' must contain a valid logging level and {option.upper()} is not.")
             sys.exit(-1)
 
-    def debug(self, text):
-        self.logger.debug(f"t={self.model.t:03} {text}")
+    def debug(self, text, before_start=False):
+        time_instant = "     " if before_start else f"t={self.model.t:03}"
+        self.logger.debug(f"{time_instant} {text}")
 
     def info(self, text):
         self.logger.info(f" t={self.model.t:03} {text}")
