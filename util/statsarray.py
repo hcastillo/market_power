@@ -6,6 +6,7 @@ ABM model auxiliary file: logging facilities
 """
 import numpy as np
 import matplotlib.pyplot as plt
+import types
 
 class StatsArray:
     def __init__(self, its_model, dtype, description, short_description):
@@ -15,15 +16,21 @@ class StatsArray:
         self.data = np.zeros(its_model.config.T, dtype=dtype)
 
     def store_statistics_firms(self, property):
-        self.data[self.model.t] = sum(getattr(firm, property) for firm in self.model.firms)
+        self.data[self.model.t] = sum(self.__get_value__(getattr(firm, property)) for firm in self.model.firms)
         return "∑"+self.__return_value_formatted__()
+
+    def __get_value__(self, element):
+        if callable(element):
+            return element()
+        else:
+            return element
 
     def store_statistics_bank(self, property):
         self.data[self.model.t] = getattr(self.model.bank_sector, property)
         return self.__return_value_formatted__()
 
     def __return_value_formatted__(self):
-        return f"{self.short_description} = {self.model.log.format(self.data[self.model.t])}"
+        return f"{self.short_description}={self.model.log.format(self.data[self.model.t])}"
 
     def __get__(self):
         return self.data

@@ -37,43 +37,29 @@ class Statistics:
 
     def current_status_save(self):
         # it returns also a string with the status
-        result = ""
+        result = " firms   "+self.firmsK.store_statistics_firms("K")
 
-        self.firmsK[self.model.t] = sum(float(firm.K) for firm in self.model.firms)
-        result += f"firms    ∑K={Log.format(self.firmsK[self.model.t])}"
+        result += " |"+self.firmsA.store_statistics_firms("A")
 
-        self.firmsA[self.model.t] = sum(float(firm.A) for firm in self.model.firms)
-        result += f" |∑A={Log.format(self.firmsA[self.model.t])}"
-
-        self.firmsL[self.model.t] = sum(float(firm.L) for firm in self.model.firms)
-        result += f"∑L={Log.format(self.firmsL[self.model.t])}"
-        result += ","+self.firmsY.store_statistics_firms("L")
+        result += self.firmsL.store_statistics_firms("L")
 
         result += ","+self.firmsY.store_statistics_firms("Y")
 
-        self.profits[self.model.t] = sum(int(firm.pi) for firm in self.model.firms)
-        result += f"∑π={Log.format(self.profits[self.model.t])}"
+        result += self.profits.store_statistics_firms("pi")
 
-        self.failures[self.model.t] = sum(int(firm.is_bankrupted()) for firm in self.model.firms)
-        result += f" fail={Log.format(self.failures[self.model.t])}"
+        result += " "+self.firmsY.store_statistics_firms("is_bankrupted")
 
-        self.bankA[self.model.t] = self.model.bank_sector.A
-        result += f"\n            banks     A={Log.format(self.model.bank_sector.A)}"
+        result += "\n             banks    "+self.bankD.store_statistics_bank("D")
 
-        self.bankD[self.model.t] = self.model.bank_sector.D
-        result += f"   D={Log.format(self.model.bank_sector.D)}"
+        result += "   "+self.bankA.store_statistics_bank("A")
 
-        self.bankL[self.model.t] = self.model.bank_sector.L
-        result += f"|L={Log.format(self.model.bank_sector.L)}"
+        result += "|"+self.bankL.store_statistics_bank("L")
 
-        self.bad_debt[self.model.t] = self.model.bank_sector.bad_debt
-        result += f",BD={Log.format(self.model.bank_sector.bad_debt)}"
+        result += " "+self.bad_debt.store_statistics_bank("bad_debt")
 
-        self.bank_profits[self.model.t] = self.model.bank_sector.profits
-        result += f" π={Log.format(self.model.bank_sector.profits)}"
+        result += " "+self.bank_profits.store_statistics_bank("profits")
 
-        self.credit_supply[self.model.t] = self.model.bank_sector.credit_supply
-        result += f" cs={Log.format(self.model.bank_sector.credit_supply)}"
+        result += " "+self.credit_supply.store_statistics_bank("credit_supply")
 
         return result
 
