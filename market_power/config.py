@@ -32,8 +32,8 @@ class Config:
 
     # bank sector:
     # balance sheet => L = A + D
-    bank_sector_A_i0: float = 32   # net worth or assets
-    r_i0: float = 0.02             # initial rate of interest charged to firms by loans
+    bank_sector_A_i0: float = 32.0  # net worth or assets
+    r_i0: float = 0.02              # initial rate of interest charged to firms by loans
 
     # seed used:
     default_seed: int = 20579

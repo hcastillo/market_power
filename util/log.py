@@ -6,6 +6,7 @@ ABM model auxiliary file: logging facilities
 """
 import logging
 import numpy as np
+import sys
 
 
 class Log:
@@ -25,11 +26,11 @@ class Log:
             result = f"{number:3}"
         else:
             result = f"{number:5.2f}"
-            while len(result) > 5 and result[-1] == "0":
+            while len(result) > 5 and result[-1] in "0":
                 result = result[:-1]
-            while len(result) > 5 and result.find('.') >= 0:
+            while len(result) > 5 and result.find('.') > 0:
                 result = result[:-1]
-        return result
+        return result if result[-1]!='.' else f' {result[:-1]}'
 
     @staticmethod
     def get_level(option):
@@ -40,22 +41,24 @@ class Log:
             sys.exit(-1)
 
     def debug(self, text, before_start=False):
-        time_instant = "     " if before_start else f"t={self.model.t:03}"
-        self.logger.debug(f"{time_instant} {text}")
+        self.logger.debug(f"{self.__format_t__(before_start)} {text}")
 
-    def info(self, text):
-        self.logger.info(f" t={self.model.t:03} {text}")
+    def info(self, text, before_start=False):
+        self.logger.info(f" {self.__format_t__(before_start)} {text}")
 
-    def error(self, text):
-        self.logger.error(f"t={self.model.t:03} {text}")
+    def error(self, text, before_start=False):
+        self.logger.error(f"{self.__format_t__(before_start)} {text}")
+
+    def __format_t__(self, before_start=False):
+        return "     " if before_start else f"t={self.model.t:03}"
 
     def define_log(self, log: str, logfile: str = ''):
         formatter = logging.Formatter('%(levelname)s %(message)s')
         self.logLevel = Log.get_level(log.upper())
         self.logger.setLevel(self.logLevel)
         if logfile:
-            if not logfile.startswith(Statistics.OUTPUT_DIRECTORY):
-                logfile = f"{Statistics.OUTPUT_DIRECTORY}/{logfile}"
+            if not logfile.startswith(self.model.statistics.OUTPUT_DIRECTORY):
+                logfile = f"{self.model.statistics.OUTPUT_DIRECTORY}/{logfile}"
             fh = logging.FileHandler(logfile, 'a', 'utf-8')
             fh.setLevel(self.logLevel)
             fh.setFormatter(formatter)

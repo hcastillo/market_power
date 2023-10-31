@@ -9,7 +9,7 @@ from util.log import Log
 
 
 class Statistics:
-    OUTPUT_DIRECTORY = "../output"
+    OUTPUT_DIRECTORY = "output"
 
     # This time the idea is to use pandas to store the statistics
     def __init__(self, its_model):
@@ -27,10 +27,10 @@ class Statistics:
         text = f"{firm.__str__()} K={Log.format(firm.K)}"
         text += f" | A={Log.format(firm.A)} L={Log.format(firm.L)}"
         if not before_start:
-            text += f",  dK={Log.format(firm.desiredK)}"
-            text += f"  dL/oL={Log.format(firm.desiredL)}/{Log.format(firm.obtainedL)}"
-            text += f"  Y={Log.format(firm.Y)}"
-            text += f"  π={Log.format(firm.pi)}"
+            text += f", Y={Log.format(firm.Y)}"
+            text += f" π={Log.format(firm.pi)}"
+            text += f" dK={Log.format(firm.desiredK)}"
+            text += f" dL/oL={Log.format(firm.desiredL)}/{Log.format(firm.obtainedL)}"
             if firm.is_bankrupted():
                 text += "  bankrupted"
         self.model.log.debug(text, before_start)
@@ -43,25 +43,37 @@ class Statistics:
         result += f"firms    ∑K={Log.format(self.firmsK[self.model.t])}"
 
         self.firmsA[self.model.t] = sum(float(firm.A) for firm in self.model.firms)
-        result += f" |  ∑A={Log.format(self.firmsA[self.model.t])}"
+        result += f" |∑A={Log.format(self.firmsA[self.model.t])}"
 
         self.firmsL[self.model.t] = sum(float(firm.L) for firm in self.model.firms)
-        result += f" ∑L={Log.format(self.firmsL[self.model.t])}"
+        result += f"∑L={Log.format(self.firmsL[self.model.t])}"
 
         self.firmsY[self.model.t] = sum(float(firm.Y) for firm in self.model.firms)
-        result += f" ∑Y={Log.format(self.firmsY[self.model.t])}"
+        result += f",∑Y={Log.format(self.firmsY[self.model.t])}"
+
+        self.profits[self.model.t] = sum(int(firm.pi) for firm in self.model.firms)
+        result += f"∑π={Log.format(self.profits[self.model.t])}"
 
         self.failures[self.model.t] = sum(int(firm.is_bankrupted()) for firm in self.model.firms)
-        result += f" fails={Log.format(self.failures[self.model.t])}"
+        result += f" fail={Log.format(self.failures[self.model.t])}"
 
         self.bankA[self.model.t] = self.model.bank_sector.A
-        result += f"\n            banks    ∑A={Log.format(self.model.bank_sector.A)}"
+        result += f"\n            banks     A={Log.format(self.model.bank_sector.A)}"
 
         self.bankD[self.model.t] = self.model.bank_sector.D
-        result += f" ∑D={Log.format(self.model.bank_sector.D)}"
+        result += f"   D={Log.format(self.model.bank_sector.D)}"
 
         self.bankL[self.model.t] = self.model.bank_sector.L
-        result += f" ∑L={Log.format(self.model.bank_sector.L)}"
+        result += f"|L={Log.format(self.model.bank_sector.L)}"
+
+        self.bad_debt[self.model.t] = self.model.bank_sector.bad_debt
+        result += f",BD={Log.format(self.model.bank_sector.bad_debt)}"
+
+        self.bank_profits[self.model.t] = self.model.bank_sector.profits
+        result += f" π={Log.format(self.model.bank_sector.profits)}"
+
+        self.credit_supply[self.model.t] = self.model.bank_sector.credit_supply
+        result += f" cs={Log.format(self.model.bank_sector.credit_supply)}"
 
         return result
 
@@ -71,9 +83,13 @@ class Statistics:
         self.firmsA = np.zeros(self.model.config.T, dtype=float)
         self.firmsL = np.zeros(self.model.config.T, dtype=float)
         self.firmsY = np.zeros(self.model.config.T, dtype=float)
+        self.profits = np.zeros(self.model.config.T, dtype=float)
         self.bankA = np.zeros(self.model.config.T, dtype=float)
         self.bankL = np.zeros(self.model.config.T, dtype=float)
         self.bankD = np.zeros(self.model.config.T, dtype=float)
+        self.bank_profits = np.zeros(self.model.config.T, dtype=float)
+        self.bad_debt = np.zeros(self.model.config.T, dtype=float)
+        self.credit_supply = np.zeros(self.model.config.T, dtype=float)
 
     def export_data(self, export_datafile=None, export_description=None):
         if export_datafile:

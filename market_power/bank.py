@@ -11,15 +11,15 @@ import functools
 class BankSector:
     def __init__(self, its_model):
         self.model = its_model
-        self.credit_supply = 0
+        self.credit_supply = 0.0
         self.bad_debt = 0.0
         self.profits = 0.0
         self.A = self.model.config.bank_sector_A_i0
         self.L = self.model.config.bank_sector_L_i0
-        #self.D = self.model.config.bank_sector_D_i0
         self.D = self.determine_deposits()
 
     def determine_deposits(self):
+        # L = A + D, ----> D = L-A
         return self.L - self.A
 
     def determine_profits(self):
@@ -40,7 +40,7 @@ class BankSector:
         return avg_r if avg_r > self.model.config.r_i0 else self.model.config.r_i0
 
     def determine_equity(self):
-        # (Equation 35)
+        # (Equation 35) At = At-1 + profits - bad_debt
         return self.A + self.profits - self.bad_debt
 
     def __str__(self):
@@ -60,4 +60,4 @@ class BankSector:
 
     def set_new_credit_suppy(self):
         self.credit_supply = self.A / self.model.config.alfa
-        self.model.log.debug(f"new credit supply={self.credit_supply}")
+        self.model.log.debug(f"new credit supply is {self.model.log.format(self.credit_supply)}")
