@@ -68,7 +68,7 @@ class Model:
         self.bank_sector.set_new_credit_suppy()
         for firm in self.firms:
             firm.do_step()
-        self.bank_sector.get_profits_and_balance()
+        self.bank_sector.balance_bank()
         self.statistics.debug_firms()
         self.log.info(self.statistics.current_status_save())
 
