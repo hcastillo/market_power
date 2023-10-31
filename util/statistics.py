@@ -6,7 +6,7 @@ ABM model auxiliary file: to have statistics and plot
 """
 import numpy as np
 from util.log import Log
-
+from util.statsarray import StatsArray
 
 class Statistics:
     OUTPUT_DIRECTORY = "output"
@@ -47,9 +47,9 @@ class Statistics:
 
         self.firmsL[self.model.t] = sum(float(firm.L) for firm in self.model.firms)
         result += f"∑L={Log.format(self.firmsL[self.model.t])}"
+        result += ","+self.firmsY.store_statistics_firms("L")
 
-        self.firmsY[self.model.t] = sum(float(firm.Y) for firm in self.model.firms)
-        result += f",∑Y={Log.format(self.firmsY[self.model.t])}"
+        result += ","+self.firmsY.store_statistics_firms("Y")
 
         self.profits[self.model.t] = sum(int(firm.pi) for firm in self.model.firms)
         result += f"∑π={Log.format(self.profits[self.model.t])}"
@@ -78,18 +78,19 @@ class Statistics:
         return result
 
     def reset(self):
-        self.failures = np.zeros(self.model.config.T, dtype=int)
-        self.firmsK = np.zeros(self.model.config.T, dtype=float)
-        self.firmsA = np.zeros(self.model.config.T, dtype=float)
-        self.firmsL = np.zeros(self.model.config.T, dtype=float)
-        self.firmsY = np.zeros(self.model.config.T, dtype=float)
-        self.profits = np.zeros(self.model.config.T, dtype=float)
-        self.bankA = np.zeros(self.model.config.T, dtype=float)
-        self.bankL = np.zeros(self.model.config.T, dtype=float)
-        self.bankD = np.zeros(self.model.config.T, dtype=float)
-        self.bank_profits = np.zeros(self.model.config.T, dtype=float)
-        self.bad_debt = np.zeros(self.model.config.T, dtype=float)
-        self.credit_supply = np.zeros(self.model.config.T, dtype=float)
+
+        self.failures = StatsArray(self.model,int,"Failures","fail")
+        self.firmsK = StatsArray(self.model,float,"Firms K","K")
+        self.firmsL = StatsArray(self.model,float,"Firms L","L")
+        self.firmsY = StatsArray(self.model,float,"Firms Y","Y")
+        self.firmsA = StatsArray(self.model,float,"Firms A","A")
+        self.profits = StatsArray(self.model,float,"Firms profits","π")
+        self.bankA = StatsArray(self.model,float,"BankSector A","A")
+        self.bankL = StatsArray(self.model,float,"BankSector L","L")
+        self.bankD = StatsArray(self.model,float,"BankSector A","D")
+        self.bank_profits = StatsArray(self.model,float,"BankSector profits","π")
+        self.bad_debt = StatsArray(self.model,float,"BankSector bad debt","bd")
+        self.credit_supply = StatsArray(self.model,float,"BankSector credit supply","cs")
 
     def export_data(self, export_datafile=None, export_description=None):
         if export_datafile:
