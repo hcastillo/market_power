@@ -31,35 +31,43 @@ class Firm:
         self.phi = self.model.config.phi
         self.pi = 0.0
         self.Y = 0.0
-        self.desiredK = self.desiredL = self.obtainedL = 0.0
+        self.c = 0.2 #TODO
+        self.desiredK = self.demandL = self.offeredL = 0.0
+        self.gap_of_L = 0.0
 
     def do_step(self):
         self.gamma = self.determine_cost_per_unit_of_capital()
-        self.c = self.determine_marginal_operating_cost()
-        self.Y = self.determine_output()
-        # self.Pb     = self.determine_prob_bankruptcy()
-        self.pi = self.determine_profits()
-        self.r = self.determine_interest_rate()
         self.desiredK = self.determine_desired_capital()
         self.I = self.determine_investment()
+        self.demandL = self.determine_demand_loan()
+        self.offeredL = self.model.bank_sector.determine_capacity_loan(self)
 
-        self.desiredL = self.determine_new_loan()
-        self.obtainedL = self.model.bank_sector.determine_capacity_loan(self)
-        if self.desiredL > self.obtainedL:
-            self.A -= (self.desiredL - self.obtainedL)
-            self.L += self.obtainedL
+        if self.demandL > self.offeredL:
+            self.gap_of_L = (self.demandL - self.offeredL)
+            self.A -= self.gap_of_L
+            self.K -= self.gap_of_L
+            self.incrementL = self.offeredL
         else:
-            self.L += self.desiredL
-        self.balance_firm()
-        self.phi = self.determine_phi()
+            self.gap_of_L = 0.0
+            self.incrementL = self.demandL
+        self.r = self.determine_interest_rate()
+        self.pi = self.determine_profits()
+        self.A = self.determine_worthnet()
+
+        if self.is_bankrupted(): # A+pi<0
+            self.set_failed()  # TODO increment BD in the bank etc etc
+        else:
+            self.L += self.incrementL
+            self.K = self.adjust_capital()
+
 
     def determine_cost_per_unit_of_capital(self):
         # (Before equation 2)  gamma
         return (self.model.config.w / self.model.config.k) + (self.model.config.g * self.r)
 
-    def determine_marginal_operating_cost(self):
-        # (Equation 2)
-        return self.gamma / self.phi
+    # def determine_marginal_operating_cost(self):
+    #     # (Equation 2)
+    #     return self.gamma / self.phi
 
     # def determine_prob_bankruptcy(self):
     #     # (Equation 10) Pb
@@ -83,7 +91,7 @@ class Firm:
         # (Below equation 33)
         return self.desiredK - self.K
 
-    def determine_new_loan(self):
+    def determine_demand_loan(self):
         # (Over equation 33)
         return self.L + (1 + self.model.config.m) * self.I - self.pi
 
@@ -91,18 +99,18 @@ class Firm:
         # stochastic demand [0,2]
         return random.uniform(0, 2)
 
-    def determine_output(self):
-        # (Equation 21)
-        return (1 - self.model.config.eta) ** 2 * self.phi / (self.model.config.b * self.gamma) - \
-            (1 - self.model.config.eta) / self.model.config.b + \
-            self.phi / (2 * self.gamma) * self.A
+    # def determine_output(self):
+    #     # (Equation 21)
+    #     return (1 - self.model.config.eta) ** 2 * self.phi / (self.model.config.b * self.gamma) - \
+    #         (1 - self.model.config.eta) / self.model.config.b + \
+    #         self.phi / (2 * self.gamma) * self.A
 
     def determine_profits(self):
         # (Equation 24)
         return self.u() * (self.model.config.eta + (1 - self.model.config.eta) * self.Y) - \
                  self.c * self.Y
 
-    def determine_assets(self):
+    def determine_worthnet(self):
         # (Equation 8)
         return self.A + self.pi
 
@@ -116,18 +124,16 @@ class Firm:
         return (self.A + self.pi) < 0
 
     def set_failed(self):
+        if self.L - self.K < 0:
+            self.model.bank_sector.add_bad_debt( self.K - self.L )
         self.failures += 1
         self.__assign_defaults__()
 
-    def balance_firm(self):
-        if self.L < 0:
-            self.L = 0.0
-        # balance sheet adjustment
-        if self.pi >= 0:
-            if self.K < (self.A + self.L):
-                self.K = (self.A + self.L)
-        else:
-            if self.K > (self.A + self.L):
-                self.K = (self.A + self.L)
-        if self.A+self.L<self.K:
-            self.A = self.K - self.L
+    def adjust_capital(self):
+        if self.K < (self.A + self.L):
+            self.model.log.debug(f"{self} K increased from {self.K} to {self.A + self.L}")
+        if self.K > (self.A + self.L):
+            self.model.log.debug(f"{self} K reduced from {self.K} to {self.A + self.L}")
+        return (self.A + self.L)
+
+

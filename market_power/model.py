@@ -64,24 +64,13 @@ class Model:
         self.log.info(self.statistics.current_status_save(), before_start=True)
 
     def do_step(self):
-        self.remove_bankrupted_firms()
+        self.bank_sector.bad_debt = 0.0
         self.bank_sector.set_new_credit_suppy()
         for firm in self.firms:
             firm.do_step()
-        self.bank_sector.balance_bank()
+        self.bank_sector.determine_step_results()
         self.statistics.debug_firms()
         self.log.info(self.statistics.current_status_save())
-
-    def remove_bankrupted_firms(self):
-        self.bank_sector.bad_debt = 0.0
-        for firm in self.firms:
-            if firm.is_bankrupted():
-                if firm.L - firm.K < 0:
-                    self.bank_sector.bad_debt += (firm.L - firm.K)
-                firm.set_failed()
-            else:
-                firm.A += firm.pi
-                firm.pi = 0.0
 
     def finish_model(self):
         if not self.test:

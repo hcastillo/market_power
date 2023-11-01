@@ -5,7 +5,6 @@ ABM model
 
 @author: hector@bith.net
 """
-import functools
 
 
 class BankSector:
@@ -49,18 +48,16 @@ class BankSector:
     def __str__(self):
         return f"bankSector L={self.L:8.3} A={self.A:8.3} D={self.D:8.3}"
 
-    def balance_bank(self):
-        self.profits = self.determine_profits()
+    def determine_step_results(self):
         self.A = self.determine_equity()
         self.L = self.determine_loans()
         self.D = self.determine_deposits()
+        self.profits = self.determine_profits()
 
     def determine_capacity_loan(self, firm):
-        #TODO we determine % of L depending of A size respect to the total
-        #     if that L is lower than desired, then a reduced L is given, else the desired
         totalA = sum(float(firm.A) for firm in self.model.firms)
         possibleL = firm.A / totalA * self.credit_supply
-        return firm.desiredL if firm.desiredL > possibleL else possibleL
+        return firm.demandL if firm.demandL > possibleL else possibleL
 
     def set_new_credit_suppy(self):
         self.credit_supply = self.A / self.model.config.alfa

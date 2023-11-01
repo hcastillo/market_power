@@ -31,8 +31,13 @@ class Statistics:
         if not before_start:
             text += f", Y={Log.format(firm.Y)}"
             text += f" π={Log.format(firm.pi)}"
+            text += f" γ={Log.format(firm.gamma)}"
             text += f" dK={Log.format(firm.desiredK)}"
-            text += f" dL/oL={Log.format(firm.desiredL)}/{Log.format(firm.obtainedL)}"
+            text += f" dL/oL={Log.format(firm.demandL)}/{Log.format(firm.offeredL)}"
+            if firm.gap_of_L>0:
+                text += f" gap={Log.format(firm.gap_of_L)}"
+            else:
+                text += f"          "
             if firm.is_bankrupted():
                 text += "  bankrupted"
         self.model.log.debug(text, before_start)
