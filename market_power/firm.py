@@ -13,6 +13,7 @@ class Firm:
         self.id = new_id
         self.model = its_model
         self.failures = 0
+        self.debug_info = ""
         self.__assign_defaults__()
 
     def __str__(self, short: bool = False):
@@ -30,12 +31,11 @@ class Firm:
         self.gamma = self.model.config.gamma
         self.phi = self.model.config.phi
         self.pi = 0.0
-        self.Y = 0.0
-        self.c = 0.2 #TODO
+        self.c = 0.0
         self.desiredK = self.demandL = self.offeredL = 0.0
-        self.gap_of_L = 0.0
 
     def do_step(self):
+        self.debug_info = ""
         self.gamma = self.determine_cost_per_unit_of_capital()
         self.desiredK = self.determine_desired_capital()
         self.I = self.determine_investment()
@@ -43,19 +43,20 @@ class Firm:
         self.offeredL = self.model.bank_sector.determine_capacity_loan(self)
 
         if self.demandL > self.offeredL:
-            self.gap_of_L = (self.demandL - self.offeredL)
-            self.A -= self.gap_of_L
-            self.K -= self.gap_of_L
+            gap_of_L = (self.demandL - self.offeredL)
+            self.A -= gap_of_L
+            self.K -= gap_of_L
+            self.debug_info += f"gapL={self.model.log.format(gap_of_L)} "
             self.incrementL = self.offeredL
         else:
-            self.gap_of_L = 0.0
             self.incrementL = self.demandL
         self.r = self.determine_interest_rate()
+        self.c = self.determine_marginal_operating_cost()
         self.pi = self.determine_profits()
-        self.A = self.determine_worthnet()
+        self.A = self.determine_net_worth()
 
-        if self.is_bankrupted(): # A+pi<0
-            self.set_failed()  # TODO increment BD in the bank etc etc
+        if self.is_bankrupted():
+            self.set_failed()
         else:
             self.L += self.incrementL
             self.K = self.adjust_capital()
@@ -65,21 +66,13 @@ class Firm:
         # (Before equation 2)  gamma
         return (self.model.config.w / self.model.config.k) + (self.model.config.g * self.r)
 
-    # def determine_marginal_operating_cost(self):
-    #     # (Equation 2)
-    #     return self.gamma / self.phi
-
-    # def determine_prob_bankruptcy(self):
-    #     # (Equation 10) Pb
-    #     return (1 / (2 * (1 - self.model.config.sigma) * (1 - self.model.config.eta))) * (
-    #             (self.gamma / self.phi) - (self.A / self.output))
+    def determine_marginal_operating_cost(self):
+        # (Equation 2)
+        return self.gamma / self.phi
 
     def determine_interest_rate(self):
         # (Equation 33)
         return self.model.config.beta * self.L / self.A
-
-    def lack_of_loan_gap(self, gap):
-        self.A -= gap
 
     def determine_desired_capital(self):
         # (Equation 22)
@@ -99,41 +92,33 @@ class Firm:
         # stochastic demand [0,2]
         return random.uniform(0, 2)
 
-    # def determine_output(self):
-    #     # (Equation 21)
-    #     return (1 - self.model.config.eta) ** 2 * self.phi / (self.model.config.b * self.gamma) - \
-    #         (1 - self.model.config.eta) / self.model.config.b + \
-    #         self.phi / (2 * self.gamma) * self.A
 
     def determine_profits(self):
-        # (Equation 24)
-        return self.u() * (self.model.config.eta + (1 - self.model.config.eta) * self.Y) - \
-                 self.c * self.Y
+        # (Equation 24)  , but with Y = phi*K
+        return self.u() * (self.model.config.eta + (1 - self.model.config.eta) * self.phi * self.K) - \
+                 self.c * self.phi * self.K
 
-    def determine_worthnet(self):
+    def determine_net_worth(self):
         # (Equation 8)
         return self.A + self.pi
-
-    def determine_phi(self):
-        return self.phi
 
     def check_loses_are_covered_by_m(self):
         return (self.pi < 0) and (self.K * self.model.config.m + self.pi) >= 0
 
     def is_bankrupted(self):
-        return (self.A + self.pi) < 0
+        return (self.A + self.pi) < self.model.config.thresold_bankrupt or self.debug_info.find("failed")>=0
 
     def set_failed(self):
+        self.debug_info += "failed "
         if self.L - self.K < 0:
             self.model.bank_sector.add_bad_debt( self.K - self.L )
+            self.debug_info += f"∆BD={self.model.log.format(self.K - self.L)} "
         self.failures += 1
         self.__assign_defaults__()
 
     def adjust_capital(self):
-        if self.K < (self.A + self.L):
-            self.model.log.debug(f"{self} K increased from {self.K} to {self.A + self.L}")
-        if self.K > (self.A + self.L):
-            self.model.log.debug(f"{self} K reduced from {self.K} to {self.A + self.L}")
-        return (self.A + self.L)
+        if self.K != (self.A + self.L):
+            self.debug_info += f"∆K={self.model.log.format(self.A + self.L - self.K)} "
+        return self.A + self.L
 
 

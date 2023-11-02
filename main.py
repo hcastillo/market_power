@@ -12,6 +12,7 @@ import typer
 def run_interactive(log: str = typer.Option('ERROR', help="Log level messages (ERROR,DEBUG,INFO...)"),
                     logfile: str = typer.Option(None, help="File to send logs to"),
                     save: str = typer.Option(None, help="Saves the output of this execution"),
+                    plot: bool = typer.Option(False, help="Saves the plots"),
                     n: int = typer.Option(Config.N, help="Number of firms"),
                     t: int = typer.Option(Config.T, help="Time repetitions")):
     global model
@@ -20,6 +21,8 @@ def run_interactive(log: str = typer.Option('ERROR', help="Log level messages (E
     if n != model.config.N:
         model.config.N = n
     model.log.define_log(log, logfile)
+    if plot:
+        model.statistics.enable_plot()
     run(save)
 
 

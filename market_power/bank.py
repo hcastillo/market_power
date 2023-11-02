@@ -55,10 +55,15 @@ class BankSector:
         self.profits = self.determine_profits()
 
     def determine_capacity_loan(self, firm):
+        # (Equation 11 of paper a new approach to business fluctuations)
         totalA = sum(float(firm.A) for firm in self.model.firms)
-        possibleL = firm.A / totalA * self.credit_supply
-        return firm.demandL if firm.demandL > possibleL else possibleL
+        totalK= sum(float(firm.K) for firm in self.model.firms)
+        return (self.model.config.lambda_param * self.credit_supply * firm.K / totalK +
+                (1 - self.model.config.lambda_param) * self.credit_supply * firm.A / totalA )
 
     def set_new_credit_suppy(self):
-        self.credit_supply = self.A / self.model.config.alfa
+        self.credit_supply = self.A / self.model.config.alpha
         self.model.log.debug(f"new credit supply is {self.model.log.format(self.credit_supply)}")
+
+    def add_bad_debt(self, amount):
+        self.bad_debt += amount

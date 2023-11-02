@@ -29,18 +29,17 @@ class Statistics:
         text = f"{firm.__str__()} K={Log.format(firm.K)}"
         text += f" | A={Log.format(firm.A)} L={Log.format(firm.L)}"
         if not before_start:
-            text += f", Y={Log.format(firm.Y)}"
+            #text += f", Y={Log.format(firm.Y)}"
             text += f" π={Log.format(firm.pi)}"
-            text += f" γ={Log.format(firm.gamma)}"
+            #text += f" γ={Log.format(firm.gamma)}"
             text += f" dK={Log.format(firm.desiredK)}"
             text += f" dL/oL={Log.format(firm.demandL)}/{Log.format(firm.offeredL)}"
-            if firm.gap_of_L>0:
-                text += f" gap={Log.format(firm.gap_of_L)}"
-            else:
-                text += f"          "
-            if firm.is_bankrupted():
-                text += "  bankrupted"
+            text += " "+firm.debug_info
         self.model.log.debug(text, before_start)
+
+    def enable_plot(self):
+        for i in self.data:
+            i.do_plot = True
 
     def current_status_save(self):
         # it returns also a string with the status
@@ -53,7 +52,7 @@ class Statistics:
         self.data["firmsK"] = StatsFirms(self.model, float, "Firms K", "K", prepend=" firms   ")
         self.data["firmsA"] = StatsFirms(self.model, float, "Firms A", "A", prepend=" |")
         self.data["firmsL"] = StatsFirms(self.model, float, "Firms L", "L")
-        self.data["firmsY"] = StatsFirms(self.model, float, "Firms Y", "Y", prepend=",")
+        #self.data["firmsY"] = StatsFirms(self.model, float, "Firms Y", "Y", prepend=",")
         self.data["profits"] = StatsFirms(self.model, float, "Firms profits", "π", property="pi")
         self.data["failures"] = StatsFirms(self.model, int, "Failures", "fail", prepend=" ", property="is_bankrupted")
         self.data["bankD"] = StatsBankSector(self.model, float, "BankSector D", "D", prepend="\n             banks    ")

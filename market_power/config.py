@@ -12,7 +12,7 @@ class Config:
     T: int = 1000         # Time (1000)
     N: int = 100          # Number of firms (100)
     eta: float = 0.00001  # ŋ Inverse elasticity: ŋ=1/10000 -> perfect competition, ŋ=1/4 -> high market power
-    alfa: float = 0.08    # α Basilea's parameter (ratio equity/loan)
+    alpha: float = 0.08   # α Basilea's parameter (ratio equity/loan)
 
     g: float = 1.1        # cost per unit of capital
     w: float = 0.005      # markdown interest rate (the higher it is, the monopolistic power of bank sector)
@@ -29,11 +29,13 @@ class Config:
     firms_A_i0: float = 1.0  # assets
     firms_L_i0: float = 4.0  # loans (from bank sector)
     phi: float = 1.1         # Φ capital productivity: constant in this model without R&D
+    thresold_bankrupt = 0    # A+
 
     # bank sector:
     # balance sheet => L = A + D
     bank_sector_A_i0: float = 32.0  # net worth or assets
     r_i0: float = 0.02              # initial rate of interest charged to firms by loans
+    lambda_param: float = 0.3       # λ, to determine credit alloted for firms, with  0 < λ < 1
 
     # seed used:
     default_seed: int = 20579

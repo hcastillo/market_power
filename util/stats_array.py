@@ -5,12 +5,11 @@ ABM model auxiliary file: logging facilities
 @author: hector@bith.net
 """
 import numpy as np
-import matplotlib.pyplot as plt
 import types
 
 class StatsArray:
     def __init__(self, its_model, dtype, description,
-                 short_description, prepend="", plot=True, property=None):
+                 short_description, prepend="", plot=False, property=None):
         self.description = description
         self.short_description = short_description
         self.model = its_model
@@ -39,6 +38,7 @@ class StatsArray:
 
     def plot(self, show=False):
         if self.do_plot:
+            import matplotlib.pyplot as plt
             plt.clf()
             xx = []
             yy = []
