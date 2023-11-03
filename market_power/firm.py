@@ -44,22 +44,16 @@ class Firm:
 
         if self.demandL > self.offeredL:
             gap_of_L = (self.demandL - self.offeredL)
-            self.A -= gap_of_L
+            #self.A -= gap_of_L
             self.K -= gap_of_L
             self.debug_info += f"gapL={self.model.log.format(gap_of_L)} "
-            self.incrementL = self.offeredL
+            self.L += self.offeredL
         else:
-            self.incrementL = self.demandL
+            self.L += self.demandL
         self.r = self.determine_interest_rate()
         self.c = self.determine_marginal_operating_cost()
         self.pi = self.determine_profits()
         self.A = self.determine_net_worth()
-
-        if self.is_bankrupted():
-            self.set_failed()
-        else:
-            self.L += self.incrementL
-            self.K = self.adjust_capital()
 
 
     def determine_cost_per_unit_of_capital(self):
@@ -106,13 +100,13 @@ class Firm:
         return (self.pi < 0) and (self.K * self.model.config.m + self.pi) >= 0
 
     def is_bankrupted(self):
-        return (self.A + self.pi) < self.model.config.thresold_bankrupt or self.debug_info.find("failed")>=0
+        return self.A < self.model.config.threshold_bankrupt or self.debug_info.find("failed")>0
 
     def set_failed(self):
         self.debug_info += "failed "
-        if self.L - self.K < 0:
-            self.model.bank_sector.add_bad_debt( self.K - self.L )
-            self.debug_info += f"∆BD={self.model.log.format(self.K - self.L)} "
+        if self.L - self.K > 0:
+            self.model.log.debug( f"some error: L={self.L},K={self.K} bankrupted {self}" )
+        self.model.bank_sector.add_bad_debt( self.K - self.L )
         self.failures += 1
         self.__assign_defaults__()
 

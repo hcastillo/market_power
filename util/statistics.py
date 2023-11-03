@@ -29,12 +29,12 @@ class Statistics:
         text = f"{firm.__str__()} K={Log.format(firm.K)}"
         text += f" | A={Log.format(firm.A)} L={Log.format(firm.L)}"
         if not before_start:
-            #text += f", Y={Log.format(firm.Y)}"
+            # text += f", Y={Log.format(firm.Y)}"
             text += f" π={Log.format(firm.pi)}"
-            #text += f" γ={Log.format(firm.gamma)}"
+            # text += f" γ={Log.format(firm.gamma)}"
             text += f" dK={Log.format(firm.desiredK)}"
             text += f" dL/oL={Log.format(firm.demandL)}/{Log.format(firm.offeredL)}"
-            text += " "+firm.debug_info
+            text += " " + firm.debug_info
         self.model.log.debug(text, before_start)
 
     def enable_plot(self):
@@ -53,17 +53,17 @@ class Statistics:
         self.data["firmsA"] = StatsFirms(self.model, float, "Firms A", "A", prepend=" |")
         self.data["firmsL"] = StatsFirms(self.model, float, "Firms L", "L")
         #self.data["firmsY"] = StatsFirms(self.model, float, "Firms Y", "Y", prepend=",")
-        self.data["profits"] = StatsFirms(self.model, float, "Firms profits", "π", property="pi")
-        self.data["failures"] = StatsFirms(self.model, int, "Failures", "fail", prepend=" ", property="is_bankrupted")
+        self.data["profits"] = StatsFirms(self.model, float, "Firms profits", "π", attr_name="pi")
+        self.data["failures"] = StatsFirms(self.model, int, "Failures", "fail", prepend=" ", attr_name="is_bankrupted")
         self.data["bankD"] = StatsBankSector(self.model, float, "BankSector D", "D", prepend="\n             banks    ")
         self.data["bankA"] = StatsBankSector(self.model, float, "BankSector A", "A", prepend="   ", plot=False)
         self.data["bankL"] = StatsBankSector(self.model, float, "BankSector L", "L", prepend="|")
-        self.data["bad_debt"] = StatsBankSector(self.model, float, "BankSector bad debt", "bd", prepend=" ",
-                                                property="bad_debt")
         self.data["bank_profits"] = StatsBankSector(self.model, float, "BankSector profits", "π", prepend=" ",
-                                                    property="profits")
+                                                    attr_name="profits")
+        self.data["bad_debt"] = StatsBankSector(self.model, float, "BankSector bad debt", "bd", prepend=" ",
+                                                attr_name="bad_debt")
         self.data["credit_supply"] = StatsBankSector(self.model, float, "BankSector credit supply", "cs", prepend=" ",
-                                                     property="credit_supply")
+                                                     attr_name="credit_supply")
 
     @staticmethod
     def get_export_path(filename):

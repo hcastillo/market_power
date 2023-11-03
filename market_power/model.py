@@ -60,8 +60,9 @@ class Model:
         for i in range(self.config.N):
             self.firms.append(self.firm_class(new_id=i, its_model=self))
         self.bank_sector = BankSector(self)
-        self.statistics.debug_firms(before_start=True)
-        self.log.info(self.statistics.current_status_save(), before_start=True)
+        if not self.test:
+            self.statistics.debug_firms(before_start=True)
+            self.log.info(self.statistics.current_status_save(), before_start=True)
 
     def do_step(self):
         self.bank_sector.bad_debt = 0.0
@@ -69,6 +70,7 @@ class Model:
         for firm in self.firms:
             firm.do_step()
         self.bank_sector.determine_step_results()
+        self.remove_failed_firms()
         self.statistics.debug_firms()
         self.log.info(self.statistics.current_status_save())
 
@@ -78,8 +80,14 @@ class Model:
             self.statistics.plot()
         self.log.info(f"finish: model T={self.config.T} N={self.config.N}")
         self.statistics.export_data(export_datafile=self.export_datafile,export_description=self.export_description)
+
     def run(self, export_datafile=None):
         self.initialize_model(export_datafile=export_datafile)
         for self.t in range(self.config.T):
             self.do_step()
         self.finish_model()
+
+    def remove_failed_firms(self):
+        for firm in self.firms:
+            if firm.is_bankrupted():
+                firm.set_failed()

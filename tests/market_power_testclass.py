@@ -65,16 +65,17 @@ class MarketPowerTest(unittest.TestCase):
     def assertFirms(self, K: float = None, failures: int = None, L: float = None, A: float = None):
         self.model.statistics.current_status_save()
         if L:
-            self.assertEqual(self.model.statistics.firmsL[self.model.t], L)
+            self.assertEqual(float(self.model.statistics.data["firmsL"][self.model.t]), L)
         if K:
-            self.assertEqual(self.model.statistics.firmsK[self.model.t], K)
+            self.assertEqual(float(self.model.statistics.data["firmsK"][self.model.t]), K)
         if A:
-            self.assertEqual(self.model.statistics.firmsA[self.model.t], A)
+            self.assertEqual(float(self.model.statistics.data["firmsA"][self.model.t]), A)
         if failures:
-            self.asserEqual(self.model.statistics.failures[self.model.t], failures)
+            self.asserEqual(float(self.model.statistics.data["failures"][self.model.t]), failures)
         if L and K and A:
-            self.assertEqual(self.model.statistics.firmsK[self.model.t],
-                             self.model.statistics.firmsL[self.model.t]+self.model.statistics.firmsA[self.model.t])
+            self.assertEqual(float(self.model.statistics.data["firmsK"][self.model.t]),
+                             float(self.model.statistics.data["firmsL"][self.model.t])+
+                             float(self.model.statistics.data["firmsA"][self.model.t]))
 
     def assertBankSector(self, D: float = None, L: float = None, A: float = None):
         if L:

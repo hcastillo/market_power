@@ -21,7 +21,7 @@ class Config:
     delta: float = 2.0    # δ
     b: float = 1.0        # parameter of bankruptcy cost (b>0)
     beta: float = 0.02    # β skewness parameter -1 ... 1
-    m: float = 0.03       # percentage of K that should be in cash
+    m: float = 0.0        # percentage of K that should be in cash
 
     # firms:
     # balance sheet => K = A + L
@@ -29,13 +29,13 @@ class Config:
     firms_A_i0: float = 1.0  # assets
     firms_L_i0: float = 4.0  # loans (from bank sector)
     phi: float = 1.1         # Φ capital productivity: constant in this model without R&D
-    thresold_bankrupt = 0    # A+
+    threshold_bankrupt = 0   # A+pi > threshold_bankrupt for not to be considered bankrupted
 
     # bank sector:
     # balance sheet => L = A + D
-    bank_sector_A_i0: float = 32.0  # net worth or assets
+    percentage_A_of_L: float = 0.08 # net worth, 8% of L
     r_i0: float = 0.02              # initial rate of interest charged to firms by loans
-    lambda_param: float = 0.3       # λ, to determine credit alloted for firms, with  0 < λ < 1
+    lambda_param: float = 0.3       # λ, to determine credit allotted for firms, with  0 < λ < 1
 
     # seed used:
     default_seed: int = 20579
@@ -43,7 +43,11 @@ class Config:
     def __init__(self):
         # parameters that come from another values:
         self.gamma: float = ((self.w / self.k) + (self.g * self.r_i0))  # γ : operating cost per unit of capital
-        self.bank_sector_L_i0 = self.firms_L_i0 * self.N
+        self.bank_sector_L_i0 = 80/0.08 #TODO self.firms_L_i0 * self.N
+        # by default, we assure 8% of L as A
+        #   100 firms with firm.L0 = 4 -> bank.A=32, bank.D = 368
+        #   10  firms                4 -> bank.A=3.2 -> bank.D= 36.8
+        self.bank_sector_A_i0 = 80 #TODO self.percentage_A_of_L * self.bank_sector_L_i0
         # self.bank_sector_D_i0 = self.bank_sector_L_i0 - self.bank_sector_A_i0
 
     def __str__(self):

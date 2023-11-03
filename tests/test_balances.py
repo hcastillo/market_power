@@ -16,8 +16,10 @@ class BalanceAtCreationTestCase(testclass.MarketPowerTest):
     def test_values(self):
         self.assertFirms(failures=0, K=50, A=10, L=40)
         self.assertFirm(self.model.firms[0], K=5, A=1, L=4)
-        self.assertBankSector(A=32, L=40, D=8)
-
+        self.assertBankSector(A=3.2, L=40, D=36.8)
+        # by default, we assure 8% of L as A
+        #   100 firms with firm.L0 = 4 -> bank.A=32, bank.D = 368
+        #   10  firms                4 -> bank.A=3.2 -> bank.D= 36.8
 
 if __name__ == '__main__':
     unittest.main()

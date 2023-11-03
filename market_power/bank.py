@@ -43,16 +43,17 @@ class BankSector:
         return self.A + self.profits - self.bad_debt
 
     def determine_loans(self):
-        return sum(float(firm.L) for firm in self.model.firms)
+        #TODO    return sum(float(firm.L) for firm in self.model.firms)
+        return self.credit_supply
 
     def __str__(self):
         return f"bankSector L={self.L:8.3} A={self.A:8.3} D={self.D:8.3}"
 
     def determine_step_results(self):
+        self.profits = self.determine_profits()
         self.A = self.determine_equity()
         self.L = self.determine_loans()
         self.D = self.determine_deposits()
-        self.profits = self.determine_profits()
 
     def determine_capacity_loan(self, firm):
         # (Equation 11 of paper a new approach to business fluctuations)
