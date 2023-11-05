@@ -41,13 +41,16 @@ class Log:
             sys.exit(-1)
 
     def debug(self, text, before_start=False):
-        self.logger.debug(f"{self.__format_t__(before_start)} {text}")
+        if not self.model.test:
+            self.logger.debug(f"{self.__format_t__(before_start)} {text}")
 
     def info(self, text, before_start=False):
-        self.logger.info(f" {self.__format_t__(before_start)} {text}")
+        if not self.model.test:
+            self.logger.info(f" {self.__format_t__(before_start)} {text}")
 
     def error(self, text, before_start=False):
-        self.logger.error(f"{self.__format_t__(before_start)} {text}")
+        if not self.model.test:
+            self.logger.error(f"{self.__format_t__(before_start)} {text}")
 
     def __format_t__(self, before_start=False):
         return "     " if before_start else f"t={self.model.t:03}"

@@ -13,16 +13,16 @@ class MarketPowerTest(unittest.TestCase):
     shocks = []
     model = None
 
-    def configureTest(self, shocks: list = None, N: int = None, T: int = None,
-                      bankA_i0: float = None, firmA_i0: float = None, firmK_i0: float = None,
-                      firmL_i0: float = None, model=None):
-        self.model = Model() if not model else model
+    def configureTest(self, **kwargs):
+        self.model = Model()
         self.model.test = True
-        MarketPowerTest.shocks = shocks
-        if N:
-            self.model.configure(N=N)
-        if T:
-            self.model.configure(T=T)
+
+        for key, value in kwargs.items():
+            if hasattr(self.model.config, key):
+                setattr(self.model.config, key, value)
+            else:
+                raise ValueError(f"config has not attr {key}={value}")
+        self.model.config.__init__()
         self.model.log.define_log(log='DEBUG')
         self.model.initialize_model()
 
@@ -77,14 +77,16 @@ class MarketPowerTest(unittest.TestCase):
                              float(self.model.statistics.data["firmsL"][self.model.t])+
                              float(self.model.statistics.data["firmsA"][self.model.t]))
 
-    def assertBankSector(self, D: float = None, L: float = None, A: float = None):
+    def assertBankSector(self, D: float = None, L: float = None, A: float = None, cs: float = None):
         if L:
             self.assertEqual(self.model.bank_sector.L, L)
         if D:
             self.assertEqual(self.model.bank_sector.D, D)
         if A:
             self.assertEqual(self.model.bank_sector.A, A)
+        if cs:
+            self.assertEqual(self.model.bank_sector.cs, cs)
         if L and D and A:
-            self.assertEqual(self.model.bank_sector.L,self.model.bank_sector.A+self.model.bank_sector.D)
+            self.assertEqual(self.model.bank_sector.L, self.model.bank_sector.A+self.model.bank_sector.D)
 
 

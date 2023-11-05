@@ -7,9 +7,13 @@ ABM model executer, to run interactively the model
 from market_power.model import Model
 from market_power.config import Config
 import typer
+from typing import List
 
 
-def run_interactive(log: str = typer.Option('ERROR', help="Log level messages (ERROR,DEBUG,INFO...)"),
+def run_interactive(getconfig: bool = typer.Option(False, help="Get current configuration"),
+                    setconfig: List[str] = typer.Argument(None, help="Change config value (i.e. alpha=3.1"),
+
+                    log: str = typer.Option('ERROR', help="Log level messages (ERROR,DEBUG,INFO...)"),
                     logfile: str = typer.Option(None, help="File to send logs to"),
                     save: str = typer.Option(None, help="Saves the output of this execution"),
                     plot: bool = typer.Option(False, help="Saves the plots"),
@@ -23,12 +27,35 @@ def run_interactive(log: str = typer.Option('ERROR', help="Log level messages (E
     model.log.define_log(log, logfile)
     if plot:
         model.statistics.enable_plot()
+    if getconfig:
+        print(model.config.__str__(separator="\n"))
+        raise typer.Exit()
+    manage_config_values(setconfig)
     run(save)
 
 
 def run(save=None):
     global model
     model.run(export_datafile=save)
+
+
+def manage_config_values(config_list):
+    for item in config_list:
+        try:
+            name_config, value_config = item.split("=")
+        except ValueError:
+            model.log.error("A config value should be passed as name=value", before_start=True)
+            raise typer.Exit(-1)
+        try:
+            getattr(model.config, name_config)
+        except AttributeError:
+            model.log.error(f"Configuration has no {name_config}", before_start=True)
+            raise typer.Exit(-1)
+        try:
+            setattr(model.config, name_config, float(value_config))
+        except ValueError:
+            model.log.error(f"Value given {value_config} is not valid", before_start=True)
+            raise typer.Exit(-1)
 
 
 def is_notebook():

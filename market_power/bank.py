@@ -10,11 +10,11 @@ ABM model
 class BankSector:
     def __init__(self, its_model):
         self.model = its_model
-        self.credit_supply = 0.0
         self.bad_debt = 0.0
         self.profits = 0.0
         self.A = self.model.config.bank_sector_A_i0
         self.L = self.model.config.bank_sector_L_i0
+        self.credit_supply = self.model.config.bank_sector_L_i0
         self.D = self.determine_deposits()
 
     def determine_deposits(self):
@@ -42,29 +42,26 @@ class BankSector:
         # (Equation 35) At = At-1 + profits - bad_debt
         return self.A + self.profits - self.bad_debt
 
-    def determine_loans(self):
-        #TODO    return sum(float(firm.L) for firm in self.model.firms)
-        return self.credit_supply
-
     def __str__(self):
-        return f"bankSector L={self.L:8.3} A={self.A:8.3} D={self.D:8.3}"
+        return f"bankSector L={self.model.log.format(self.L)} A={self.model.log.format(self.A)} " +\
+               f"D={self.model.log.format(self.D)} cs={self.model.log.format(self.credit_supply)}"
 
     def determine_step_results(self):
         self.profits = self.determine_profits()
         self.A = self.determine_equity()
-        self.L = self.determine_loans()
+        self.L = self.credit_supply
         self.D = self.determine_deposits()
+        self.credit_supply = self.set_new_credit_suppy()
 
-    def determine_capacity_loan(self, firm):
+    def determine_firm_capacity_loan(self, firm):
         # (Equation 11 of paper a new approach to business fluctuations)
         totalA = sum(float(firm.A) for firm in self.model.firms)
-        totalK= sum(float(firm.K) for firm in self.model.firms)
+        totalK = sum(float(firm.K) for firm in self.model.firms)
         return (self.model.config.lambda_param * self.credit_supply * firm.K / totalK +
-                (1 - self.model.config.lambda_param) * self.credit_supply * firm.A / totalA )
+                (1 - self.model.config.lambda_param) * self.credit_supply * firm.A / totalA)
 
     def set_new_credit_suppy(self):
-        self.credit_supply = self.A / self.model.config.alpha
-        self.model.log.debug(f"new credit supply is {self.model.log.format(self.credit_supply)}")
+        return self.A / self.model.config.alpha
 
     def add_bad_debt(self, amount):
         self.bad_debt += amount

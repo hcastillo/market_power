@@ -4,7 +4,6 @@
 ABM model auxiliary file: to have statistics and plot
 @author:  hector@bith.net
 """
-import numpy as np
 from util.log import Log
 from util.stats_array import StatsFirms, StatsBankSector
 
@@ -52,12 +51,11 @@ class Statistics:
         self.data["firmsK"] = StatsFirms(self.model, float, "Firms K", "K", prepend=" firms   ")
         self.data["firmsA"] = StatsFirms(self.model, float, "Firms A", "A", prepend=" |")
         self.data["firmsL"] = StatsFirms(self.model, float, "Firms L", "L")
-        #self.data["firmsY"] = StatsFirms(self.model, float, "Firms Y", "Y", prepend=",")
         self.data["profits"] = StatsFirms(self.model, float, "Firms profits", "π", attr_name="pi")
         self.data["failures"] = StatsFirms(self.model, int, "Failures", "fail", prepend=" ", attr_name="is_bankrupted")
-        self.data["bankD"] = StatsBankSector(self.model, float, "BankSector D", "D", prepend="\n             banks    ")
-        self.data["bankA"] = StatsBankSector(self.model, float, "BankSector A", "A", prepend="   ", plot=False)
-        self.data["bankL"] = StatsBankSector(self.model, float, "BankSector L", "L", prepend="|")
+        self.data["bankL"] = StatsBankSector(self.model, float, "BankSector L", "L", prepend="\n             banks    ")
+        self.data["bankA"] = StatsBankSector(self.model, float, "BankSector A", "A", prepend=" | ", plot=False)
+        self.data["bankD"] = StatsBankSector(self.model, float, "BankSector D", "D", prepend=" ")
         self.data["bank_profits"] = StatsBankSector(self.model, float, "BankSector profits", "π", prepend=" ",
                                                     attr_name="profits")
         self.data["bad_debt"] = StatsBankSector(self.model, float, "BankSector bad debt", "bd", prepend=" ",

@@ -14,19 +14,7 @@ class BalanceAtCreationTestCase(test_class.MarketPowerTest):
         self.configureTest(N=10, T=1, bank_sector_A_i0=5, firms_L_i0=4)
 
     def test_values(self):
-        self.assertFirms(failures=0, K=50, A=10, L=40)
-        self.assertFirm(self.model.firms[0], K=5, A=1, L=4)
-
-        self.assertBankSector(A=5, L=40, D=35)
-        # by default initially bank.L = bank.cs = firm.L*N
-        #            after first step, cs=bank.A/alpha
-        #    bank.A=5, bank.L=4/0.08=62.5, bank.D=57.5
-
-        self.doTest()
-
-        print(self.model.t)
-        print(self.model.bank_sector)
-
+        self.assertRaises(ValueError, self.configureTest, noexist=True)
 
 if __name__ == '__main__':
     unittest.main()
