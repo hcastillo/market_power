@@ -5,16 +5,19 @@ ABM model auxiliary file: logging facilities
 @author: hector@bith.net
 """
 import numpy as np
+import statistics
+import math
 
 
 class StatsArray:
     def __init__(self, its_model, data_type, description,
-                 short_description, prepend="", plot=True, attr_name=None):
+                 short_description, prepend="", plot=True, attr_name=None, log=False):
         self.description = description
         self.short_description = short_description
         self.model = its_model
         self.prepend = prepend
         self.its_name = ""
+        self.log = log
         if attr_name:
             self.attr_name = attr_name
         else:
@@ -29,7 +32,10 @@ class StatsArray:
             return element
 
     def __return_value_formatted__(self):
-        return f"{self.short_description}={self.model.log.format(self.data[self.model.t])}"
+        result = f"{self.short_description}"
+        result += "Ξ" if self.log else "="
+        result += f"{self.model.log.format(self.data[self.model.t])}"
+        return result
 
     def __getitem__(self, t):
         return self.model.log.format(self.data[t])
@@ -47,7 +53,7 @@ class StatsArray:
                 xx.append(i)
                 yy.append(self.data[i])
             plt.plot(xx, yy, 'b-')
-            plt.ylabel(self.description)
+            plt.ylabel(self.description + "(ln)" if self.log else "")
             plt.xlabel("t")
             plt.title(self.description)
             plt.show() if show else plt.savefig(
@@ -61,21 +67,28 @@ class StatsArray:
 
 
 class StatsFirms(StatsArray):
-    def __init__(self, its_model, data_type, description,
-                 short_description, prepend="", plot=False, attr_name=None, avg=False):
-        StatsArray.__init__(self, its_model, data_type, description, short_description, prepend, plot, attr_name)
-        self.avg = avg
+    def __init__(self, its_model, data_type, description, short_description,
+                 prepend="", plot=True, attr_name=None, function=sum, log=False):
+        StatsArray.__init__(self, its_model, data_type, description, short_description, prepend, plot, attr_name, log)
+        self.function = function
 
     def store_statistics(self):
-        self.data[self.model.t] = sum(self.get_value(getattr(firm, self.attr_name)) for firm in self.model.firms)
-        if self.avg:
-            self.data[self.model.t] /= self.model.config.N
-        return self.prepend + ("̅" if self.avg else "∑") + self.__return_value_formatted__()
+        result = self.function(self.get_value(getattr(firm, self.attr_name)) for firm in self.model.firms)
+        self.data[self.model.t] = math.log(result) if self.log else result
+        return self.prepend + self.repr_function() + self.__return_value_formatted__()
+
+    def repr_function(self):
+        match self.function:
+            case statistics.mean:
+                return "x̄"
+            case _:
+                return "Σ"
 
 
 class StatsBankSector(StatsArray):
     its_name = "Bank"
 
     def store_statistics(self):
-        self.data[self.model.t] = getattr(self.model.bank_sector, self.attr_name)
+        result = getattr(self.model.bank_sector, self.attr_name)
+        self.data[self.model.t] = math.log(result) if self.log else result
         return self.prepend + self.__return_value_formatted__()

@@ -39,10 +39,10 @@ class Config:
     def __init__(self):
         # parameters that come from another values:
         self.gamma: float = ((self.w / self.k) + (self.g * self.r_i0))  # γ : operating cost per unit of capital
-        self.bank_sector_L_i0 = self.firms_L_i0*self.N
+        self.bank_sector_L_i0 = self.bank_sector_A_i0 / self.alpha # self.firms_L_i0*self.N
         self.bank_sector_D_i0 = self.bank_sector_L_i0 - self.bank_sector_A_i0
         if self.bank_sector_D_i0 < 0:
-            raise ValueError("bank.D is <0 due to a bad selection of bank_A_i0")
+            raise ValueError(f"bank.D<0: D={self.bank_sector_L_i0} - {self.bank_sector_A_i0}")
 
     def __str__(self, separator=""):
         description = sys.argv[0]

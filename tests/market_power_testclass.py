@@ -77,15 +77,15 @@ class MarketPowerTest(unittest.TestCase):
                              float(self.model.statistics.data["firmsL"][self.model.t])+
                              float(self.model.statistics.data["firmsA"][self.model.t]))
 
-    def assertBankSector(self, D: float = None, L: float = None, A: float = None, cs: float = None):
+    def assertBankSector(self, D: float = None, L: float = None, A: float = None, credit_supply: float = None):
         if L:
             self.assertEqual(self.model.bank_sector.L, L)
         if D:
             self.assertEqual(self.model.bank_sector.D, D)
         if A:
             self.assertEqual(self.model.bank_sector.A, A)
-        if cs:
-            self.assertEqual(self.model.bank_sector.cs, cs)
+        if credit_supply:
+            self.assertEqual(self.model.bank_sector.credit_supply, credit_supply)
         if L and D and A:
             self.assertEqual(self.model.bank_sector.L, self.model.bank_sector.A+self.model.bank_sector.D)
 

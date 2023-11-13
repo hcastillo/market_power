@@ -24,6 +24,7 @@ class Firm:
         self.phi = self.model.config.phi
         self.pi = 0.0
         self.c = 0.0
+        self.Y = 0.0
         self.desiredK = self.demandL = self.offeredL = self.I = 0.0
 
     def __str__(self, short: bool = False):
@@ -38,6 +39,8 @@ class Firm:
         self.gamma = self.determine_cost_per_unit_of_capital()
         self.desiredK = self.determine_desired_capital()
         self.I = self.determine_investment()
+        self.model.log.debug(f"{self} γ={self.model.log.format(self.gamma)} " + \
+                             f"dK={self.model.log.format(self.desiredK)} I={self.model.log.format(self.I)}")
         self.demandL = self.determine_demand_loan()
         self.offeredL = self.model.bank_sector.determine_firm_capacity_loan(self)
 
@@ -49,9 +52,10 @@ class Firm:
             self.L += self.offeredL
         else:
             self.L += self.demandL
-        self.r = self.determine_interest_rate()
+        self.r = random.uniform(0.01, 0.05)   #TODO self.determine_interest_rate()
         self.c = self.determine_marginal_operating_cost()
         self.pi = self.determine_profits()
+        self.Y = self.phi * self.K
         self.A = self.determine_net_worth()
 
     def determine_cost_per_unit_of_capital(self):
@@ -82,7 +86,9 @@ class Firm:
 
     def u(self):
         # stochastic demand [0,2]
-        return random.uniform(0, 2)
+        u = random.uniform(0, 2)
+        self.debug_info += f"u={self.model.log.format(u)} "
+        return u
 
     def determine_profits(self):
         # (Equation 24)  , but with Y = phi*K

@@ -17,15 +17,13 @@ class BalanceAtCreationTestCase(test_class.MarketPowerTest):
         self.assertFirms(failures=0, K=50, A=10, L=40)
         self.assertFirm(self.model.firms[0], K=5, A=1, L=4)
 
-        self.assertBankSector(A=5, L=40, D=35)
+        self.assertBankSector(A=5, L=40, D=35, credit_supply=40)
         # by default initially bank.L = bank.cs = firm.L*N
         #            after first step, cs=bank.A/alpha
         #    bank.A=5, bank.L=4/0.08=62.5, bank.D=57.5
 
         self.doTest()
-
-        print(self.model.t)
-        print(self.model.bank_sector)
+        self.assertBankSector(A=-562.2805682060567, L=40, D=-522.2805682060567, credit_supply=7028.507102575709)
 
 
 if __name__ == '__main__':

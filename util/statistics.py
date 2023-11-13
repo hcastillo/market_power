@@ -6,10 +6,12 @@ ABM model auxiliary file: to have statistics and plot
 """
 from util.log import Log
 from util.stats_array import StatsFirms, StatsBankSector
+from market_power.bank import BankSector
 
 
 class Statistics:
     OUTPUT_DIRECTORY = "output"
+    enable_plot = False
 
     # This time the idea is to use pandas to store the statistics
     def __init__(self, its_model):
@@ -18,7 +20,6 @@ class Statistics:
         import os
         if not os.path.isdir(self.OUTPUT_DIRECTORY):
             os.mkdir(self.OUTPUT_DIRECTORY)
-        self.reset()
 
     def debug_firms(self, before_start=False):
         for firm in self.model.firms:
@@ -33,12 +34,9 @@ class Statistics:
             # text += f" γ={Log.format(firm.gamma)}"
             text += f" dK={Log.format(firm.desiredK)}"
             text += f" dL/oL={Log.format(firm.demandL)}/{Log.format(firm.offeredL)}"
+            text += " bankrupted" if firm.is_bankrupted() else ""
             text += " " + firm.debug_info
         self.model.log.debug(text, before_start)
-
-    def enable_plot(self):
-        for i in self.data:
-            i.do_plot = True
 
     def current_status_save(self):
         # it returns also a string with the status
@@ -47,21 +45,22 @@ class Statistics:
             result += self.data[item].store_statistics()
         return result
 
-    def reset(self):
-        self.data["firmsK"] = StatsFirms(self.model, float, "Firms K", "K", prepend=" firms   ")
-        self.data["firmsA"] = StatsFirms(self.model, float, "Firms A", "A", prepend=" |")
-        self.data["firmsL"] = StatsFirms(self.model, float, "Firms L", "L")
-        self.data["profits"] = StatsFirms(self.model, float, "Firms profits", "π", attr_name="pi")
-        self.data["failures"] = StatsFirms(self.model, int, "Failures", "fail", prepend=" ", attr_name="is_bankrupted")
-        self.data["bankL"] = StatsBankSector(self.model, float, "BankSector L", "L", prepend="\n             banks    ")
-        self.data["bankA"] = StatsBankSector(self.model, float, "BankSector A", "A", prepend=" | ", plot=False)
-        self.data["bankD"] = StatsBankSector(self.model, float, "BankSector D", "D", prepend=" ")
-        self.data["bank_profits"] = StatsBankSector(self.model, float, "BankSector profits", "π", prepend=" ",
-                                                    attr_name="profits")
-        self.data["bad_debt"] = StatsBankSector(self.model, float, "BankSector bad debt", "bd", prepend=" ",
-                                                attr_name="bad_debt")
-        self.data["credit_supply"] = StatsBankSector(self.model, float, "BankSector credit supply", "cs", prepend=" ",
-                                                     attr_name="credit_supply")
+    def add(self, what, name, prepend="", symbol=None, attr_name=None, number_type=float, function=sum,
+            plot=True, log=False):
+        if not attr_name:
+            attr_name = name
+        if not symbol:
+            symbol = name.replace(" ", "_")
+            if len(symbol) != len(name):
+                symbol = symbol.lower()
+        if not callable(function):
+            raise TypeError("function parameter should be a callable type")
+        if what == BankSector:
+            self.data["bank"+name] = StatsBankSector(self.model, number_type, name, symbol, prepend=prepend, plot=plot,
+                                                     attr_name=attr_name, log=log)
+        else:
+            self.data["firm"+name] = StatsFirms(self.model, number_type, name, symbol, prepend=prepend,
+                                                function=function, plot=plot, attr_name=attr_name, log=log)
 
     @staticmethod
     def get_export_path(filename):
@@ -78,8 +77,8 @@ class Statistics:
                     savefile.write(f"# {__name__} T={self.model.config.T} N={self.model.config.N}\n")
                 header = "# t"
                 for item in self.data:
-                    header += "\t"+self.data[item].__str__()
-                savefile.write(header+"\n")
+                    header += "\t" + self.data[item].__str__()
+                savefile.write(header + "\n")
                 for i in range(self.model.config.T):
                     line = f"{i:3}"
                     for item in self.data:
@@ -87,5 +86,6 @@ class Statistics:
                     savefile.write(line + "\n")
 
     def plot(self):
-        for item in self.data:
-            self.data[item].plot()
+        if self.enable_plot:
+            for item in self.data:
+                self.data[item].plot()

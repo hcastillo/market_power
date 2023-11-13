@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-ABM model test to check if we have 10 firms, the bankSector has the correct initial parameters
-@author: iTzSte & hector@bith.net
+ABM model test to verify the formats that the log.format() generate
+@author: hector@bith.net
 """
 import unittest
 from util.log import Log

@@ -11,6 +11,7 @@ from market_power.firm import Firm
 from util.log import Log
 from util.statistics import Statistics
 import random
+import statistics
 
 
 class Model:
@@ -20,9 +21,9 @@ class Model:
     bankruptcies = []
 
     test = False  # it's true when we are inside a test
-    log = None
-    statistics = None
-    config = None
+    log: Log = None
+    statistics: Statistics = None
+    config: Config = None
     export_datafile = None
     export_description = None
 
@@ -51,7 +52,28 @@ class Model:
 
     def initialize_model(self, seed=None,
                          export_datafile=None, export_description=None):
-        self.statistics.reset()
+
+        # what to plot and represent, and in which order
+        self.statistics.add(what=Firm, name="K", prepend=" firms   ")
+        self.statistics.add(what=Firm, name="A", prepend=" |")
+        self.statistics.add(what=Firm, name="L")
+        self.statistics.add(what=Firm, name="Y")
+
+        self.statistics.add(what=Firm, name="profits", symbol="π", attr_name="pi")
+        self.statistics.add(what=Firm, name="r", function=statistics.mean)
+        self.statistics.add(what=Firm, name="Failures", symbol="fail", prepend=" ", attr_name="is_bankrupted",
+                            number_type=int)
+
+        self.statistics.add(what=BankSector, name="L", prepend="\n             banks    ")
+        self.statistics.add(what=BankSector, name="A", prepend=" | ")
+        self.statistics.add(what=BankSector, name="D", prepend=" ")
+
+        self.statistics.add(what=BankSector, name="SumK", attr_name="totalK", prepend=" ")
+        self.statistics.add(what=BankSector, name="SumA", attr_name="totalA", prepend=" ")
+        self.statistics.add(what=BankSector, name="profits", symbol="π", plot=False, attr_name="profits")
+        self.statistics.add(what=BankSector, name="bad debt", symbol="bd", plot=False, attr_name="bad_debt")
+        self.statistics.add(what=BankSector, name="credit supply", symbol="cs", plot=False, attr_name="credit_supply")
+
         self.config.__init__()
         random.seed(seed if seed else self.config.default_seed)
         self.export_datafile = export_datafile
@@ -66,12 +88,12 @@ class Model:
 
     def do_step(self):
         self.bank_sector.bad_debt = 0.0
-        self.bank_sector.set_new_credit_suppy()
+        self.bank_sector.determine_new_credit_suppy()
         for firm in self.firms:
             firm.do_step()
         self.bank_sector.determine_step_results()
-        self.remove_failed_firms()
         self.statistics.debug_firms()
+        self.remove_failed_firms()
         self.log.info(self.statistics.current_status_save())
 
     def finish_model(self):

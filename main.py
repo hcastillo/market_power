@@ -26,7 +26,7 @@ def run_interactive(getconfig: bool = typer.Option(False, help="Get current conf
         model.config.N = n
     model.log.define_log(log, logfile)
     if plot:
-        model.statistics.enable_plot()
+        model.statistics.enable_plot = True
     if getconfig:
         print(model.config.__str__(separator="\n"))
         raise typer.Exit()
