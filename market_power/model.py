@@ -68,8 +68,6 @@ class Model:
         self.statistics.add(what=BankSector, name="A", prepend=" | ")
         self.statistics.add(what=BankSector, name="D", prepend=" ")
 
-        self.statistics.add(what=BankSector, name="SumK", attr_name="totalK", prepend=" ")
-        self.statistics.add(what=BankSector, name="SumA", attr_name="totalA", prepend=" ")
         self.statistics.add(what=BankSector, name="profits", symbol="π", plot=False, attr_name="profits")
         self.statistics.add(what=BankSector, name="bad debt", symbol="bd", plot=False, attr_name="bad_debt")
         self.statistics.add(what=BankSector, name="credit supply", symbol="cs", plot=False, attr_name="credit_supply")
@@ -113,3 +111,6 @@ class Model:
         for firm in self.firms:
             if firm.is_bankrupted():
                 firm.set_failed()
+        self.bank_sector.set_total_A_K()
+
+
