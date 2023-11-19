@@ -18,6 +18,7 @@ class TestLog(unittest.TestCase):
     def setUp(self):
         self.model = Model(N=2, T=2, bank_sector_A_i0=20, firms_A_i0=2)
         self.log = Log(self.model)
+        self.model.test = True
         self.statistics = Statistics(self.model)
 
         self.statistics.add(what=Firm, name="K", prepend="*text*")

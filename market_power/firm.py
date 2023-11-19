@@ -46,8 +46,8 @@ class Firm:
         self.debug_info += f"c={self.model.log.format(self.c)} r={self.model.log.format(self.r)} "
         self.Y = self.determine_output()
         self.pi = self.determine_profits()
-        self.K = self.desiredK
         self.A = self.determine_net_worth()
+        self.K = self.adjust_capital()
 
     def determine_cost_per_unit_of_capital(self):
         # (Before equation 2)  gamma

@@ -46,6 +46,16 @@ class Model:
                         setattr(self.config, attribute, float(configuration[attribute]))
                     else:
                         raise Exception(f"type of config {attribute} not allowed: {type(current_value)}")
+                match attribute:
+                    case "N":
+                        if self.config.N == 0:
+                            raise ValueError("For config N values > 0")
+                    case "T":
+                        if self.config.T == 0:
+                            raise ValueError("For config T values > 0")
+
+                    case _:
+                        pass
             else:
                 raise LookupError(f"attribute '{attribute}' in config not found")
         self.initialize_model()
@@ -82,9 +92,8 @@ class Model:
         for i in range(self.config.N):
             self.firms.append(self.firm_class(new_id=i, its_model=self))
         self.bank_sector = BankSector(self)
-        if not self.test:
-            self.statistics.debug_firms(before_start=True)
-            self.log.info(self.statistics.current_status_save(), before_start=True)
+        self.statistics.initialize_model()
+        self.log.initialize_model()
 
     def do_step(self):
         self.bank_sector.bad_debt = 0.0
@@ -94,14 +103,11 @@ class Model:
         self.bank_sector.determine_step_results()
         self.statistics.debug_firms()
         self.remove_failed_firms()
-        self.log.info(self.statistics.current_status_save())
+        self.log.step(self.statistics.current_status_save())
 
     def finish_model(self):
-        if not self.test:
-            self.statistics.export_data(self.export_datafile, self.export_description)
-            self.statistics.plot()
-        self.log.info(f"finish: model T={self.config.T} N={self.config.N}")
-        self.statistics.export_data(export_datafile=self.export_datafile, export_description=self.export_description)
+        self.log.finish_model()
+        self.statistics.finish_model(export_datafile=self.export_datafile, export_description=self.export_description)
 
     def run(self, export_datafile=None):
         self.initialize_model(export_datafile=export_datafile)

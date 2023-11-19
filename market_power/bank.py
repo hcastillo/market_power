@@ -30,12 +30,13 @@ class BankSector:
         for firm in self.model.firms:
             profits_loans += firm.r * firm.L
 
-        remunerations_of_deposits_and_networth = self.determine_average_interest_rate() * (self.D + self.A)
+        #TODO 0.02 always instead of average interest rate for determine remunerations
+        remunerations_of_deposits_and_networth = 0.02 * (self.D + self.A)
+        #remunerations_of_deposits_and_networth = self.determine_average_interest_rate() * (self.D + self.A)
 
         return profits_loans - remunerations_of_deposits_and_networth
 
     def determine_average_interest_rate(self):
-        # return 0.01 # TODO
         avg_r = sum(firm.r for firm in self.model.firms) / len(self.model.firms)
         return avg_r if avg_r > self.model.config.r_i0 else self.model.config.r_i0
 

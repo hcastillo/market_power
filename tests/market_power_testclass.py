@@ -16,15 +16,7 @@ class MarketPowerTest(unittest.TestCase):
     def configureTest(self, **kwargs):
         self.model = Model()
         self.model.test = True
-
-        for key, value in kwargs.items():
-            if hasattr(self.model.config, key):
-                setattr(self.model.config, key, value)
-            else:
-                raise ValueError(f"config has not attr {key}={value}")
-        self.model.config.__init__()
-        self.model.log.define_log(log='DEBUG')
-        self.model.initialize_model()
+        self.model.configure(**kwargs)
 
     def doTest(self):
         self.model.run()

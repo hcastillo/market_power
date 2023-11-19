@@ -56,12 +56,13 @@ class Statistics:
         if not callable(function):
             raise TypeError("function parameter should be a callable type")
         if what == BankSector:
-            self.data["bank"+name] = StatsBankSector(self.model, number_type, name, symbol, prepend=prepend, plot=plot,
-                                                     attr_name=attr_name, log=log)
+            self.data["bank" + name] = StatsBankSector(self.model, number_type, name, symbol, prepend=prepend,
+                                                       plot=plot,
+                                                       attr_name=attr_name, log=log)
         else:
-            self.data["firm"+name] = StatsFirms(self.model, number_type, name, symbol, prepend=prepend,
-                                                function=function, repr_function=repr_function,
-                                                plot=plot, attr_name=attr_name, log=log)
+            self.data["firm" + name] = StatsFirms(self.model, number_type, name, symbol, prepend=prepend,
+                                                  function=function, repr_function=repr_function,
+                                                  plot=plot, attr_name=attr_name, log=log)
 
     @staticmethod
     def get_export_path(filename):
@@ -91,12 +92,18 @@ class Statistics:
             for item in self.data:
                 self.data[item].plot()
 
+    def initialize_model(self):
+        if not self.model.test:
+            self.debug_firms(before_start=True)
 
-
+    def finish_model(self, export_datafile=None, export_description=None):
+        if not self.model.test:
+            self.export_data(export_datafile=export_datafile, export_description=export_description)
+            self.plot()
 
 def mean(data):
     """ returns the mean of an array"""
     result = 0
-    for i,x in enumerate(data):
+    for i, x in enumerate(data):
         result += x
-    return result/i
+    return result / i

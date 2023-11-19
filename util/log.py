@@ -7,6 +7,7 @@ ABM model auxiliary file: logging facilities
 import logging
 import numpy as np
 import sys
+from progress.bar import Bar
 
 
 class Log:
@@ -15,7 +16,9 @@ class Log:
     """
     logger = logging.getLogger("model")
     model = None
-    logLevel = "ERROR"
+    log_level = "ERROR"
+    only_errors = True
+    progress_bar = None
 
     def __init__(self, its_model):
         self.model = its_model
@@ -30,7 +33,7 @@ class Log:
                 result = result[:-1]
             while len(result) > 5 and result.find('.') > 0:
                 result = result[:-1]
-        return result if result[-1]!='.' else f' {result[:-1]}'
+        return result if result[-1] != '.' else f' {result[:-1]}'
 
     @staticmethod
     def get_level(option):
@@ -57,17 +60,40 @@ class Log:
 
     def define_log(self, log: str, logfile: str = ''):
         formatter = logging.Formatter('%(levelname)s %(message)s')
-        self.logLevel = Log.get_level(log.upper())
-        self.logger.setLevel(self.logLevel)
+        self.log_level = Log.get_level(log.upper())
+        self.only_errors == log == "ERROR"
+        self.logger.setLevel(self.log_level)
         if logfile:
             if not logfile.startswith(self.model.statistics.OUTPUT_DIRECTORY):
                 logfile = f"{self.model.statistics.OUTPUT_DIRECTORY}/{logfile}"
             fh = logging.FileHandler(logfile, 'a', 'utf-8')
-            fh.setLevel(self.logLevel)
+            fh.setLevel(self.log_level)
             fh.setFormatter(formatter)
             self.logger.addHandler(fh)
         else:
             ch = logging.StreamHandler()
-            ch.setLevel(self.logLevel)
+            ch.setLevel(self.log_level)
             ch.setFormatter(formatter)
             self.logger.addHandler(ch)
+
+    def initialize_model(self):
+        if not self.model.test:
+            self.info(self.model.statistics.current_status_save(), before_start=True)
+            if self.only_errors:
+                self.progress_bar = Bar('Executing model', max=self.model.config.T)
+
+    def step(self, log_info):
+        if not self.model.test:
+            if self.only_errors and self.progress_bar:
+                self.progress_bar.next()
+            else:
+                self.info(log_info)
+
+    def finish_model(self):
+        if not self.model.test:
+            if self.only_errors and self.progress_bar:
+                self.progress_bar.finish()
+            else:
+                self.info(f"finish: model T={self.model.config.T} N={self.model.config.N}")
+
+

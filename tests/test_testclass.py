@@ -14,7 +14,9 @@ class BalanceAtCreationTestCase(test_class.MarketPowerTest):
         self.configureTest(N=10, T=1, bank_sector_A_i0=5, firms_L_i0=4)
 
     def test_values(self):
-        self.assertRaises(ValueError, self.configureTest, noexist=True)
+        self.assertRaises(LookupError, self.configureTest, noexist=True)
+        self.assertRaises(ValueError, self.configureTest, N=0.02)
+        self.assertRaises(ValueError, self.configureTest, alpha="a")
 
 if __name__ == '__main__':
     unittest.main()
