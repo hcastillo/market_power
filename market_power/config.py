@@ -28,7 +28,7 @@ class Config:
     m: float = 0.0           # percentage of K that should be in cash
 
     # bank sector:                   balance sheet => L = A + D
-    bank_sector_A_i0: float = 32.0   # It makes sense for 100 firms
+    bank_sector_A_i0: float = 32.0   # L and D are set inside bank.py
     r_i0: float = 0.02               # initial rate of interest charged to firms by loans
     lambda_param: float = 0.3        # λ, to determine credit allotted for firms L=A/alfa, 0 < λ < 1
     alpha: float = 0.08              # α ratio equity/loan,  Ls=A/α
@@ -36,13 +36,6 @@ class Config:
     # seed used:
     default_seed: int = 20579
 
-    def __init__(self):
-        # parameters that come from another values:
-        self.gamma: float = ((self.w / self.k) + (self.g * self.r_i0))  # γ : operating cost per unit of capital
-        self.bank_sector_L_i0 = self.bank_sector_A_i0 / self.alpha # self.firms_L_i0*self.N
-        self.bank_sector_D_i0 = self.bank_sector_L_i0 - self.bank_sector_A_i0
-        if self.bank_sector_D_i0 < 0:
-            raise ValueError(f"bank.D<0: D={self.bank_sector_L_i0} - {self.bank_sector_A_i0}")
 
     def __str__(self, separator=""):
         description = sys.argv[0]
@@ -51,3 +44,5 @@ class Config:
             if isinstance(value, int) or isinstance(value, float):
                 description += f" {attr}={value}{separator}"
         return description
+
+

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-ABM model test to check if we have 10 firms, the bankSector has the correct initial parameters
+ABM model tests to check if we have 10 firms, the bankSector has the correct initial parameters
 @author: iTzSte & hector@bith.net
 """
 import unittest

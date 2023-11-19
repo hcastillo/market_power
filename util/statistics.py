@@ -46,7 +46,7 @@ class Statistics:
         return result
 
     def add(self, what, name, prepend="", symbol=None, attr_name=None, number_type=float, function=sum,
-            plot=True, log=False):
+            repr_function="Σ", plot=True, log=False):
         if not attr_name:
             attr_name = name
         if not symbol:
@@ -60,7 +60,8 @@ class Statistics:
                                                      attr_name=attr_name, log=log)
         else:
             self.data["firm"+name] = StatsFirms(self.model, number_type, name, symbol, prepend=prepend,
-                                                function=function, plot=plot, attr_name=attr_name, log=log)
+                                                function=function, repr_function=repr_function,
+                                                plot=plot, attr_name=attr_name, log=log)
 
     @staticmethod
     def get_export_path(filename):
@@ -89,3 +90,13 @@ class Statistics:
         if self.enable_plot:
             for item in self.data:
                 self.data[item].plot()
+
+
+
+
+def mean(data):
+    """ returns the mean of an array"""
+    result = 0
+    for i,x in enumerate(data):
+        result += x
+    return result/i

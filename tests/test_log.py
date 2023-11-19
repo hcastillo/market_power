@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-ABM model test to verify the formats that the log.format() generate
+ABM model tests to verify the formats that the log.format() generate
 @author: hector@bith.net
 """
 import unittest

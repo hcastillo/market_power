@@ -8,14 +8,17 @@ ABM model
 
 
 class BankSector:
-    def __init__(self, its_model):
+    def __init__(self, its_model, A_i0=None):
         self.model = its_model
         self.bad_debt = self.profits = self.totalA = self.totalK = 0.0
-        self.A = self.model.config.bank_sector_A_i0
-        self.L = self.model.config.bank_sector_L_i0
-        self.D = self.determine_deposits()
+        self.A = A_i0 if A_i0 else self.model.config.bank_sector_A_i0
+        self.L = self.A / self.model.config.alpha
+        self.D = self.L - self.A
+        if self.D < 0:
+            raise ValueError("error bank.D<0 due to " +
+                             f"D=L-A={self.model.log.format(self.L)}-{self.model.log.format(self.A)}")
         self.credit_supply = self.determine_new_credit_suppy()
-        self.set_total_A_K()
+        self.estimate_total_A_K()
 
     def determine_deposits(self):
         # L = A + D, ----> D = L-A
@@ -31,14 +34,10 @@ class BankSector:
 
         return profits_loans - remunerations_of_deposits_and_networth
 
-
     def determine_average_interest_rate(self):
-        return 0.01
-        # TODO r = 0
-        # for firm in self.model.firms:
-        #    r += firm.r
-        # avg_r = r / len(self.model.firms)
-        # return avg_r if avg_r > self.model.config.r_i0 else self.model.config.r_i0
+        # return 0.01 # TODO
+        avg_r = sum(firm.r for firm in self.model.firms) / len(self.model.firms)
+        return avg_r if avg_r > self.model.config.r_i0 else self.model.config.r_i0
 
     def determine_equity(self):
         # (Equation 35) At = At-1 + profits - bad_debt
@@ -66,6 +65,6 @@ class BankSector:
     def add_bad_debt(self, amount):
         self.bad_debt += amount
 
-    def set_total_A_K(self):
+    def estimate_total_A_K(self):
         self.totalA = sum(float(firm.A) for firm in self.model.firms)
         self.totalK = sum(float(firm.K) for firm in self.model.firms)

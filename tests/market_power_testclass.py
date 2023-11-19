@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-ABM model test class
+ABM model tests class
 @author: iTzSte & hector@bith.net
 """
 import unittest
@@ -65,17 +65,17 @@ class MarketPowerTest(unittest.TestCase):
     def assertFirms(self, K: float = None, failures: int = None, L: float = None, A: float = None):
         self.model.statistics.current_status_save()
         if L:
-            self.assertEqual(float(self.model.statistics.data["firmsL"][self.model.t]), L)
+            self.assertEqual(float(self.model.statistics.data["firmL"][self.model.t]), L)
         if K:
-            self.assertEqual(float(self.model.statistics.data["firmsK"][self.model.t]), K)
+            self.assertEqual(float(self.model.statistics.data["firmK"][self.model.t]), K)
         if A:
-            self.assertEqual(float(self.model.statistics.data["firmsA"][self.model.t]), A)
+            self.assertEqual(float(self.model.statistics.data["firmA"][self.model.t]), A)
         if failures:
-            self.asserEqual(float(self.model.statistics.data["failures"][self.model.t]), failures)
+            self.asserEqual(float(self.model.statistics.data["firmFailures"][self.model.t]), failures)
         if L and K and A:
-            self.assertEqual(float(self.model.statistics.data["firmsK"][self.model.t]),
-                             float(self.model.statistics.data["firmsL"][self.model.t])+
-                             float(self.model.statistics.data["firmsA"][self.model.t]))
+            self.assertEqual(float(self.model.statistics.data["firmK"][self.model.t]),
+                             float(self.model.statistics.data["firmL"][self.model.t])+
+                             float(self.model.statistics.data["firmA"][self.model.t]))
 
     def assertBankSector(self, D: float = None, L: float = None, A: float = None, credit_supply: float = None):
         if L:

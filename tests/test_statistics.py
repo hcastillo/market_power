@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-ABM model test if the summs of values after execute current_status_save() are correct
+ABM model tests if the summs of values after execute current_status_save() are correct
 """
 import unittest
 from util.log import Log

@@ -47,7 +47,7 @@ class Model:
                     else:
                         raise Exception(f"type of config {attribute} not allowed: {type(current_value)}")
             else:
-                raise LookupError("attribute in config not found")
+                raise LookupError(f"attribute '{attribute}' in config not found")
         self.initialize_model()
 
     def initialize_model(self, seed=None,
@@ -60,7 +60,7 @@ class Model:
         self.statistics.add(what=Firm, name="Y")
 
         self.statistics.add(what=Firm, name="profits", symbol="π", attr_name="pi")
-        self.statistics.add(what=Firm, name="r", function=statistics.mean)
+        self.statistics.add(what=Firm, name="r", function=statistics.mean, repr_function="x̄")
         self.statistics.add(what=Firm, name="Failures", symbol="fail", prepend=" ", attr_name="is_bankrupted",
                             number_type=int)
 
@@ -68,9 +68,11 @@ class Model:
         self.statistics.add(what=BankSector, name="A", prepend=" | ")
         self.statistics.add(what=BankSector, name="D", prepend=" ")
 
-        self.statistics.add(what=BankSector, name="profits", symbol="π", plot=False, attr_name="profits")
-        self.statistics.add(what=BankSector, name="bad debt", symbol="bd", plot=False, attr_name="bad_debt")
-        self.statistics.add(what=BankSector, name="credit supply", symbol="cs", plot=False, attr_name="credit_supply")
+        self.statistics.add(what=BankSector, name="profits", symbol="π", prepend=" ", plot=False, attr_name="profits")
+        self.statistics.add(what=BankSector, name="bad debt",
+                            symbol="bd", prepend=" ", plot=False, attr_name="bad_debt")
+        self.statistics.add(what=BankSector, name="credit supply", symbol="cs", prepend=" ", plot=False,
+                            attr_name="credit_supply")
 
         self.config.__init__()
         random.seed(seed if seed else self.config.default_seed)
@@ -111,6 +113,4 @@ class Model:
         for firm in self.firms:
             if firm.is_bankrupted():
                 firm.set_failed()
-        self.bank_sector.set_total_A_K()
-
-
+        self.bank_sector.estimate_total_A_K()

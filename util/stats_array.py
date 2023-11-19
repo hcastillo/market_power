@@ -5,7 +5,6 @@ ABM model auxiliary file: logging facilities
 @author: hector@bith.net
 """
 import numpy as np
-import statistics
 import math
 
 
@@ -68,21 +67,15 @@ class StatsArray:
 
 class StatsFirms(StatsArray):
     def __init__(self, its_model, data_type, description, short_description,
-                 prepend="", plot=True, attr_name=None, function=sum, log=False):
+                 prepend="", plot=True, attr_name=None, function=sum, repr_function="Σ", log=False):
         StatsArray.__init__(self, its_model, data_type, description, short_description, prepend, plot, attr_name, log)
         self.function = function
+        self.repr_function = repr_function
 
     def store_statistics(self):
         result = self.function(self.get_value(getattr(firm, self.attr_name)) for firm in self.model.firms)
         self.data[self.model.t] = math.log(result) if self.log else result
-        return self.prepend + self.repr_function() + self.__return_value_formatted__()
-
-    def repr_function(self):
-        match self.function:
-            case statistics.mean:
-                return "x̄"
-            case _:
-                return "Σ"
+        return self.prepend + self.repr_function + self.__return_value_formatted__()
 
 
 class StatsBankSector(StatsArray):
