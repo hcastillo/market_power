@@ -7,6 +7,7 @@ ABM model auxiliary file: to have statistics and plot
 from util.log import Log
 from util.stats_array import StatsFirms, StatsBankSector
 from market_power.bank import BankSector
+from progress.bar import Bar
 
 
 class Statistics:
@@ -20,6 +21,8 @@ class Statistics:
         import os
         if not os.path.isdir(self.OUTPUT_DIRECTORY):
             os.mkdir(self.OUTPUT_DIRECTORY)
+        self.export_datafile = None
+        self.export_description = None
 
     def debug_firms(self, before_start=False):
         for firm in self.model.firms:
@@ -29,9 +32,7 @@ class Statistics:
         text = f"{firm.__str__()} K={Log.format(firm.K)}"
         text += f" | A={Log.format(firm.A)} L={Log.format(firm.L)}"
         if not before_start:
-            # text += f", Y={Log.format(firm.Y)}"
             text += f" π={Log.format(firm.pi)}"
-            # text += f" γ={Log.format(firm.gamma)}"
             text += f" dK={Log.format(firm.desiredK)}"
             text += f" dL/oL={Log.format(firm.demandL)}/{Log.format(firm.offeredL)}"
             text += " bankrupted" if firm.is_bankrupted() else ""
@@ -72,6 +73,8 @@ class Statistics:
 
     def export_data(self, export_datafile=None, export_description=None):
         if export_datafile:
+            progress_bar = Bar('Saving output in ' + Statistics.get_export_path(export_datafile),
+                               max=self.model.config.T)
             with open(Statistics.get_export_path(export_datafile), 'w', encoding="utf-8") as savefile:
                 if export_description:
                     savefile.write(f"# {export_description}\n")
@@ -86,13 +89,24 @@ class Statistics:
                     for item in self.data:
                         line += "\t" + self.data[item][i]
                     savefile.write(line + "\n")
+                    progress_bar.next()
+            progress_bar.finish()
 
     def plot(self):
         if self.enable_plot:
+            progress_bar = Bar('Saving plots in '+self.OUTPUT_DIRECTORY, max=len(self.data))
             for item in self.data:
                 self.data[item].plot()
+                progress_bar.next()
+            progress_bar.finish()
 
-    def initialize_model(self):
+    def initialize_model(self, export_datafile=None, export_description=None):
+        self.export_datafile = export_datafile
+        self.export_description = export_description
+        if self.model.log.no_debugging and not self.enable_plot and not self.export_datafile:
+            # if no debug, and no output to file and no plots, then why you execute this?
+            self.enable_plot = True
+            self.model.log.warning("--plot enabled due to lack of any output", before_start=True)
         if not self.model.test:
             self.debug_firms(before_start=True)
 
@@ -101,9 +115,10 @@ class Statistics:
             self.export_data(export_datafile=export_datafile, export_description=export_description)
             self.plot()
 
+
 def mean(data):
     """ returns the mean of an array"""
-    result = 0
+    result = i = 0
     for i, x in enumerate(data):
         result += x
     return result / i

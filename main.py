@@ -12,8 +12,7 @@ from typing import List
 
 def run_interactive(getconfig: bool = typer.Option(False, help="Get current configuration"),
                     setconfig: List[str] = typer.Argument(None, help="Change config value (i.e. alpha=3.1"),
-
-                    log: str = typer.Option('ERROR', help="Log level messages (ERROR,DEBUG,INFO...)"),
+                    log: str = typer.Option('WARNING', help="Log level messages (ERROR,WARNING,DEBUG,INFO...)"),
                     logfile: str = typer.Option(None, help="File to send logs to"),
                     save: str = typer.Option(None, help="Saves the output of this execution"),
                     plot: bool = typer.Option(False, help="Saves the plots"),

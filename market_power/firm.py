@@ -41,9 +41,11 @@ class Firm:
         self.demandL = self.determine_demand_loan()
         self.offeredL = self.model.bank_sector.determine_firm_capacity_loan(self)
         self.L += self.determine_new_loan()
+        if self.L <= 0:
+            self.L = self.model.config.firms_L_i0
         self.r = self.determine_interest_rate()
         self.c = self.determine_marginal_operating_cost()
-        self.debug_info += f"c={self.model.log.format(self.c)} r={self.model.log.format(self.r)} "
+        self.debug_info += f" c={self.model.log.format(self.c)}r={self.model.log.format(self.r)} "
         self.Y = self.determine_output()
         self.pi = self.determine_profits()
         self.A = self.determine_net_worth()
@@ -62,7 +64,7 @@ class Firm:
 
     def determine_interest_rate(self):
         # (Equation 33)
-        # return random.uniform(0.01, 0.05)   #TODO
+        #return random.uniform(0.01, 0.05)   #TODO
         return self.model.config.beta * self.L / self.A
 
     def determine_desired_capital(self):
@@ -108,7 +110,7 @@ class Firm:
         return (self.pi < 0) and (self.K * self.model.config.m + self.pi) >= 0
 
     def is_bankrupted(self):
-        return self.A < self.model.config.threshold_bankrupt or self.debug_info.find("failed") > 0
+        return self.A < self.model.config.threshold_bankrupt
 
     def set_failed(self):
         self.debug_info += "failed "

@@ -35,7 +35,7 @@ class Model:
         if configuration:
             self.configure(**configuration)
 
-    def configure(self, **configuration):
+    def configure(self, export_datafile=None, export_description=None, **configuration):
         for attribute in configuration:
             if hasattr(self.config, attribute):
                 current_value = getattr(self.config, attribute)
@@ -58,7 +58,7 @@ class Model:
                         pass
             else:
                 raise LookupError(f"attribute '{attribute}' in config not found")
-        self.initialize_model()
+        self.initialize_model(export_datafile=export_datafile, export_description=export_description)
 
     def initialize_model(self, seed=None,
                          export_datafile=None, export_description=None):
@@ -80,19 +80,21 @@ class Model:
 
         self.statistics.add(what=BankSector, name="profits", symbol="π", prepend=" ", plot=False, attr_name="profits")
         self.statistics.add(what=BankSector, name="bad debt",
-                            symbol="bd", prepend=" ", plot=False, attr_name="bad_debt")
-        self.statistics.add(what=BankSector, name="credit supply", symbol="cs", prepend=" ", plot=False,
+                            symbol="bd", prepend="", plot=False, attr_name="bad_debt")
+        self.statistics.add(what=BankSector, name="credit supply", symbol="cs", prepend="", plot=False,
                             attr_name="credit_supply")
 
         self.config.__init__()
         random.seed(seed if seed else self.config.default_seed)
-        self.export_datafile = export_datafile
+        if export_datafile:
+            self.export_datafile = export_datafile
         self.export_description = str(self.config) if export_description is None else export_description
         self.firms = []
         for i in range(self.config.N):
             self.firms.append(self.firm_class(new_id=i, its_model=self))
         self.bank_sector = BankSector(self)
-        self.statistics.initialize_model()
+        self.statistics.initialize_model(export_datafile=self.export_datafile,
+                                         export_description=self.export_description)
         self.log.initialize_model()
 
     def do_step(self):
@@ -102,18 +104,19 @@ class Model:
             firm.do_step()
         self.bank_sector.determine_step_results()
         self.statistics.debug_firms()
-        self.remove_failed_firms()
         self.log.step(self.statistics.current_status_save())
+        self.remove_failed_firms()
 
     def finish_model(self):
         self.log.finish_model()
         self.statistics.finish_model(export_datafile=self.export_datafile, export_description=self.export_description)
 
-    def run(self, export_datafile=None):
+    def run(self, export_datafile=None, values_i_want=None):
         self.initialize_model(export_datafile=export_datafile)
         for self.t in range(self.config.T):
             self.do_step()
         self.finish_model()
+        return self.statistics.data
 
     def remove_failed_firms(self):
         for firm in self.firms:

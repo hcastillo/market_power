@@ -16,8 +16,8 @@ class Log:
     """
     logger = logging.getLogger("model")
     model = None
-    log_level = "ERROR"
-    only_errors = True
+    log_level = "WARNING"
+    no_debugging = True
     progress_bar = None
 
     def __init__(self, its_model):
@@ -51,6 +51,10 @@ class Log:
         if not self.model.test:
             self.logger.info(f" {self.__format_t__(before_start)} {text}")
 
+    def warning(self,text, before_start=False):
+        if not self.model.test:
+            self.logger.warning(f" {self.__format_t__(before_start)} {text}")
+
     def error(self, text, before_start=False):
         if not self.model.test:
             self.logger.error(f"{self.__format_t__(before_start)} {text}")
@@ -61,7 +65,7 @@ class Log:
     def define_log(self, log: str, logfile: str = ''):
         formatter = logging.Formatter('%(levelname)s %(message)s')
         self.log_level = Log.get_level(log.upper())
-        self.only_errors == log == "ERROR"
+        self.no_debugging = self.log_level >= Log.get_level("WARNING")
         self.logger.setLevel(self.log_level)
         if logfile:
             if not logfile.startswith(self.model.statistics.OUTPUT_DIRECTORY):
@@ -79,21 +83,19 @@ class Log:
     def initialize_model(self):
         if not self.model.test:
             self.info(self.model.statistics.current_status_save(), before_start=True)
-            if self.only_errors:
+            if self.no_debugging:
                 self.progress_bar = Bar('Executing model', max=self.model.config.T)
 
     def step(self, log_info):
         if not self.model.test:
-            if self.only_errors and self.progress_bar:
+            if self.no_debugging and self.progress_bar:
                 self.progress_bar.next()
             else:
                 self.info(log_info)
 
     def finish_model(self):
         if not self.model.test:
-            if self.only_errors and self.progress_bar:
+            if self.no_debugging and self.progress_bar:
                 self.progress_bar.finish()
             else:
                 self.info(f"finish: model T={self.model.config.T} N={self.model.config.N}")
-
-

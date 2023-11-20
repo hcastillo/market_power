@@ -24,7 +24,8 @@ class StatsArray:
         self.data = np.zeros(its_model.config.T, dtype=data_type)
         self.do_plot = plot
 
-    def get_value(self, element):
+    @staticmethod
+    def get_value(element):
         if callable(element):
             return element()
         else:
@@ -52,24 +53,28 @@ class StatsArray:
                 xx.append(i)
                 yy.append(self.data[i])
             plt.plot(xx, yy, 'b-')
-            plt.ylabel(self.description + "(ln)" if self.log else "")
+            plt.ylabel(self.repr_function + self.description + "(ln)" if self.log else "")
             plt.xlabel("t")
-            plt.title(self.description)
+            plt.title(self.its_name+ " " + self.repr_function + self.description)
             plt.show() if show else plt.savefig(
-                self.model.statistics.OUTPUT_DIRECTORY + "/" + self.description.lower().replace(" ", "_") + ".svg")
+                self.model.statistics.OUTPUT_DIRECTORY + "/" + self.filename() + ".svg")
 
     def __str__(self):
         if self.its_name != "":
-            return self.its_name + "." + self.short_description.upper()
+            return self.its_name + self.short_description.upper()
         else:
             return self.short_description.upper()
+
+    def filename(self):
+        return self.its_name.lower()+"_"+self.description.lower().replace(" ", "_")
 
 
 class StatsFirms(StatsArray):
     def __init__(self, its_model, data_type, description, short_description,
                  prepend="", plot=True, attr_name=None, function=sum, repr_function="Σ", log=False):
-        StatsArray.__init__(self, its_model, data_type, description, short_description, prepend, plot, attr_name, log)
+        super().__init__(its_model, data_type, description, short_description, prepend, plot, attr_name, log)
         self.function = function
+        self.its_name = "Firms"
         self.repr_function = repr_function
 
     def store_statistics(self):
@@ -78,10 +83,17 @@ class StatsFirms(StatsArray):
         return self.prepend + self.repr_function + self.__return_value_formatted__()
 
 
+
 class StatsBankSector(StatsArray):
-    its_name = "Bank"
+    def __init__(self, its_model, data_type, description, short_description,
+                 prepend="", plot=True, attr_name=None, log=False):
+        super().__init__(its_model, data_type, description, short_description, prepend, plot, attr_name, log)
+        self.function = None
+        self.its_name = "Bank"
+        self.repr_function = ""
 
     def store_statistics(self):
         result = getattr(self.model.bank_sector, self.attr_name)
         self.data[self.model.t] = math.log(result) if self.log else result
         return self.prepend + self.__return_value_formatted__()
+
