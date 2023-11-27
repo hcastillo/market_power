@@ -10,6 +10,18 @@ import sys
 from progress.bar import Bar
 
 
+class TermColors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 class Log:
     """
     The class acts as a logger and helpers to represent the data and evol from the Model.
@@ -19,6 +31,7 @@ class Log:
     log_level = "WARNING"
     no_debugging = True
     progress_bar = None
+    what_keywords = []
 
     def __init__(self, its_model):
         self.model = its_model
@@ -62,9 +75,11 @@ class Log:
     def __format_t__(self, before_start=False):
         return "     " if before_start else f"t={self.model.t:03}"
 
-    def define_log(self, log: str, logfile: str = ''):
+    def define_log(self, log: str, logfile: str = '', what=""):
         formatter = logging.Formatter('%(levelname)s %(message)s')
         self.log_level = Log.get_level(log.upper())
+        if what:
+            self.what_keywords = what.split(",")
         self.no_debugging = self.log_level >= Log.get_level("WARNING")
         self.logger.setLevel(self.log_level)
         if logfile:
@@ -80,22 +95,39 @@ class Log:
             ch.setFormatter(formatter)
             self.logger.addHandler(ch)
 
+    def debug_firm(self, firm, before_start=False):
+        text = f"{firm.__str__()} K={Log.format(firm.K)}"
+        text += f" | A={Log.format(firm.A)} L={Log.format(firm.L)}"
+        if not before_start:
+            if self.what_keywords:
+                for elem in self.model.statistics.data:
+                    if elem in self.what_keywords and elem.startswith('firm'):
+                        text += f" {elem}={self.model.statistics.data[elem].data[-1]}"
+            # text += f" dK={Log.format(firm.desiredK)}"
+            # text += f" dL/oL={Log.format(firm.demandL)}/{Log.format(firm.offeredL)}"
+            # text += " bankrupted" if firm.is_bankrupted() else ""
+            # text += " " + firm.debug_info
+        self.debug(text, before_start)
+
     def initialize_model(self):
         if not self.model.test:
             self.info(self.model.statistics.current_status_save(), before_start=True)
-            if self.no_debugging:
+            if self.no_debugging and self.model.statistics.interactive:
                 self.progress_bar = Bar('Executing model', max=self.model.config.T)
 
     def step(self, log_info):
         if not self.model.test:
-            if self.no_debugging and self.progress_bar:
-                self.progress_bar.next()
+            if self.no_debugging:
+                if self.model.statistics.interactive:
+                    self.progress_bar.next()
             else:
                 self.info(log_info)
+                self.model.statistics.debug_status(before_start=False)
 
     def finish_model(self):
         if not self.model.test:
-            if self.no_debugging and self.progress_bar:
-                self.progress_bar.finish()
+            if self.no_debugging:
+                if self.model.statistics.interactive:
+                    self.progress_bar.finish()
             else:
                 self.info(f"finish: model T={self.model.config.T} N={self.model.config.N}")

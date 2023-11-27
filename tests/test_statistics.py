@@ -36,17 +36,17 @@ class TestLog(unittest.TestCase):
         self.assertEqual(len(self.model.firms), 2)
         self.assertEqual(len(self.statistics.data), 5)
         # check that the classes are in the correct order and the data stored with the correct names
-        self.assertIsInstance(self.statistics.data['firmA'], StatsFirms)
-        self.assertIsInstance(self.statistics.data['bankL'], StatsBankSector)
+        self.assertIsInstance(self.statistics.data['firm_A'], StatsFirms)
+        self.assertIsInstance(self.statistics.data['bank_L'], StatsBankSector)
 
         result = self.statistics.current_status_save()
         # check that the data is correctly sum/stored:
         # sum firmA = 4
         # sum firmK = 10
         # sum firmL = ln(8) = (2,0794415416798359282516963643745)
-        self.assertEqual(float(self.statistics.data['firmA'][0]), 4.0)
-        self.assertEqual(float(self.statistics.data['firmK'][0]), 10.0)
-        self.assertEqual(self.statistics.data['firmL'][0], " 2.08")
+        self.assertEqual(float(self.statistics.data['firm_A'][0]), 4.0)
+        self.assertEqual(float(self.statistics.data['firm_K'][0]), 10.0)
+        self.assertEqual(self.statistics.data['firm_L'][0], " 2.08")
         # string with the order of stored items and prepends / separators and symbols:
         self.assertEqual(result, "*text*ΣK=10.00ΣA= 4.00ΣLΞ 2.08Σ$=  0L=250.0")
 

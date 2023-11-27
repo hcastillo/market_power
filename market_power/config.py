@@ -12,7 +12,7 @@ class Config:
     T: int = 1000  # Time (1000)
     N: int = 100  # Number of firms (100)
 
-    eta: float = 0.00001  # ŋ Inverse elasticity: ŋ=1/10000 -> perfect competition, ŋ=1/4 -> high market power
+    eta: float = 0.25  # ŋ Inverse elasticity: ŋ=1/10000 -> perfect competition, ŋ=1/4 -> high market power
 
     # firms:                 balance sheet => K = A + L
     firms_K_i0: float = 5.0  # capital

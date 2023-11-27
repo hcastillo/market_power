@@ -31,8 +31,8 @@ class BankSector:
             profits_loans += firm.r * firm.L
 
         #TODO 0.02 always instead of average interest rate for determine remunerations
-        remunerations_of_deposits_and_networth = 0.02 * (self.D + self.A)
-        #remunerations_of_deposits_and_networth = self.determine_average_interest_rate() * (self.D + self.A)
+        #remunerations_of_deposits_and_networth = 0.02 * (self.D + self.A)
+        remunerations_of_deposits_and_networth = self.determine_average_interest_rate() * (self.D + self.A)
 
         return profits_loans - remunerations_of_deposits_and_networth
 

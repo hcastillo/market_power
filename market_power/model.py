@@ -64,13 +64,18 @@ class Model:
                          export_datafile=None, export_description=None):
 
         # what to plot and represent, and in which order
-        self.statistics.add(what=Firm, name="K", prepend=" firms   ")
-        self.statistics.add(what=Firm, name="A", prepend=" |")
+        self.statistics.add(what=Firm, name="r", function=statistics.mean, repr_function="¯")
         self.statistics.add(what=Firm, name="L")
+        self.statistics.add(what=Firm, name="I")
+        self.statistics.add(what=Firm, name="u", function=statistics.mean, repr_function="¯")
+        self.statistics.add(what=Firm, name="desiredK")
+        self.statistics.add(what=Firm, name="A", prepend=" |")
+        self.statistics.add(what=Firm, name="offeredL")
+        self.statistics.add(what=Firm, name="demandL")
+        self.statistics.add(what=Firm, name="K", prepend=" firms   ")
         self.statistics.add(what=Firm, name="Y")
 
         self.statistics.add(what=Firm, name="profits", symbol="π", attr_name="pi")
-        self.statistics.add(what=Firm, name="r", function=statistics.mean, repr_function="x̄")
         self.statistics.add(what=Firm, name="Failures", symbol="fail", prepend=" ", attr_name="is_bankrupted",
                             number_type=int)
 
@@ -103,15 +108,15 @@ class Model:
         for firm in self.firms:
             firm.do_step()
         self.bank_sector.determine_step_results()
-        self.statistics.debug_firms()
         self.log.step(self.statistics.current_status_save())
         self.remove_failed_firms()
+        #self.statistics.debug_status()
 
     def finish_model(self):
         self.log.finish_model()
         self.statistics.finish_model(export_datafile=self.export_datafile, export_description=self.export_description)
 
-    def run(self, export_datafile=None, values_i_want=None):
+    def run(self, export_datafile=None):
         self.initialize_model(export_datafile=export_datafile)
         for self.t in range(self.config.T):
             self.do_step()

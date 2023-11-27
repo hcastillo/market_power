@@ -4,15 +4,15 @@
 ABM model auxiliary file: to have statistics and plot
 @author:  hector@bith.net
 """
-from util.log import Log
-from util.stats_array import StatsFirms, StatsBankSector
-from market_power.bank import BankSector
 from progress.bar import Bar
+
+from market_power.bank import BankSector
+from util.log import Log, TermColors
+from util.stats_array import StatsFirms, StatsBankSector
 
 
 class Statistics:
     OUTPUT_DIRECTORY = "output"
-    enable_plot = False
 
     # This time the idea is to use pandas to store the statistics
     def __init__(self, its_model):
@@ -23,21 +23,12 @@ class Statistics:
             os.mkdir(self.OUTPUT_DIRECTORY)
         self.export_datafile = None
         self.export_description = None
+        self.do_plot = False
+        self.interactive = True
 
-    def debug_firms(self, before_start=False):
+    def debug_status(self, before_start=False):
         for firm in self.model.firms:
-            self.debug_firm(firm, before_start=before_start)
-
-    def debug_firm(self, firm, before_start=False):
-        text = f"{firm.__str__()} K={Log.format(firm.K)}"
-        text += f" | A={Log.format(firm.A)} L={Log.format(firm.L)}"
-        if not before_start:
-            text += f" π={Log.format(firm.pi)}"
-            text += f" dK={Log.format(firm.desiredK)}"
-            text += f" dL/oL={Log.format(firm.demandL)}/{Log.format(firm.offeredL)}"
-            text += " bankrupted" if firm.is_bankrupted() else ""
-            text += " " + firm.debug_info
-        self.model.log.debug(text, before_start)
+            self.model.log.debug_firm(firm, before_start=before_start)
 
     def current_status_save(self):
         # it returns also a string with the status
@@ -57,13 +48,14 @@ class Statistics:
         if not callable(function):
             raise TypeError("function parameter should be a callable type")
         if what == BankSector:
-            self.data["bank" + name] = StatsBankSector(self.model, number_type, name, symbol, prepend=prepend,
-                                                       plot=plot,
-                                                       attr_name=attr_name, log=log)
+            self.data["bank_" + name.replace(" ", "_")] = StatsBankSector(self.model, number_type, name, symbol,
+                                                                          prepend=prepend, plot=plot,
+                                                                          attr_name=attr_name, logarithm=log)
         else:
-            self.data["firm" + name] = StatsFirms(self.model, number_type, name, symbol, prepend=prepend,
-                                                  function=function, repr_function=repr_function,
-                                                  plot=plot, attr_name=attr_name, log=log)
+            self.data["firm_" + name.replace(" ", "_")] = StatsFirms(self.model, number_type, name, symbol,
+                                                                     prepend=prepend, function=function,
+                                                                     repr_function=repr_function,
+                                                                     plot=plot, attr_name=attr_name, logarithm=log)
 
     @staticmethod
     def get_export_path(filename):
@@ -73,8 +65,11 @@ class Statistics:
 
     def export_data(self, export_datafile=None, export_description=None):
         if export_datafile:
-            progress_bar = Bar('Saving output in ' + Statistics.get_export_path(export_datafile),
-                               max=self.model.config.T)
+            if self.interactive:
+                progress_bar = Bar('Saving output in ' + Statistics.get_export_path(export_datafile),
+                                   max=self.model.config.T)
+            else:
+                progress_bar = None
             with open(Statistics.get_export_path(export_datafile), 'w', encoding="utf-8") as savefile:
                 if export_description:
                     savefile.write(f"# {export_description}\n")
@@ -89,26 +84,85 @@ class Statistics:
                     for item in self.data:
                         line += "\t" + self.data[item][i]
                     savefile.write(line + "\n")
-                    progress_bar.next()
-            progress_bar.finish()
+                    if progress_bar:
+                        progress_bar.next()
+            if progress_bar:
+                progress_bar.finish()
 
     def plot(self):
-        if self.enable_plot:
-            progress_bar = Bar('Saving plots in '+self.OUTPUT_DIRECTORY, max=len(self.data))
+        if self.do_plot:
+            if self.plot_what:
+                what_to_plot = 0
+                for item in self.data:
+                    if item in self.plot_what:
+                        what_to_plot += 1
+            else:
+                what_to_plot = len(self.data)
+            plotted_files = []
+            text = f"Saving {self.do_plot} plots"
+            if self.interactive:
+                progress_bar = Bar(f"{text} in {self.OUTPUT_DIRECTORY}/", max=what_to_plot)
+            else:
+                progress_bar = None
             for item in self.data:
-                self.data[item].plot()
-                progress_bar.next()
-            progress_bar.finish()
+                if not self.plot_what or item in self.plot_what:
+                    plotted_files.append(self.data[item].plot(plot_format=self.do_plot,
+                                                              plot_min=self.plot_min, plot_max=self.plot_max))
+                    if progress_bar:
+                        progress_bar.next()
+            if progress_bar:
+                progress_bar.finish()
+            Statistics.execute_program(plotted_files)
+
+    @staticmethod
+    def execute_program(plot_format_array):
+        plot_format_array.remove(None)
+        if len(plot_format_array) == 1:
+            import configparser
+            config = configparser.ConfigParser()
+            config_file = 'market_power.config'
+            config.read(config_file)
+            file_extension = plot_format_array[0][-3:]
+            if file_extension in config:
+                if 'program' in config[file_extension]:
+                    executable = config[file_extension]['program']
+                    if executable.lower() == "default":
+                        import os
+                        os.startfile(plot_format_array[0], 'open')
+                    else:
+                        import subprocess
+                        subprocess.run([executable, plot_format_array[0]], stdout=subprocess.DEVNULL, shell=True)
+
+    def get_what(self):
+        print(f"\t{TermColors.BOLD}{'name':20}{TermColors.ENDC} " +
+              f"{TermColors.UNDERLINE}Σ=summation ¯=average, Ξ=logarithm scale, *=plot all{TermColors.ENDC}")
+        for item in self.data:
+            print(f"\t{item:20} {self.data[item].get_description()}")
+
+    @staticmethod
+    def get_plot_formats(display: bool = False):
+        if display:
+            print(f"\t{TermColors.BOLD}{'name':20}{TermColors.ENDC} ")
+            for item in StatsBankSector.get_plot_formats():
+                print(f"\t{item}")
+        else:
+            return StatsBankSector.get_plot_formats()
+
+    def enable_plotting(self, plot_format: str, plot_min: int = None, plot_max: int = None, plot_what: str = ""):
+        self.do_plot = plot_format
+        self.plot_min = plot_min
+        self.plot_max = plot_max
+        self.plot_what = plot_what # TODO
 
     def initialize_model(self, export_datafile=None, export_description=None):
         self.export_datafile = export_datafile
         self.export_description = export_description
-        if self.model.log.no_debugging and not self.enable_plot and not self.export_datafile:
+        if self.model.log.no_debugging and not self.do_plot and not self.export_datafile:
             # if no debug, and no output to file and no plots, then why you execute this?
-            self.enable_plot = True
+            self.do_plot = StatsBankSector.get_plot_formats()[0]  # by default, the first one type
             self.model.log.warning("--plot enabled due to lack of any output", before_start=True)
         if not self.model.test:
-            self.debug_firms(before_start=True)
+            self.debug_status(before_start=True)
 
     def finish_model(self, export_datafile=None, export_description=None):
         if not self.model.test:
