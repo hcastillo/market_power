@@ -58,7 +58,7 @@ class Firm:
 
     def determine_output(self):
         output = self.phi * self.desiredK
-        self.model.log.debug(f"{self} c={self.model.log.format(output)}")
+        self.model.log.debug(f"{self} Y={self.model.log.format(output)}")
         return output
 
     def determine_interest_rate(self):
@@ -75,7 +75,7 @@ class Firm:
     def determine_investment(self):
         # (Below equation 33)
         investment = self.desiredK - self.K
-        self.model.log.debug(f"{self} γ={self.model.log.format(investment)}")
+        self.model.log.debug(f"{self} I={self.model.log.format(investment)}")
         return investment
 
     def determine_demand_loan(self):

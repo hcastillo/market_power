@@ -28,3 +28,11 @@ An Agent Based Model based on Dixit-Greenwald-Sitglitz model of monopolistic com
 
   - *market_power.ipynb*: Notebook version
 
+
+- Command line options:
+  - *./main.py --log-what firms_K,firms_A*: executes in level INFO showing for each firm K and A
+  - *./main.py --log DEBUG*: executes in maximum level of detail with also all the operations done for each firm/step
+  - *./main.py --log WARNING*: a minimum level of details: for each step, the summary of firms and bank sector state
+  - *./main.py --logfile xxx*: sends the log output to a file instead to screen
+  - *./main.py --save xxx*: saves in text file the model output (not the log)
+  - *./main.py --plot bokeh*: instead of saving a text file with the output, creates a plot with Bokeh

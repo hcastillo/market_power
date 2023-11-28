@@ -64,22 +64,20 @@ class Model:
                          export_datafile=None, export_description=None):
 
         # what to plot and represent, and in which order
-        self.statistics.add(what=Firm, name="r", function=statistics.mean, repr_function="¯")
-        self.statistics.add(what=Firm, name="L")
-        self.statistics.add(what=Firm, name="I")
-        self.statistics.add(what=Firm, name="u", function=statistics.mean, repr_function="¯")
-        self.statistics.add(what=Firm, name="desiredK")
-        self.statistics.add(what=Firm, name="A", prepend=" |")
-        self.statistics.add(what=Firm, name="offeredL")
-        self.statistics.add(what=Firm, name="demandL")
         self.statistics.add(what=Firm, name="K", prepend=" firms   ")
+        self.statistics.add(what=Firm, name="A", prepend=" |")
+        self.statistics.add(what=Firm, name="L")
         self.statistics.add(what=Firm, name="Y")
-
         self.statistics.add(what=Firm, name="profits", symbol="π", attr_name="pi")
+        self.statistics.add(what=Firm, name="r", function=statistics.mean)
         self.statistics.add(what=Firm, name="Failures", symbol="fail", prepend=" ", attr_name="is_bankrupted",
                             number_type=int)
-
-        self.statistics.add(what=BankSector, name="L", prepend="\n             banks    ")
+        self.statistics.add(what=Firm, name="I")
+        self.statistics.add(what=Firm, name="u", function=statistics.mean, repr_function="¯")
+        self.statistics.add(what=Firm, name="desiredK", show=False)
+        self.statistics.add(what=Firm, name="offeredL", show=False)
+        self.statistics.add(what=Firm, name="demandL", show=False)
+        self.statistics.add(what=BankSector, name="L", prepend="\n                banks    ")
         self.statistics.add(what=BankSector, name="A", prepend=" | ")
         self.statistics.add(what=BankSector, name="D", prepend=" ")
 

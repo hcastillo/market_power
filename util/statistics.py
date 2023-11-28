@@ -41,7 +41,7 @@ class Statistics:
         return result
 
     def add(self, what, name, prepend="", symbol=None, attr_name=None, number_type=float, function=sum,
-            repr_function="Σ", plot=True, log=False):
+            repr_function="Σ", plot=True, logarithm=False, show=True):
         if not attr_name:
             attr_name = name
         if not symbol:
@@ -53,12 +53,14 @@ class Statistics:
         if what == BankSector:
             self.data["bank_" + name.replace(" ", "_")] = StatsBankSector(self.model, number_type, name, symbol,
                                                                           prepend=prepend, plot=plot,
-                                                                          attr_name=attr_name, logarithm=log)
+                                                                          attr_name=attr_name, logarithm=logarithm,
+                                                                          show=show)
         else:
-            self.data["firm_" + name.replace(" ", "_")] = StatsFirms(self.model, number_type, name, symbol,
+            self.data["firms_" + name.replace(" ", "_")] = StatsFirms(self.model, number_type, name, symbol,
                                                                      prepend=prepend, function=function,
                                                                      repr_function=repr_function,
-                                                                     plot=plot, attr_name=attr_name, logarithm=log)
+                                                                     plot=plot, attr_name=attr_name,
+                                                                     logarithm=logarithm, show=show)
 
     @staticmethod
     def get_export_path(filename):
@@ -144,7 +146,7 @@ class Statistics:
 
     def get_what(self):
         print(f"\t{TermColors.BOLD}{'name':20}{TermColors.ENDC} " +
-              f"{TermColors.UNDERLINE}Σ=summation ¯=average, Ξ=logarithm scale, *=plot all{TermColors.ENDC}")
+              f"{TermColors.UNDERLINE}Σ=summation ¯=average, Ξ=logarithm scale{TermColors.ENDC}")
         for item in self.data:
             print(f"\t{item:20} {self.data[item].get_description()}")
 
@@ -187,3 +189,11 @@ def mean(data):
     for i, x in enumerate(data):
         result += x
     return result / i
+
+
+
+def allvalues(data):
+    result = []
+    for i in enumerate(data):
+        result.append(i)
+    return result
