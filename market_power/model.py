@@ -110,7 +110,7 @@ class Model:
         self.bank_sector.determine_step_results()
         self.log.step(self.statistics.current_status_save())
         self.remove_failed_firms()
-        #self.statistics.debug_status()
+        #self.statistics.info_status()
 
     def finish_model(self):
         self.log.finish_model()

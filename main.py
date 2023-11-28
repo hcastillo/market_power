@@ -11,14 +11,14 @@ from typing import List
 
 
 def run_interactive(config: List[str] = typer.Argument(None, help="Change config value (i.e. alpha=3.1, ? to list)"),
-                    log: str = typer.Option('WARNING', help="Log level messages (ERROR,WARNING,DEBUG,INFO...)"),
+                    log: str = typer.Option(None, help="Log level messages (ERROR,WARNING,INFO,DEBUG)"),
                     logfile: str = typer.Option(None, help="File to send the logs to"),
                     log_what: str = typer.Option(None, help="What to log (apart from balance, ? to list)"),
                     save: str = typer.Option(None, help="Save the output of this execution"),
                     plot: str = typer.Option(None, help="Save the plot (? to list formats)"),
-                    plot_tmin: int = typer.Option(default=0, min=0, help="Min. time to represent in the plots"),
-                    plot_tmax: int = typer.Option(default=Config.N, help="Max. time to represent in the plots"),
-                    plot_what: str = typer.Option(None, help="What to plot (all by default, ? to list)"),
+                    plot_tmin: int = typer.Option(None, help="Min. time to represent in the plots"),
+                    plot_tmax: int = typer.Option(None, help="Max. time to represent in the plots"),
+                    plot_what: str = typer.Option("", help="What to plot (all by default, ? to list)"),
                     n: int = typer.Option(Config.N, help="Number of firms"),
                     t: int = typer.Option(Config.T, help="Time repetitions")):
     global model
@@ -26,10 +26,23 @@ def run_interactive(config: List[str] = typer.Argument(None, help="Change config
         model.config.T = t
     if n != model.config.N:
         model.config.N = n
+    if log_what and not log:
+        log = "INFO"
+    if not log:
+        log = "WARNING"
     if log_what == '?' or plot_what == '?':
         list_what()
     else:
         model.log.define_log(log=log, logfile=logfile, what=log_what)
+    if (plot_tmin or plot_tmax or plot_what) and not plot:
+        # if not enabled plot with an specific format, we assume the first type: pyplot
+        plot = model.statistics.get_plot_formats()[0]
+    if config:
+        if config == '?':
+            print(model.config.__str__(separator="\n"))
+            raise typer.Exit()
+        else:
+            manage_config_values(config)
     if plot:
         if plot == '?':
             model.statistics.get_plot_formats(display=True)
@@ -41,12 +54,6 @@ def run_interactive(config: List[str] = typer.Argument(None, help="Change config
             else:
                 model.log.error(f"Plot format must be one of {model.statistics.get_plot_formats()}", before_start=True)
                 raise typer.Exit(-1)
-    if config:
-        if config == '?':
-            print(model.config.__str__(separator="\n"))
-            raise typer.Exit()
-        else:
-            manage_config_values(config)
     run(save)
 
 

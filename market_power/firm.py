@@ -14,7 +14,6 @@ class Firm:
             self.id = new_id
             self.model = its_model
             self.failures = 0
-            self.debug_info = ""
         self.K = self.model.config.firms_K_i0
         self.A = self.model.config.firms_A_i0
         self.L = self.model.config.firms_L_i0
@@ -32,20 +31,14 @@ class Firm:
             return f"{init}{self.id}   "
 
     def do_step(self):
-        #self.debug_info = ""
         self.gamma = self.determine_cost_per_unit_of_capital()
         self.desiredK = self.determine_desired_capital()
         self.I = self.determine_investment()
-        #self.debug_info += f"γ={self.model.log.format(self.gamma)} " + \
-        #                   f"I={self.model.log.format(self.I)}"
         self.demandL = self.determine_demand_loan()
         self.offeredL = self.model.bank_sector.determine_firm_capacity_loan(self)
         self.L += self.determine_new_loan()
-        #if self.L <= 0:
-        #    self.L = self.model.config.firms_L_i0
         self.r = self.determine_interest_rate()
         self.c = self.determine_marginal_operating_cost()
-        #self.debug_info += f" c={self.model.log.format(self.c)}r={self.model.log.format(self.r)} "
         self.Y = self.determine_output()
         self.pi = self.determine_profits()
         self.A = self.determine_net_worth()
@@ -53,14 +46,20 @@ class Firm:
 
     def determine_cost_per_unit_of_capital(self):
         # (Before equation 2)  gamma
-        return (self.model.config.w / self.model.config.k) + (self.model.config.g * self.r)
+        gamma = (self.model.config.w / self.model.config.k) + (self.model.config.g * self.r)
+        self.model.log.debug(f"{self} γ={self.model.log.format(gamma)}")
+        return gamma
 
     def determine_marginal_operating_cost(self):
         # (Equation 2)
-        return self.gamma / self.phi
+        c = self.gamma / self.phi
+        self.model.log.debug(f"{self} c={self.model.log.format(c)}")
+        return c
 
     def determine_output(self):
-        return self.phi * self.desiredK
+        output = self.phi * self.desiredK
+        self.model.log.debug(f"{self} c={self.model.log.format(output)}")
+        return output
 
     def determine_interest_rate(self):
         # (Equation 33)
@@ -75,7 +74,9 @@ class Firm:
 
     def determine_investment(self):
         # (Below equation 33)
-        return self.desiredK - self.K
+        investment = self.desiredK - self.K
+        self.model.log.debug(f"{self} γ={self.model.log.format(investment)}")
+        return investment
 
     def determine_demand_loan(self):
         # (Over equation 33)
@@ -85,7 +86,7 @@ class Firm:
         if self.demandL > self.offeredL:
             self.gap_of_L = (self.demandL - self.offeredL)
             self.K -= self.gap_of_L
-            #self.debug_info += f" gapL={self.model.log.format(self.gap_of_L)} "
+            self.model.log.debug(f"{self} gapL={self.model.log.format(self.gap_of_L)}")
             return self.offeredL
         else:
             self.gap_of_L = 0.0
@@ -94,7 +95,7 @@ class Firm:
     def determine_u(self):
         # stochastic demand [0,2]
         self.u = random.uniform(0, 2)
-        #self.debug_info += f"u={self.model.log.format(self.u)} "
+        self.model.log.debug(f"{self} u={self.model.log.format(self.u)}")
         return self.u
 
     def determine_profits(self):
@@ -113,14 +114,13 @@ class Firm:
         return self.A < self.model.config.threshold_bankrupt
 
     def set_failed(self):
-        #self.debug_info += "failed "
         if self.L - self.K > 0:
-            self.model.log.debug(f"some error: L={self.L},K={self.K} bankrupted {self}")
+            self.model.log.debug(f"{self} failed! L={self.L} > K={self.K}")
+        else:
+            self.model.log.debug(f"{self} failed! L={self.L},K={self.K}")
         self.model.bank_sector.add_bad_debt(self.K - self.L)
         self.failures += 1
         self.__init__()
 
     def adjust_capital(self):
-        #if self.K != (self.A + self.L):
-        #    self.debug_info += f"∆K={self.model.log.format(self.A + self.L - self.K)} "
         return self.A + self.L

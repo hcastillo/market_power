@@ -29,7 +29,6 @@ class Log:
     logger = logging.getLogger("model")
     model = None
     log_level = "WARNING"
-    no_debugging = True
     progress_bar = None
     what_keywords = []
 
@@ -64,13 +63,13 @@ class Log:
         if not self.model.test:
             self.logger.info(f" {self.__format_t__(before_start)} {text}")
 
-    def warning(self,text, before_start=False):
+    def warning(self, text, before_start=False):
         if not self.model.test:
             self.logger.warning(f" {self.__format_t__(before_start)} {text}")
 
     def error(self, text, before_start=False):
         if not self.model.test:
-            self.logger.error(f"{self.__format_t__(before_start)} {text}")
+            self.logger.error(f"{TermColors.FAIL}{self.__format_t__(before_start)} {text}{TermColors.ENDC}")
 
     def __format_t__(self, before_start=False):
         return "     " if before_start else f"t={self.model.t:03}"
@@ -80,7 +79,8 @@ class Log:
         self.log_level = Log.get_level(log.upper())
         if what:
             self.what_keywords = what.split(",")
-        self.no_debugging = self.log_level >= Log.get_level("WARNING")
+        if self.log_level > Log.get_level("WARNING") and self.model.statistics.interactive:
+            self.progress_bar = Bar('Executing model', max=self.model.config.T)
         self.logger.setLevel(self.log_level)
         if logfile:
             if not logfile.startswith(self.model.statistics.OUTPUT_DIRECTORY):
@@ -95,7 +95,7 @@ class Log:
             ch.setFormatter(formatter)
             self.logger.addHandler(ch)
 
-    def debug_firm(self, firm, before_start=False):
+    def info_firm(self, firm, before_start=False):
         text = f"{firm.__str__()} K={Log.format(firm.K)}"
         text += f" | A={Log.format(firm.A)} L={Log.format(firm.L)}"
         if not before_start:
@@ -103,31 +103,23 @@ class Log:
                 for elem in self.model.statistics.data:
                     if elem in self.what_keywords and elem.startswith('firm'):
                         text += f" {elem}={self.model.statistics.data[elem].data[-1]}"
-            # text += f" dK={Log.format(firm.desiredK)}"
-            # text += f" dL/oL={Log.format(firm.demandL)}/{Log.format(firm.offeredL)}"
-            # text += " bankrupted" if firm.is_bankrupted() else ""
-            # text += " " + firm.debug_info
-        self.debug(text, before_start)
+        self.info(text, before_start)
 
     def initialize_model(self):
         if not self.model.test:
-            self.info(self.model.statistics.current_status_save(), before_start=True)
-            if self.no_debugging and self.model.statistics.interactive:
-                self.progress_bar = Bar('Executing model', max=self.model.config.T)
+            self.warning(self.model.statistics.current_status_save(), before_start=True)
 
     def step(self, log_info):
         if not self.model.test:
-            if self.no_debugging:
-                if self.model.statistics.interactive:
-                    self.progress_bar.next()
+            if self.progress_bar:
+                self.progress_bar.next()
             else:
-                self.info(log_info)
-                self.model.statistics.debug_status(before_start=False)
+                self.warning(log_info)
+                self.model.statistics.info_status(before_start=False)
 
     def finish_model(self):
         if not self.model.test:
-            if self.no_debugging:
-                if self.model.statistics.interactive:
-                    self.progress_bar.finish()
+            if self.progress_bar:
+                self.progress_bar.finish()
             else:
                 self.info(f"finish: model T={self.model.config.T} N={self.model.config.N}")

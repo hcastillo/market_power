@@ -18,6 +18,9 @@ class Statistics:
     def __init__(self, its_model):
         self.model = its_model
         self.data = {}
+        self.plot_min = 0
+        self.plot_max = None
+        self.plot_what = []
         import os
         if not os.path.isdir(self.OUTPUT_DIRECTORY):
             os.mkdir(self.OUTPUT_DIRECTORY)
@@ -26,9 +29,9 @@ class Statistics:
         self.do_plot = False
         self.interactive = True
 
-    def debug_status(self, before_start=False):
+    def info_status(self, before_start=False):
         for firm in self.model.firms:
-            self.model.log.debug_firm(firm, before_start=before_start)
+            self.model.log.info_firm(firm, before_start=before_start)
 
     def current_status_save(self):
         # it returns also a string with the status
@@ -116,7 +119,8 @@ class Statistics:
 
     @staticmethod
     def execute_program(plot_format_array):
-        plot_format_array.remove(None)
+        if plot_format_array.count(None) > 0:
+            plot_format_array.remove(None)
         if len(plot_format_array) == 1:
             import configparser
             config = configparser.ConfigParser()
@@ -128,9 +132,14 @@ class Statistics:
                     executable = config[file_extension]['program']
                     if executable.lower() == "default":
                         import os
+                        if os.name == 'nt':
+                            plot_format_array[0] = plot_format_array[0].replace('/', '\\')
                         os.startfile(plot_format_array[0], 'open')
                     else:
                         import subprocess
+                        import os.path
+                        if not os.path.exists(executable):
+                            executable = config[file_extension]['program1']
                         subprocess.run([executable, plot_format_array[0]], stdout=subprocess.DEVNULL, shell=True)
 
     def get_what(self):
@@ -150,19 +159,21 @@ class Statistics:
 
     def enable_plotting(self, plot_format: str, plot_min: int = None, plot_max: int = None, plot_what: str = ""):
         self.do_plot = plot_format
-        self.plot_min = plot_min
-        self.plot_max = plot_max
-        self.plot_what = plot_what # TODO
+        if plot_min and plot_min >= 0:
+            self.plot_min = plot_min
+        if plot_max and plot_max <= self.model.config.T:
+            self.plot_max = plot_max
+        self.plot_what = plot_what.split(",")
 
     def initialize_model(self, export_datafile=None, export_description=None):
         self.export_datafile = export_datafile
         self.export_description = export_description
-        if self.model.log.no_debugging and not self.do_plot and not self.export_datafile:
+        if self.model.log.progress_bar and not self.do_plot and not self.export_datafile:
             # if no debug, and no output to file and no plots, then why you execute this?
             self.do_plot = StatsBankSector.get_plot_formats()[0]  # by default, the first one type
             self.model.log.warning("--plot enabled due to lack of any output", before_start=True)
         if not self.model.test:
-            self.debug_status(before_start=True)
+            self.info_status(before_start=True)
 
     def finish_model(self, export_datafile=None, export_description=None):
         if not self.model.test:
