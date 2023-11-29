@@ -57,8 +57,12 @@ class BankSector:
 
     def determine_firm_capacity_loan(self, firm):
         # (Equation 11 of paper a new approach to business fluctuations)
-        return (self.model.config.lambda_param * self.credit_supply * firm.K / self.totalK +
-                (1 - self.model.config.lambda_param) * self.credit_supply * firm.A / self.totalA)
+        offeredL = (self.model.config.lambda_param * self.credit_supply * firm.K / self.totalK +
+                    (1 - self.model.config.lambda_param) * self.credit_supply * firm.A / self.totalA)
+        if offeredL<0:
+            offeredL = firm.L #TODO innecesary?
+        self.model.log.debug(f"{firm} offeredL={offeredL}")
+        return offeredL
 
     def determine_new_credit_suppy(self):
         return self.A / self.model.config.alpha

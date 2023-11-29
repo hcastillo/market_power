@@ -38,12 +38,12 @@ class Log:
     @staticmethod
     def format(number):
         if isinstance(number, int) or isinstance(number, np.int32):
-            result = f"{number:3}"
+            result = f"{number:4}"
         else:
-            result = f"{number:5.2f}"
-            while len(result) > 5 and result[-1] in "0":
+            result = f"{number:7.3f}"
+            while len(result) > 7 and result[-1] in "0":
                 result = result[:-1]
-            while len(result) > 5 and result.find('.') > 0:
+            while len(result) > 7 and result.find('.') > 0:
                 result = result[:-1]
         return result if result[-1] != '.' else f' {result[:-1]}'
 
@@ -102,9 +102,10 @@ class Log:
             if self.what_keywords:
                 for elem in self.model.statistics.data:
                     if elem in self.what_keywords and elem.startswith('firms'):
-                        text += f" {elem}={self.model.statistics.data[elem].get_value(firm)}"
+                        text += f" {elem.replace('firms_','')}="
+                        text += f"{self.model.log.format(self.model.statistics.data[elem].get_value(firm))}"
                         #self.get_value(getattr(firm, self.attr_name))
-        self.info(text, before_start)
+            self.info(text, before_start)
 
     def initialize_model(self):
         if not self.model.test:

@@ -36,13 +36,18 @@ class Firm:
         self.I = self.determine_investment()
         self.demandL = self.determine_demand_loan()
         self.offeredL = self.model.bank_sector.determine_firm_capacity_loan(self)
-        self.L += self.determine_new_loan()
+        self.L = self.determine_new_loan()
         self.r = self.determine_interest_rate()
         self.c = self.determine_marginal_operating_cost()
+        self.K = self.adjust_capital()
         self.Y = self.determine_output()
+        self.u = self.determine_u()
         self.pi = self.determine_profits()
         self.A = self.determine_net_worth()
-        self.K = self.adjust_capital()
+        if self.is_bankrupted():
+            self.set_failed()
+        else:
+            self.K = self.adjust_capital()
 
     def determine_cost_per_unit_of_capital(self):
         # (Before equation 2)  gamma
@@ -63,7 +68,6 @@ class Firm:
 
     def determine_interest_rate(self):
         # (Equation 33)
-        #return random.uniform(0.01, 0.05)   #TODO
         return self.model.config.beta * self.L / self.A
 
     def determine_desired_capital(self):
@@ -80,47 +84,50 @@ class Firm:
 
     def determine_demand_loan(self):
         # (Over equation 33)
-        return (1 + self.model.config.m) * self.I - self.pi
+        demandL = self.L + (1 + self.model.config.m) * self.I - self.pi
+        if demandL < 0: #TODO innecesary?
+            demandL = self.L
+        return demandL
 
     def determine_new_loan(self):
         if self.demandL > self.offeredL:
             self.gap_of_L = (self.demandL - self.offeredL)
-            self.K -= self.gap_of_L
-            self.model.log.debug(f"{self} gapL={self.model.log.format(self.gap_of_L)}")
+            self.model.log.debug(f"{self} L={self.offeredL}")
             return self.offeredL
         else:
             self.gap_of_L = 0.0
+            self.model.log.debug(f"{self} L={self.demandL}")
             return self.demandL
 
     def determine_u(self):
         # stochastic demand [0,2]
-        self.u = random.uniform(0, 2)
-        self.model.log.debug(f"{self} u={self.model.log.format(self.u)}")
-        return self.u
+        u = random.uniform(0, 2)
+        self.model.log.debug(f"{self} u={u}")
+        return u
 
     def determine_profits(self):
-        # (Equation 24)  , but with Y = phi*K
-        return self.determine_u() * (self.model.config.eta + (1 - self.model.config.eta) * self.Y) - \
-            self.c * self.Y
+        # (Equation 24)  , but with Y = phi*K and simplifying
+        profits = self.u * (self.model.config.eta + (1 - self.model.config.eta) * self.model.config.phi * self.K) - \
+                  self.gamma * self.K
+        self.model.log.debug(f"{self} π={profits}")
+        return profits
 
     def determine_net_worth(self):
         # (Equation 8)
-        return self.A + self.pi
-
-    def check_loses_are_covered_by_m(self):
-        return (self.pi < 0) and (self.K * self.model.config.m + self.pi) >= 0
+        new_A = self.A + self.pi
+        self.model.log.debug(f"{self} A={new_A}")
+        return new_A
 
     def is_bankrupted(self):
         return self.A < self.model.config.threshold_bankrupt
 
     def set_failed(self):
-        if self.L - self.K > 0:
-            self.model.log.debug(f"{self} failed! L={self.L} > K={self.K}")
-        else:
-            self.model.log.debug(f"{self} failed! L={self.L},K={self.K}")
         self.model.bank_sector.add_bad_debt(self.K - self.L)
         self.failures += 1
         self.__init__()
 
     def adjust_capital(self):
-        return self.A + self.L
+        newK = self.A + self.L
+        self.model.log.debug(f"{self} K={newK}")
+        return newK
+
