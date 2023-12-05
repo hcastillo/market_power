@@ -66,27 +66,26 @@ class Model:
         # what to plot and represent, and in which order
         self.statistics.add(what=Firm, name="K", prepend=" firms   ")
         self.statistics.add(what=Firm, name="A", prepend=" |")
-        self.statistics.add(what=Firm, name="L")
-        self.statistics.add(what=Firm, name="Y")
-        self.statistics.add(what=Firm, name="profits", symbol="π", attr_name="pi")
-        self.statistics.add(what=Firm, name="r", function=statistics.mean)
+        self.statistics.add(what=Firm, name="L", prepend=" ")
+        self.statistics.add(what=Firm, name="profits", prepend=" ", symbol="π", attr_name="pi")
+        self.statistics.add(what=Firm, name="Y", prepend=" ")
+        self.statistics.add(what=Firm, name="r", prepend=" ", function=statistics.mean)
         self.statistics.add(what=Firm, name="Failures", symbol="fail", prepend=" ", attr_name="is_bankrupted",
                             number_type=int)
-        self.statistics.add(what=Firm, name="I")
+        self.statistics.add(what=Firm, name="I", prepend=" ")
         self.statistics.add(what=Firm, name="u", function=statistics.mean, repr_function="¯")
         self.statistics.add(what=Firm, name="desiredK", show=False)
         self.statistics.add(what=Firm, name="offeredL", show=False)
         self.statistics.add(what=Firm, name="demandL", show=False)
         self.statistics.add(what=BankSector, name="L", prepend="\n                banks    ")
         self.statistics.add(what=BankSector, name="A", prepend=" | ")
-        self.statistics.add(what=BankSector, name="D", prepend=" ")
+        self.statistics.add(what=BankSector, name="D", prepend="  ")
 
-        self.statistics.add(what=BankSector, name="profits", symbol="π", prepend=" ", plot=False, attr_name="profits")
+        self.statistics.add(what=BankSector, name="profits", symbol="π", prepend="  ", plot=False, attr_name="profits")
         self.statistics.add(what=BankSector, name="bad debt",
-                            symbol="bd", prepend="", plot=False, attr_name="bad_debt")
-        self.statistics.add(what=BankSector, name="credit supply", symbol="cs", prepend="", plot=False,
+                            symbol="bd", prepend=" ", plot=False, attr_name="bad_debt")
+        self.statistics.add(what=BankSector, name="credit supply", symbol="cs", prepend=" ", plot=False,
                             attr_name="credit_supply")
-
         self.config.__init__()
         random.seed(seed if seed else self.config.default_seed)
         if export_datafile:

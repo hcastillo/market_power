@@ -96,16 +96,14 @@ class Log:
             self.logger.addHandler(ch)
 
     def info_firm(self, firm, before_start=False):
-        text = f"{firm.__str__()}  " # K={Log.format(firm.K)}"
-        # text += f" | A={Log.format(firm.A)} L={Log.format(firm.L)}"
-        if not before_start: #TODO
+        text = f"{firm.__str__()}  "
+        if not before_start:
             if self.what_keywords:
                 for elem in self.model.statistics.data:
                     if elem in self.what_keywords and elem.startswith('firms'):
                         text += f" {elem.replace('firms_','')}="
                         text += f"{self.model.log.format(self.model.statistics.data[elem].get_value(firm))}"
-                        #self.get_value(getattr(firm, self.attr_name))
-            self.info(text, before_start)
+                self.info(text, before_start)
 
     def initialize_model(self):
         if not self.model.test:

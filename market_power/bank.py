@@ -37,8 +37,9 @@ class BankSector:
         return profits_loans - remunerations_of_deposits_and_networth
 
     def determine_average_interest_rate(self):
-        avg_r = sum(firm.r for firm in self.model.firms) / len(self.model.firms)
-        return avg_r if avg_r > self.model.config.r_i0 else self.model.config.r_i0
+        #avg_r = sum(firm.r for firm in self.model.firms) / len(self.model.firms)
+        #return avg_r if avg_r > self.model.config.r_i0 else self.model.config.r_i0
+        return 0.00 #TODO
 
     def determine_equity(self):
         # (Equation 35) At = At-1 + profits - bad_debt
@@ -50,8 +51,9 @@ class BankSector:
 
     def determine_step_results(self):
         self.profits = self.determine_profits()
+        self.L = self.A / self.model.config.alpha
         self.A = self.determine_equity()
-        self.L = self.credit_supply
+        # self.L = self.credit_supply
         self.D = self.determine_deposits()
         self.credit_supply = self.determine_new_credit_suppy()
 
@@ -59,7 +61,7 @@ class BankSector:
         # (Equation 11 of paper a new approach to business fluctuations)
         offeredL = (self.model.config.lambda_param * self.credit_supply * firm.K / self.totalK +
                     (1 - self.model.config.lambda_param) * self.credit_supply * firm.A / self.totalA)
-        if offeredL<0:
+        if offeredL < 0:
             offeredL = firm.L #TODO innecesary?
         self.model.log.debug(f"{firm} offeredL={offeredL}")
         return offeredL

@@ -165,7 +165,10 @@ class Statistics:
             self.plot_min = plot_min
         if plot_max and plot_max <= self.model.config.T:
             self.plot_max = plot_max
-        self.plot_what = plot_what.split(",")
+        if self.plot_what:
+            self.plot_what = plot_what.split(",")
+        else:
+            self.plot_what = []
 
     def initialize_model(self, export_datafile=None, export_description=None):
         self.export_datafile = export_datafile
