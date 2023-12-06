@@ -7,9 +7,9 @@ ABM model auxiliary file: to have statistics and plot
 from progress.bar import Bar
 
 from market_power.bank import BankSector
-from util.log import Log, TermColors
+from util.log import Log
 from util.stats_array import StatsFirms, StatsBankSector
-
+import os
 
 class Statistics:
     OUTPUT_DIRECTORY = "output"
@@ -57,25 +57,26 @@ class Statistics:
                                                                           show=show)
         else:
             self.data["firms_" + name.replace(" ", "_")] = StatsFirms(self.model, number_type, name, symbol,
-                                                                     prepend=prepend, function=function,
-                                                                     repr_function=repr_function,
-                                                                     plot=plot, attr_name=attr_name,
-                                                                     logarithm=logarithm, show=show)
+                                                                      prepend=prepend, function=function,
+                                                                      repr_function=repr_function,
+                                                                      plot=plot, attr_name=attr_name,
+                                                                      logarithm=logarithm, show=show)
 
-    @staticmethod
-    def get_export_path(filename):
+    def get_export_path(self, filename):
         if not filename.startswith(Statistics.OUTPUT_DIRECTORY):
-            filename = f"{Statistics.OUTPUT_DIRECTORY}/{filename}"
+            filename = f"{Statistics.OUTPUT_DIRECTORY}/{self.model.get_id_for_filename()}{filename}"
+        else:
+            filename = f"{self.model.get_id_for_filename()}{filename}"
         return filename if filename.endswith('.txt') else f"{filename}.txt"
 
     def export_data(self, export_datafile=None, export_description=None):
         if export_datafile:
             if self.interactive:
-                progress_bar = Bar('Saving output in ' + Statistics.get_export_path(export_datafile),
+                progress_bar = Bar('Saving output in ' + self.get_export_path(export_datafile),
                                    max=self.model.config.T)
             else:
                 progress_bar = None
-            with open(Statistics.get_export_path(export_datafile), 'w', encoding="utf-8") as savefile:
+            with open(self.get_export_path(export_datafile), 'w', encoding="utf-8") as savefile:
                 if export_description:
                     savefile.write(f"# {export_description}\n")
                 else:
@@ -106,7 +107,8 @@ class Statistics:
             plotted_files = []
             text = f"Saving {self.do_plot} plots"
             if self.interactive:
-                progress_bar = Bar(f"{text} in {self.OUTPUT_DIRECTORY}/", max=what_to_plot)
+                progress_bar = Bar(f"{text} in {self.OUTPUT_DIRECTORY}/{self.model.get_id_for_filename()}*",
+                                   max=what_to_plot)
             else:
                 progress_bar = None
             for item in self.data:
@@ -140,20 +142,18 @@ class Statistics:
                     else:
                         import subprocess
                         import os.path
-                        if not os.path.exists(executable):
-                            executable = config[file_extension]['program1']
-                        subprocess.run([executable, plot_format_array[0]], stdout=subprocess.DEVNULL, shell=True)
+                        if os.path.exists(executable):
+                            subprocess.run([executable, plot_format_array[0]], stdout=subprocess.DEVNULL, shell=True)
 
     def get_what(self):
-        print(f"\t{TermColors.BOLD}{'name':20}{TermColors.ENDC} " +
-              f"{TermColors.UNDERLINE}Σ=summation ¯=average, Ξ=logarithm scale{TermColors.ENDC}")
+        print(f"\t{self.model.log.colors.BOLD}{'name':20}{self.model.log.colors.ENDC} " +
+              f"{self.model.log.colors.UNDERLINE}Σ=summation ¯=average, Ξ=logarithm scale{self.model.log.colors.ENDC}")
         for item in self.data:
             print(f"\t{item:20} {self.data[item].get_description()}")
 
-    @staticmethod
-    def get_plot_formats(display: bool = False):
+    def get_plot_formats(self, display: bool = False):
         if display:
-            print(f"\t{TermColors.BOLD}{'name':20}{TermColors.ENDC} ")
+            print(f"\t{self.model.log.colors.BOLD}{'name':20}{self.model.log.colors.ENDC} ")
             for item in StatsBankSector.get_plot_formats():
                 print(f"\t{item}")
         else:
@@ -184,6 +184,12 @@ class Statistics:
         if not self.model.test:
             self.export_data(export_datafile=export_datafile, export_description=export_description)
             self.plot()
+
+    def clear_output_dir(self):
+        for file in [f for f in os.listdir(self.OUTPUT_DIRECTORY)]:
+            if os.path.isfile(self.OUTPUT_DIRECTORY+"/"+file):
+                self.model.log.warning(f"Removing {self.OUTPUT_DIRECTORY+'/'+file}", before_start=True)
+                os.remove(self.OUTPUT_DIRECTORY+"/"+file)
 
 
 def mean(data):

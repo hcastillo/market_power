@@ -37,7 +37,7 @@ class Config:
     default_seed: int = 20579
 
     def __str__(self, separator=""):
-        description = sys.argv[0]
+        description = sys.argv[0] if not separator else ""
         for attr in dir(self):
             value = getattr(self, attr)
             if isinstance(value, int) or isinstance(value, float):

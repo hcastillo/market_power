@@ -47,21 +47,25 @@ class StatsArray:
 
     @staticmethod
     def get_plot_formats():
-        return ["pyplot", "bokeh", "pygrace"]
+        return ["pyplot", "bokeh", "grace", "gretl"]
 
     def get_description(self):
         return f"{self.repr_function if self.repr_function else ' '} {self.attr_name:10}"
 
-    def plot(self, plot_format: str, plot_min: int = None, plot_max: int = None):
-        if not plot_min or plot_min<0:
+    def plot(self, plot_format: str, plot_min: int = None, plot_max: int = None, multiple=None, multiple_key=None):
+        if not plot_min or plot_min < 0:
             plot_min = 0
         if not plot_max or plot_max > self.model.config.T:
             plot_max = self.model.config.T
         if self.do_plot:
-            title = self.its_name + " " + self.repr_function + self.description
             y_label = self.repr_function + self.description + "(ln)" if self.logarithm else ""
-            filename = self.model.statistics.OUTPUT_DIRECTORY + "/" + self.filename()
-
+            if multiple:
+                filename = self.model.statistics.OUTPUT_DIRECTORY + "/" + self.filename()
+                title = self.its_name + " " + self.repr_function + self.description
+            else:
+                filename = self.model.statistics.OUTPUT_DIRECTORY + "/" + \
+                           self.model.get_id_for_filename() + self.filename()
+                title = self.its_name + " " + self.repr_function + self.description + self.model.model_title
             match plot_format:
                 case "bokeh" | "screen":
                     import bokeh.plotting
@@ -82,7 +86,7 @@ class StatsArray:
                         bokeh.plotting.save(p)
                         return filename + ".html"
 
-                case "pygrace":
+                case "grace":
                     from pygrace.project import Project
                     import unicodedata
                     plot = Project()
@@ -102,16 +106,28 @@ class StatsArray:
                     plot.saveall(filename + ".agr")
                     return filename + ".agr"
 
+                case "gretl":
+                    print("TODO")  # TODO
+                    pass
+
                 case _:
                     import matplotlib.pyplot as plt
                     plt.clf()
                     xx = []
                     yy = []
-                    for i in range(plot_min, plot_max):
-                        if not np.isnan(self.data[i]):
-                            xx.append(i)
-                            yy.append(self.data[i])
-                    plt.plot(xx, yy, 'b-')
+                    if multiple:
+                        for element in multiple:
+                            for i in range(plot_min, plot_max):
+                                if not np.isnan(element[multiple_key].data[i]):
+                                    xx.append(i)
+                                    yy.append(element[multiple_key].data[i])
+                            plt.plot(xx, yy)
+                    else:
+                        for i in range(plot_min, plot_max):
+                            if not np.isnan(self.data[i]):
+                                xx.append(i)
+                                yy.append(self.data[i])
+                        plt.plot(xx, yy, 'b-')
                     plt.ylabel(y_label)
                     plt.xlabel("t")
                     plt.title(title)

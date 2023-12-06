@@ -26,10 +26,18 @@ class Model:
     config: Config = None
     export_datafile = None
     export_description = None
+    model_id = ""
+    model_title = ""
 
-    def __init__(self, firm_class=Firm, **configuration):
+    def __init__(self, firm_class=Firm, model_id="", log=None, model_title="", **configuration):
         self.config = Config()
-        self.log = Log(self)
+        if log:
+            self.log = log
+            log.model = self
+        else:
+            self.log = Log(self)
+        self.model_id = model_id
+        self.model_title = model_title
         self.firm_class = firm_class
         self.statistics = Statistics(self)
         if configuration:
@@ -107,7 +115,6 @@ class Model:
         self.bank_sector.determine_step_results()
         self.log.step(self.statistics.current_status_save())
         self.remove_failed_firms()
-        #self.statistics.info_status()
 
     def finish_model(self):
         self.log.finish_model()
@@ -125,3 +132,15 @@ class Model:
             if firm.is_bankrupted():
                 firm.set_failed()
         self.bank_sector.estimate_total_A_K()
+
+    def get_id(self, short=False):
+        if self.model_id:
+            return f" model#{self.model_id}" if short else f"model #{self.model_id}"
+        else:
+            return "" if short else "model"
+
+    def get_id_for_filename(self):
+        if self.model_id:
+            return f"{self.model_id}_"
+        else:
+            return ""
