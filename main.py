@@ -28,12 +28,15 @@ def run_interactive(config: List[str] = typer.Argument(None, help="Change config
                                          plot_what, plot, logger, config)
     if clear:
         do_clear_of_output_directory()
-    results = []
+    results = {}
     for i in range(len(models)):
         logger.set_model(models[i])
-        results.append(run(models[i], save))
-    if len(models) > 1 and plot:
-        plot_multiple(results, plot_tmin, plot_tmax, plot)
+        models[i].statistics.interactive = len(models) == 1
+        models[i].statistics.multiple = len(models) != 1
+        result, name_of_result = run(models[i], save)
+        results[name_of_result] = result
+    if len(models) > 1 and (plot or plot_what):
+        models[0].statistics.plot(results)
 
 
 def run_notebook():
@@ -53,48 +56,54 @@ def run(model, save=None):
     return model.run(export_datafile=save)
 
 
-def plot_multiple(results, plot_min, plot_max, plot):
-    for i in results[0]:
-        results[0][i].plot(plot, plot_min, plot_max, results, i)
-
-
-def list_what():
-    mock_model = Model()
-    mock_model.initialize_model(export_datafile="mock")
-    mock_model.statistics.get_what()
-    raise typer.Exit()
-
-
-def manage_plot_options(model, plot_tmin, plot_tmax, plot_what, plot):
-    if plot_what == '?':
-        list_what()
-    else:
-        if (plot_tmin or plot_tmax or plot_what) and not plot:
-            # if not enabled plot with a specific format, we assume the first type: pyplot
-            plot = model.statistics.get_plot_formats()[0]
-        if plot:
-            if plot == '?':
-                model.statistics.get_plot_formats(display=True)
+def check_what(logger, what, log_or_plot):
+    result = []
+    if what:
+        mock_model = Model(log=logger)
+        mock_model.test = True
+        mock_model.initialize_model(export_datafile="mock")
+        for item in what.split(","):
+            if item not in mock_model.statistics.data:
+                if item == '?':
+                    if log_or_plot == 'plot':
+                        print(logger.colors.remark(f"\t{'name':20} Σ=summation ¯=average, Ξ=logarithm scale"))
+                    for valid_values in mock_model.statistics.data:
+                        print(f"\t{valid_values:20} {mock_model.statistics.data[valid_values].get_description()}")
+                else:
+                    valid_values = {str(key) for key, value in mock_model.statistics.data.items()}
+                    logger.error(f"{log_or_plot}_what must be one of {valid_values}", before_start=True)
                 raise typer.Exit()
             else:
-                if plot.lower() in model.statistics.get_plot_formats():
-                    model.statistics.enable_plotting(plot_format=plot.lower(), plot_min=plot_tmin,
-                                                     plot_max=plot_tmax, plot_what=plot_what)
-                else:
-                    model.log.error(f"Plot format must be one of {model.statistics.get_plot_formats()}",
-                                    before_start=True)
-                    raise typer.Exit(-1)
+                result.append(item)
+    return result
 
 
-def manage_log_options(model, log, log_what, logfile):
+def manage_plot_options(model, plot_tmin, plot_tmax, plot_what, plot, logger):
+    plot_what = check_what(logger, plot_what, "plot")
+    if (plot_tmin or plot_tmax or plot_what) and not plot:
+        # if not enabled plot with a specific format, we assume the first type: pyplot
+        plot = model.statistics.get_plot_formats()[0]
+    if plot:
+        if plot == '?':
+            model.statistics.get_plot_formats(display=True)
+            raise typer.Exit()
+        else:
+            if plot.lower() in model.statistics.get_plot_formats():
+                model.statistics.enable_plotting(plot_format=plot.lower(), plot_min=plot_tmin,
+                                                 plot_max=plot_tmax, plot_what=plot_what)
+            else:
+                logger.log.error(f"Plot format must be one of {model.statistics.get_plot_formats()}",
+                                 before_start=True)
+                raise typer.Exit(-1)
+
+
+def manage_log_options(model, log, log_what, logfile, logger):
+    log_what = check_what(logger, log_what, "log")
     if log_what and not log:
         log = "INFO"
     if not log:
         log = "ERROR"
-    if log_what == '?':
-        list_what()
-    else:
-        model.log.define_log(log=log, logfile=logfile, what=log_what)
+    model.log.define_log(log=log, logfile=logfile, what=log_what)
 
 
 def manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax, plot_what, plot, logger, config_list):
@@ -147,8 +156,8 @@ def manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax, plo
             model.config.T = t
         if n != model.config.N:
             model.config.N = n
-        manage_log_options(model, log, log_what, logfile)
-        manage_plot_options(model, plot_tmin, plot_tmax, plot_what, plot)
+        manage_log_options(model, log, log_what, logfile, logger)
+        manage_plot_options(model, plot_tmin, plot_tmax, plot_what, plot, logger)
         for param in params_only_present_once:
             setattr(model.config, param, params_only_present_once[param])
         for param in one_combination_of_multiple_params:

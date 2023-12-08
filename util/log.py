@@ -9,8 +9,7 @@ import numpy as np
 import sys
 import os
 from progress.bar import Bar
-#from statistics import Statistics
-
+import colorama
 
 class Log:
     """
@@ -28,7 +27,7 @@ class Log:
             self.model = model
         else:
             self.model = MockedModel()
-        self.colors = TermColors()
+        self.colors = LogColors()
 
     def set_model(self, its_model):
         self.model = its_model
@@ -67,19 +66,16 @@ class Log:
             self.logger.warning(f" {self.__format_t__(before_start)} {text}")
 
     def error(self, text, before_start=False):
-        if text and not self.model.test:
-            self.logger.error(f"{self.colors.FAIL}{self.__format_t__(before_start)} {text}{self.colors.ENDC}")
+        if text:
+            self.logger.error(self.colors.fail(f"{self.__format_t__(before_start)} {text}"))
 
     def __format_t__(self, before_start=False):
         return "     " if before_start else f"t={self.model.t:03}{self.model.get_id(short=True)}"
 
-    def define_log(self, log: str, logfile: str = '', what=""):
+    def define_log(self, log: str, logfile: str = '', what=[]):
         formatter = logging.Formatter('%(levelname)s %(message)s')
         self.log_level = Log.get_level(log.upper())
-        if what:
-            self.what_keywords = what.split(",")
-        if self.log_level > Log.get_level("WARNING") and self.model.statistics.interactive:
-            self.progress_bar = Bar(f"Executing {self.model.get_id()}", max=self.model.config.T)
+        self.what_keywords = what
         self.logger.setLevel(self.log_level)
         if self.logger.hasHandlers():
             self.logger.handlers.clear()
@@ -109,6 +105,8 @@ class Log:
                 self.info(text, before_start)
 
     def initialize_model(self):
+        if self.logger.level == Log.get_level("ERROR") and not self.model.test:
+            self.progress_bar = Bar(f"Executing {self.model.get_id()}", max=self.model.config.T)
         if not self.model.test:
             self.warning(self.model.statistics.current_status_save(), before_start=True)
 
@@ -133,29 +131,23 @@ class MockedModel:
     model_title = ""
     before_start = True
 
+    statistics = None
+    log = None
+
     def get_id(self):
         return ""
 
 
+class LogColors:
+    def warning(self, text):
+        return colorama.Fore.YELLOW + text + colorama.Fore.RESET
 
-class TermColors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    def fail(self, text):
+        return colorama.Fore.RED + text + colorama.Fore.RESET
+
+    def remark(self, text):
+        return colorama.Style.BRIGHT + text + colorama.Style.NORMAL
+
 
     def __init__(self):
-        # disable colors if not tty compatible terminal:
-        supports_colors = False
-        for handle in [sys.stdout, sys.stderr]:
-            if (hasattr(handle, "isatty") and handle.isatty()) or \
-                    ('TERM' in os.environ and os.environ['TERM'] == 'ANSI'):
-                supports_colors = True
-        if not supports_colors:
-            self.HEADER = self.OKBLUE = self.OKCYAN = self.OKGREEN = self.WARNING = self.FAIL = self.ENDC = \
-                          self.UNDERLINE = ''
+        colorama.init(autoreset=True)

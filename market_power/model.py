@@ -125,7 +125,7 @@ class Model:
         for self.t in range(self.config.T):
             self.do_step()
         self.finish_model()
-        return self.statistics.data
+        return self.statistics.data, self.model_title
 
     def remove_failed_firms(self):
         for firm in self.firms:

@@ -48,6 +48,8 @@ class Statistics:
             symbol = name.replace(" ", "_")
             if len(symbol) != len(name):
                 symbol = symbol.lower()
+        if not symbol.isascii():
+            symbol = name
         if not callable(function):
             raise TypeError("function parameter should be a callable type")
         if what == BankSector:
@@ -76,12 +78,12 @@ class Statistics:
                                    max=self.model.config.T)
             else:
                 progress_bar = None
-            with open(self.get_export_path(export_datafile), 'w', encoding="utf-8") as savefile:
+            with open(export_datafile, 'w', encoding="utf-8") as savefile:
                 if export_description:
                     savefile.write(f"# {export_description}\n")
                 else:
                     savefile.write(f"# {__name__} T={self.model.config.T} N={self.model.config.N}\n")
-                header = "# t"
+                header = " t"
                 for item in self.data:
                     header += "\t" + self.data[item].__str__()
                 savefile.write(header + "\n")
@@ -95,7 +97,7 @@ class Statistics:
             if progress_bar:
                 progress_bar.finish()
 
-    def plot(self):
+    def plot(self, results_multiple=None):
         if self.do_plot:
             if self.plot_what:
                 what_to_plot = 0
@@ -113,19 +115,25 @@ class Statistics:
                 progress_bar = None
             for item in self.data:
                 if not self.plot_what or item in self.plot_what:
-                    plotted_files.append(self.data[item].plot(plot_format=self.do_plot,
-                                                              plot_min=self.plot_min, plot_max=self.plot_max))
+                    if results_multiple:
+                        plotted_files.append(self.data[item].plot(plot_format=self.do_plot,
+                                                                  plot_min=self.plot_min, plot_max=self.plot_max,
+                                                                  multiple=results_multiple, multiple_key=item))
+                    else:
+                        plotted_files.append(self.data[item].plot(plot_format=self.do_plot,
+                                                                  plot_min=self.plot_min, plot_max=self.plot_max))
                     if progress_bar:
                         progress_bar.next()
+
             if progress_bar:
                 progress_bar.finish()
-            Statistics.execute_program(plotted_files)
+            if results_multiple or not self.model.statistics.multiple:
+                self.execute_program(plotted_files)
 
-    @staticmethod
-    def execute_program(plot_format_array):
+    def execute_program(self, plot_format_array):
         if plot_format_array.count(None) > 0:
             plot_format_array.remove(None)
-        if len(plot_format_array) == 1:
+        if len(plot_format_array) == 1 and self.model.statistics.interactive:
             import configparser
             config = configparser.ConfigParser()
             config_file = 'market_power.config'
@@ -146,14 +154,13 @@ class Statistics:
                             subprocess.run([executable, plot_format_array[0]], stdout=subprocess.DEVNULL, shell=True)
 
     def get_what(self):
-        print(f"\t{self.model.log.colors.BOLD}{'name':20}{self.model.log.colors.ENDC} " +
-              f"{self.model.log.colors.UNDERLINE}Σ=summation ¯=average, Ξ=logarithm scale{self.model.log.colors.ENDC}")
+        print(self.model.log.colors.remark(f"\t{'name':20} Σ=summation ¯=average, Ξ=logarithm scale"))
         for item in self.data:
             print(f"\t{item:20} {self.data[item].get_description()}")
 
     def get_plot_formats(self, display: bool = False):
         if display:
-            print(f"\t{self.model.log.colors.BOLD}{'name':20}{self.model.log.colors.ENDC} ")
+            print(self.model.log.colors.remark(f"\t{'name':20} "))
             for item in StatsBankSector.get_plot_formats():
                 print(f"\t{item}")
         else:
@@ -165,10 +172,7 @@ class Statistics:
             self.plot_min = plot_min
         if plot_max and plot_max <= self.model.config.T:
             self.plot_max = plot_max
-        if self.plot_what:
-            self.plot_what = plot_what.split(",")
-        else:
-            self.plot_what = []
+        self.plot_what = plot_what
 
     def initialize_model(self, export_datafile=None, export_description=None):
         self.export_datafile = export_datafile

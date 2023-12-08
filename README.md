@@ -34,8 +34,8 @@ An Agent Based Model based on Dixit-Greenwald-Sitglitz model of monopolistic com
     
           [agr]
           program=C:\program files\qtgrace\qtgrace.exe # Grace for windows
-          [gdt] 
-          program=.... # for Gretl
+          [inp] 
+          program=.... # for Gretl scripts (gdt are not necessary, we import from txt file)
           [html]
           program=default  # to open with default program in the system for html files generated for Bokeh format
           [png]

@@ -62,6 +62,7 @@ class StatsArray:
             if multiple:
                 filename = self.model.statistics.OUTPUT_DIRECTORY + "/" + self.filename()
                 title = self.its_name + " " + self.repr_function + self.description
+                plot_format = "pyplot"
             else:
                 filename = self.model.statistics.OUTPUT_DIRECTORY + "/" + \
                            self.model.get_id_for_filename() + self.filename()
@@ -88,7 +89,6 @@ class StatsArray:
 
                 case "grace":
                     from pygrace.project import Project
-                    import unicodedata
                     plot = Project()
                     graph = plot.add_graph()
                     graph.title.text = title.encode('ascii', 'replace').decode()
@@ -107,34 +107,52 @@ class StatsArray:
                     return filename + ".agr"
 
                 case "gretl":
-                    print("TODO")  # TODO
-                    pass
+                    if not self.model.export_datafile:
+                        exported_data = self.model.statistics.get_export_path("exported.txt")
+                        import os
+                        if not os.path.isfile(exported_data):
+                            self.model.statistics.export_data(export_datafile=exported_data)
+                    else:
+                        exported_data = self.model.export_datafile
+                    with open(filename + ".inp", 'w', encoding="utf-8") as script:
+                        script.write(f"open {exported_data}\n")
+                        script.write("setobs 1 1 --special-time-series\n")
+                        script.write(f"gnuplot {self.its_name}{self.short_description.upper()}" +
+                                     f"--time-series --with-lines\n")
+                        script.write(f"quit()\n")
+                    return filename + ".inp"
 
                 case _:
                     import matplotlib.pyplot as plt
                     plt.clf()
-                    xx = []
-                    yy = []
                     if multiple:
                         for element in multiple:
-                            for i in range(plot_min, plot_max):
-                                if not np.isnan(element[multiple_key].data[i]):
-                                    xx.append(i)
-                                    yy.append(element[multiple_key].data[i])
-                            plt.plot(xx, yy)
+                            xx, yy = StatsArray.get_plot_elements(multiple[element][multiple_key].data,
+                                                                  plot_min, plot_max)
+                            plt.plot(xx, yy, label=element)
+                        plt.legend()
                     else:
-                        for i in range(plot_min, plot_max):
-                            if not np.isnan(self.data[i]):
-                                xx.append(i)
-                                yy.append(self.data[i])
-                        plt.plot(xx, yy, 'b-')
-                    plt.ylabel(y_label)
+                        xx, yy = StatsArray.get_plot_elements(self.data, plot_min, plot_max)
+                        plt.plot(xx, yy)
+                        plt.ylabel(y_label)
+                    plt.xticks(xx)
                     plt.xlabel("t")
                     plt.title(title)
                     plt.savefig(filename + ".png")
                     # plt.show()
                     return filename + ".png"
+
         return None
+
+    @staticmethod
+    def get_plot_elements(the_array, plot_min, plot_max):
+        xx = []
+        yy = []
+        for i in range(plot_min, plot_max):
+            if not np.isnan(the_array[i]):
+                xx.append(i)
+                yy.append(the_array[i])
+        return xx, yy
 
     def __str__(self):
         if self.its_name != "":
