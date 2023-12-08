@@ -182,7 +182,8 @@ class Statistics:
             self.do_plot = StatsBankSector.get_plot_formats()[0]  # by default, the first one type
             self.model.log.warning("--plot enabled due to lack of any output", before_start=True)
         if not self.model.test:
-            self.info_status(before_start=True)
+            self.model.log.step(self.current_status_save(), before_start=True)
+
 
     def finish_model(self, export_datafile=None, export_description=None):
         if not self.model.test:

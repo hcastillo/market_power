@@ -30,6 +30,8 @@ class Log:
         self.colors = LogColors()
 
     def set_model(self, its_model):
+        if not self.what_keywords and its_model.log.what_keywords:
+            self.what_keywords = its_model.log.what_keywords
         self.model = its_model
         self.model.log = self
 
@@ -70,7 +72,8 @@ class Log:
             self.logger.error(self.colors.fail(f"{self.__format_t__(before_start)} {text}"))
 
     def __format_t__(self, before_start=False):
-        return "     " if before_start else f"t={self.model.t:03}{self.model.get_id(short=True)}"
+        return f"     {self.model.get_id(short=True)}" if before_start \
+            else f"t={self.model.t+1:03}{self.model.get_id(short=True)}"
 
     def define_log(self, log: str, logfile: str = '', what=[]):
         formatter = logging.Formatter('%(levelname)s %(message)s')
@@ -94,6 +97,7 @@ class Log:
             ch.setFormatter(formatter)
             self.logger.addHandler(ch)
 
+
     def info_firm(self, firm, before_start=False):
         text = f"{firm.__str__()}  "
         if not before_start:
@@ -107,16 +111,14 @@ class Log:
     def initialize_model(self):
         if self.logger.level == Log.get_level("ERROR") and not self.model.test:
             self.progress_bar = Bar(f"Executing {self.model.get_id()}", max=self.model.config.T)
-        if not self.model.test:
-            self.warning(self.model.statistics.current_status_save(), before_start=True)
 
-    def step(self, log_info):
+    def step(self, log_info, before_start=False):
         if not self.model.test:
             if self.progress_bar:
                 self.progress_bar.next()
             else:
-                self.warning(log_info)
-                self.model.statistics.info_status(before_start=False)
+                self.warning(log_info, before_start=before_start)
+                self.model.statistics.info_status(before_start=before_start)
 
     def finish_model(self):
         if not self.model.test:

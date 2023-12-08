@@ -95,14 +95,11 @@ class StatsArray:
                     data = []
                     for i in range(plot_min, plot_max):
                         if not np.isnan(self.data[i]):
-                            data.append([i, self.data[i]])
+                            data.append((i, self.data[i]))
                     graph.add_dataset(data)
                     graph.autoscalex()
-                    graph.autotickx()
-                    _x_min, _y_min, _x_max, _y_max = graph.get_world()
-                    graph.set_world(_x_min, _x_min, _x_max, _x_max)
+                    graph.autoscaley()
                     graph.autoticky()
-                    graph.remove_extraworld_drawing_objects()
                     plot.saveall(filename + ".agr")
                     return filename + ".agr"
 
@@ -118,7 +115,7 @@ class StatsArray:
                         script.write(f"open {exported_data}\n")
                         script.write("setobs 1 1 --special-time-series\n")
                         script.write(f"gnuplot {self.its_name}{self.short_description.upper()}" +
-                                     f"--time-series --with-lines\n")
+                                     f" --time-series --with-lines\n")
                         script.write(f"quit()\n")
                     return filename + ".inp"
 
