@@ -23,7 +23,7 @@ An Agent Based Model based on Dixit-Greenwald-Sitglitz model of monopolistic com
     - To run two models and obtain a combined plot, repeat twice a config parameter, for instance:
     
           main.py --log DEBUG --n 150 --t 2000 eta=0.0001 eta=0.25 --plot
-      It will execute two models and generate individual files for each model but also a combined version to compare both. The individual files will be prepend with "1" and the combined version without it.
+      It will execute two models and generate individual files for each model but also a combined version to compare both. The individual files will be prepended with "1" and the combined version without it.
     - The model can be executed as a package. To do it, the sequence should be:
 
           import market_power as mp

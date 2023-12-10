@@ -165,3 +165,7 @@ auxiliar/*
 
 output/*
 
+market_power.aux
+market_power.log
+market_power.out
+market_power.synctex.gz

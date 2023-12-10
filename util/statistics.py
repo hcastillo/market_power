@@ -7,7 +7,6 @@ ABM model auxiliary file: to have statistics and plot
 from progress.bar import Bar
 
 from market_power.bank import BankSector
-from util.log import Log
 from util.stats_array import StatsFirms, StatsBankSector, PlotMethods
 import os
 
@@ -80,23 +79,23 @@ class Statistics:
                                    max=self.model.config.T)
             else:
                 progress_bar = None
-            with (open(export_datafile, 'w', encoding="utf-8") as savefile):
+            with (open(export_datafile, 'w', encoding="utf-8") as save_file):
                 if export_description:
-                    savefile.write(f"# {export_description}\n")
+                    save_file.write(f"# {export_description}\n")
                 else:
-                    savefile.write(f"# {__name__} T={self.model.config.T} N={self.model.config.N}\n")
+                    save_file.write(f"# {__name__} T={self.model.config.T} N={self.model.config.N}\n")
                 header = " t"
                 for item in self.data:
                     header += "\t"
                     header += f"{self.data[item].__str__()}"
                     if self.model.model_id:
                         header += f"_{self.model.model_id}"
-                savefile.write(header + "\n")
+                save_file.write(header + "\n")
                 for i in range(self.model.config.T):
                     line = f"{i:3}"
                     for item in self.data:
                         line += "\t" + self.data[item][i]
-                    savefile.write(line + "\n")
+                    save_file.write(line + "\n")
                     if progress_bar:
                         progress_bar.next()
             if progress_bar:
@@ -204,7 +203,7 @@ def mean(data):
     return result / i
 
 
-def allvalues(data):
+def all_values(data):
     result = []
     for i in enumerate(data):
         result.append(i)

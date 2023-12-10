@@ -24,7 +24,7 @@ class MarketPowerTest(unittest.TestCase):
     def __check_values__(self, firm, name, value):
         if value < 0:
             self.model.log.debug("******",
-                                 f"{firm.getId()} value {name}={value} <0 is not valid: I changed it to 0")
+                                 f"{firm} value {name}={value} <0 is not valid: I changed it to 0")
             return 0
         else:
             return value
@@ -36,7 +36,7 @@ class MarketPowerTest(unittest.TestCase):
         if L + K != A:
             L = A - K
             self.model.log.debug("******",
-                                 f"{firm.getId()} K must be equal to A+L => L modified to {L:.3f}")
+                                 f"{firm} K must be equal to A+L => L modified to {L:.3f}")
         firm.L = L
         firm.A = A
         firm.K = K
@@ -50,7 +50,7 @@ class MarketPowerTest(unittest.TestCase):
         if A:
             self.assertEqual(firm.A, A)
         if failures:
-            self.asserEqual(firm.failures, failures)
+            self.assertEqual(firm.failures, failures)
         if L and K and A:
             self.assertEqual(firm.K, firm.A+firm.L)
 
@@ -63,21 +63,19 @@ class MarketPowerTest(unittest.TestCase):
         if A:
             self.assertEqual(float(self.model.statistics.data["firms_A"][self.model.t]), A)
         if failures:
-            self.asserEqual(float(self.model.statistics.data["firms_Failures"][self.model.t]), failures)
+            self.assertEqual(float(self.model.statistics.data["firms_Failures"][self.model.t]), failures)
         if L and K and A:
             self.assertEqual(float(self.model.statistics.data["firms_K"][self.model.t]),
-                             float(self.model.statistics.data["firms_L"][self.model.t])+
+                             float(self.model.statistics.data["firms_L"][self.model.t]) +
                              float(self.model.statistics.data["firms_A"][self.model.t]))
 
-    def assertBankSector(self, D: float = None, L: float = None, A: float = None, credit_supply: float = None):
+    def assertBankSector(self, D: float = None, L: float = None, A: float = None):
         if L:
             self.assertEqual(self.model.bank_sector.L, L)
         if D:
             self.assertEqual(self.model.bank_sector.D, D)
         if A:
             self.assertEqual(self.model.bank_sector.A, A)
-        if credit_supply:
-            self.assertEqual(self.model.bank_sector.credit_supply, credit_supply)
         if L and D and A:
             self.assertEqual(self.model.bank_sector.L, self.model.bank_sector.A+self.model.bank_sector.D)
 

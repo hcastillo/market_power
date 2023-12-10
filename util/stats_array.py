@@ -9,6 +9,7 @@ import math
 from enum import Enum
 
 
+# noinspection SpellCheckingInspection
 class PlotMethods(str, Enum):
     pyplot = "pyplot"
     bokeh = "bokeh"
@@ -17,8 +18,8 @@ class PlotMethods(str, Enum):
     screen = "screen"
 
     @classmethod
-    def _missing_(self, value):
-        return self.pyplot
+    def _missing_(cls, _):
+        return cls.pyplot
 
     def plot(self, plot_min, plot_max, filename, title, y_label, series_name,
              data, model, multiple=None, multiple_key=None):
@@ -28,16 +29,16 @@ class PlotMethods(str, Enum):
                 from bokeh.palettes import Category20
                 p = bokeh.plotting.figure(title=title, x_axis_label="t", y_axis_label=y_label,
                                           sizing_mode="stretch_width", height=550)
-                if multiple:
+                if not multiple:
+                    xx, yy = StatsArray.get_plot_elements(data, plot_min, plot_max)
+                    p.line(xx, yy, color="blue", line_width=2)
+                else:
                     i = 0
                     for element in multiple:
                         xx, yy = StatsArray.get_plot_elements(multiple[element][multiple_key].data,
                                                               plot_min, plot_max)
-                        p.line(xx, yy, color=Category20[20][i%20], line_width=2, legend_label=element)
+                        p.line(xx, yy, color=Category20[20][i % 20], line_width=2, legend_label=element)
                         i += 1
-                else:
-                    xx, yy = StatsArray.get_plot_elements(data, plot_min, plot_max)
-                    p.line(xx, yy, color="blue", line_width=2)
                 if self.name == PlotMethods.screen:
                     bokeh.plotting.output_notebook()
                     bokeh.plotting.show(p)
@@ -92,9 +93,9 @@ class PlotMethods(str, Enum):
                         script.write(f"gnuplot {series_to_plot} --time-series --with-lines\n")
                     else:
                         if model.get_id_for_filename() != '':
-                            series_name += "_"+model.get_id_for_filename().replace("_", "")
+                            series_name += "_" + model.get_id_for_filename().replace("_", "")
                         script.write(f"gnuplot {series_name} --time-series --with-lines\n")
-                    # script.write(f"quit()\n")
+                    script.write(f"exit()\n")
                 return filename + ".inp"
 
             case _:
@@ -121,9 +122,9 @@ class PlotMethods(str, Enum):
     @staticmethod
     def check_sys_argv():
         import sys
-        for i in range(len(sys.argv)-1):
-            if sys.argv[i] == "--plot" and sys.argv[i+1].startswith("-"):
-                sys.argv.insert(i+1, PlotMethods('default').name)
+        for i in range(len(sys.argv) - 1):
+            if sys.argv[i] == "--plot" and sys.argv[i + 1].startswith("-"):
+                sys.argv.insert(i + 1, PlotMethods('default').name)
         if sys.argv[-1] == '--plot':
             sys.argv.append(PlotMethods('default').name)
 
@@ -199,7 +200,7 @@ class StatsArray:
                     xx.append(i)
                     yy.append(the_array[i])
                 else:
-                    xx.append((i,the_array[i]))
+                    xx.append((i, the_array[i]))
         if two_list:
             return xx, yy
         else:
@@ -249,4 +250,3 @@ class StatsBankSector(StatsArray):
             return self.prepend + self.__return_value_formatted__()
         else:
             return ""
-

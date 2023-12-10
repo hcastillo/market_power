@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-ABM model executer, to run interactively the modelss
+ABM model executor, to run interactively the models
 @author: hector@bith.net
 """
 from market_power.model import Model
@@ -12,6 +12,7 @@ import typer
 from typing import List
 
 
+# noinspection SpellCheckingInspection
 def run_interactive(config: List[str] = typer.Argument(None, help="Change config value (i.e. alpha=3.1, ? to list)"),
                     log: str = typer.Option(None, help="Log level messages (ERROR,WARNING,INFO,DEBUG)"),
                     logfile: str = typer.Option(None, help="File to send the logs to"),
@@ -96,6 +97,7 @@ def manage_log_options(model, log, log_what, logfile, logger):
     model.log.define_log(log=log, logfile=logfile, what=log_what)
 
 
+# noinspection SpellCheckingInspection
 def manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax, plot_what, plot, logger, config_list):
     params_only_present_once = {}
     params_present_multiple = {}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 """
-ABM model tests if the summs of values after execute current_status_save() are correct
+ABM model tests if the sums of values after execute current_status_save() are correct
 """
 import unittest
 from util.log import Log
@@ -10,7 +10,6 @@ from market_power.firm import Firm
 from market_power.bank import BankSector
 from util.stats_array import StatsFirms, StatsBankSector
 from util.statistics import Statistics
-import math
 
 
 class TestLog(unittest.TestCase):
@@ -23,7 +22,7 @@ class TestLog(unittest.TestCase):
 
         self.statistics.add(what=Firm, name="K", prepend="*text*")
         self.statistics.add(what=Firm, name="A")
-        self.statistics.add(what=Firm, name="L", log=True)
+        self.statistics.add(what=Firm, name="L", logarithm=True)
         self.statistics.add(what=Firm, name="Failures", symbol="$", attr_name="is_bankrupted", number_type=int)
         self.statistics.add(what=BankSector, name="L")
         self.model.config.__init__()
@@ -36,7 +35,7 @@ class TestLog(unittest.TestCase):
         self.assertEqual(len(self.model.firms), 2)
         self.assertEqual(len(self.statistics.data), 5)
         # check that the classes are in the correct order and the data stored with the correct names
-        self.assertIsInstance(self.statistics.data['firm_A'], StatsFirms)
+        self.assertIsInstance(self.statistics.data['firms_A'], StatsFirms)
         self.assertIsInstance(self.statistics.data['bank_L'], StatsBankSector)
 
         result = self.statistics.current_status_save()
@@ -44,11 +43,11 @@ class TestLog(unittest.TestCase):
         # sum firmA = 4
         # sum firmK = 10
         # sum firmL = ln(8) = (2,0794415416798359282516963643745)
-        self.assertEqual(float(self.statistics.data['firm_A'][0]), 4.0)
-        self.assertEqual(float(self.statistics.data['firm_K'][0]), 10.0)
-        self.assertEqual(self.statistics.data['firm_L'][0], " 2.08")
+        self.assertEqual(float(self.statistics.data['firms_A'][0]), 4.0)
+        self.assertEqual(float(self.statistics.data['firms_K'][0]), 10.0)
+        self.assertEqual(self.statistics.data['firms_L'][0], "  2.079")
         # string with the order of stored items and prepends / separators and symbols:
-        self.assertEqual(result, "*text*ΣK=10.00ΣA= 4.00ΣLΞ 2.08Σ$=  0L=250.0")
+        self.assertEqual(result, "*text*ΣK= 10.000ΣA=  4.000ΣLΞ  2.079Σ$=   0L=250.000")
 
 
 if __name__ == '__main__':

@@ -14,7 +14,7 @@ from util.stats_array import PlotMethods
 
 class Log:
     """
-    The class acts as a logger and helpers to represent the data and evol from the Model.
+    The class acts as a logger and helpers for the Model.
     """
     logger = logging.getLogger("model")
     OUTPUT_DIRECTORY = "output"
@@ -87,6 +87,7 @@ class Log:
             else f"t={self.model.t + 1:03}{self.model.get_id(short=True)}"
 
     def define_log(self, log: str, logfile: str = '', what=[]):
+        # noinspection SpellCheckingInspection
         formatter = logging.Formatter('%(levelname)s %(message)s')
         self.log_level = Log.get_level(log.upper())
         self.what_keywords = what
@@ -149,21 +150,24 @@ class MockedModel:
     t = 0
     config = None
 
-    def get_id_for_filename(self, filename):
+    def get_id_for_filename(self, _):
         return 0
 
-    def get_id(self, short=False):
+    def get_id(self, _):
         return ""
 
 
 class LogColors:
-    def warning(self, text):
+    @staticmethod
+    def warning(text):
         return colorama.Fore.YELLOW + text + colorama.Fore.RESET
 
-    def fail(self, text):
+    @staticmethod
+    def fail(text):
         return colorama.Fore.RED + text + colorama.Fore.RESET
 
-    def remark(self, text):
+    @staticmethod
+    def remark(text):
         return colorama.Style.BRIGHT + text + colorama.Style.NORMAL
 
     def __init__(self):

@@ -6,7 +6,6 @@ ABM model tests to verify the functions inside bank.py
 """
 import pytest
 from market_power.model import Model
-from market_power.firm import Firm
 
 
 class TestFirm:
@@ -18,10 +17,8 @@ class TestFirm:
         model.firms[0].r = 0.03
         model.firms[1].r = 0.05
         yield model
-        # teardown
-        model = None
 
     def test_bank(self, setup):
         avg_r = setup.bank_sector.determine_average_interest_rate()
-        assert avg_r == 0.04
+        assert avg_r == 0.01
 

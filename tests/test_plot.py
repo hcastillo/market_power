@@ -6,10 +6,10 @@ ABM model tests to verify the functions inside firm
 """
 import pytest
 from market_power.model import Model
-from market_power.firm import Firm
 from util.stats_array import StatsFirms, PlotMethods
 import numpy as np
 import os
+
 
 class TestPlot:
     @pytest.fixture
@@ -21,11 +21,9 @@ class TestPlot:
         array = StatsFirms(model, float, "description", "short", prepend="^")
         array.data = np.array([5, 4, 3, 8, 12])
         yield array
-        # teardown
-        array = None
 
     def plot_a_figure(self, array_to_plot):
-        file_generated = array_to_plot.model.statistics.OUTPUT_DIRECTORY+"/firms_"+"description.png"
+        file_generated = array_to_plot.model.statistics.OUTPUT_DIRECTORY + "/firms_" + "description.png"
 
         assert os.path.isfile(file_generated), False
         array_to_plot.plot(PlotMethods.pyplot)
@@ -36,10 +34,10 @@ class TestPlot:
         array1 = StatsFirms(array_to_plot.model, float, "other1", "name1", prepend="#")
         array2 = StatsFirms(array_to_plot.model, float, "other2", "name1", prepend="#")
         array_multiple = [array_to_plot, array1, array2]
-        file0_generated = array_to_plot.model.statistics.OUTPUT_DIRECTORY+"/firms_"+"description.png"
-        file1_generated = array_to_plot.model.statistics.OUTPUT_DIRECTORY+"/firms_"+"description.png"
-        file2_generated = array_to_plot.model.statistics.OUTPUT_DIRECTORY+"/firms_"+"description.png"
-        file_global = array_to_plot.model.statistics.OUTPUT_DIRECTORY+"/firms_"+"description.png"
+        file0_generated = array_to_plot.model.statistics.OUTPUT_DIRECTORY + "/firms_" + "description.png"
+        file1_generated = array_to_plot.model.statistics.OUTPUT_DIRECTORY + "/firms_" + "description.png"
+        file2_generated = array_to_plot.model.statistics.OUTPUT_DIRECTORY + "/firms_" + "description.png"
+        file_global = array_to_plot.model.statistics.OUTPUT_DIRECTORY + "/firms_" + "description.png"
         assert os.path.isfile(file_global), False
         assert os.path.isfile(file0_generated), False
         assert os.path.isfile(file1_generated), False
