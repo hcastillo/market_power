@@ -7,6 +7,7 @@ ABM model executer, to run interactively the modelss
 from market_power.model import Model
 from market_power.config import Config
 from util.log import Log
+from util.stats_array import PlotMethods
 import typer
 from typing import List
 
@@ -16,7 +17,7 @@ def run_interactive(config: List[str] = typer.Argument(None, help="Change config
                     logfile: str = typer.Option(None, help="File to send the logs to"),
                     log_what: str = typer.Option(None, help="What to log (apart from balances, ? to list)"),
                     save: str = typer.Option(None, help="Save the output of this execution"),
-                    plot: str = typer.Option(None, help="Save the plot (? to list formats)"),
+                    plot: PlotMethods = typer.Option(None, help="Save the plot (? to list formats)"),
                     plot_tmin: int = typer.Option(None, help="Min. time to represent in the plots"),
                     plot_tmax: int = typer.Option(None, help="Max. time to represent in the plots"),
                     plot_what: str = typer.Option("", help="What to plot (all if omitted, ? to list)"),
@@ -30,9 +31,7 @@ def run_interactive(config: List[str] = typer.Argument(None, help="Change config
         do_clear_of_output_directory()
     results = {}
     for i in range(len(models)):
-        logger.set_model(models[i])
-        models[i].statistics.interactive = len(models) == 1
-        models[i].statistics.multiple = len(models) != 1
+        logger.set_model(models[i], plot, i, len(models) != 1)
         result, name_of_result = run(models[i], save)
         results[name_of_result] = result
     if len(models) > 1 and (plot or plot_what):
@@ -82,19 +81,10 @@ def manage_plot_options(model, plot_tmin, plot_tmax, plot_what, plot, logger):
     plot_what = check_what(logger, plot_what, "plot")
     if (plot_tmin or plot_tmax or plot_what) and not plot:
         # if not enabled plot with a specific format, we assume the first type: pyplot
-        plot = model.statistics.get_plot_formats()[0]
+        plot = model.statistics.get_default_plot_method()
     if plot:
-        if plot == '?':
-            model.statistics.get_plot_formats(display=True)
-            raise typer.Exit()
-        else:
-            if plot.lower() in model.statistics.get_plot_formats():
-                model.statistics.enable_plotting(plot_format=plot.lower(), plot_min=plot_tmin,
-                                                 plot_max=plot_tmax, plot_what=plot_what)
-            else:
-                logger.log.error(f"Plot format must be one of {model.statistics.get_plot_formats()}",
-                                 before_start=True)
-                raise typer.Exit(-1)
+        model.statistics.enable_plotting(plot_format=plot, plot_min=plot_tmin,
+                                         plot_max=plot_tmax, plot_what=plot_what)
 
 
 def manage_log_options(model, log, log_what, logfile, logger):
@@ -183,4 +173,5 @@ if is_notebook():
     run_notebook()
 else:
     if __name__ == "__main__":
+        PlotMethods.check_sys_argv()
         typer.run(run_interactive)

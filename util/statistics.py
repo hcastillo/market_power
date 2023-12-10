@@ -8,8 +8,9 @@ from progress.bar import Bar
 
 from market_power.bank import BankSector
 from util.log import Log
-from util.stats_array import StatsFirms, StatsBankSector
+from util.stats_array import StatsFirms, StatsBankSector, PlotMethods
 import os
+
 
 class Statistics:
     OUTPUT_DIRECTORY = "output"
@@ -19,6 +20,7 @@ class Statistics:
         self.model = its_model
         self.data = {}
         self.plot_min = 0
+        self.multiple = False
         self.plot_max = None
         self.plot_what = []
         import os
@@ -78,14 +80,17 @@ class Statistics:
                                    max=self.model.config.T)
             else:
                 progress_bar = None
-            with open(export_datafile, 'w', encoding="utf-8") as savefile:
+            with (open(export_datafile, 'w', encoding="utf-8") as savefile):
                 if export_description:
                     savefile.write(f"# {export_description}\n")
                 else:
                     savefile.write(f"# {__name__} T={self.model.config.T} N={self.model.config.N}\n")
                 header = " t"
                 for item in self.data:
-                    header += "\t" + self.data[item].__str__()
+                    header += "\t"
+                    header += f"{self.data[item].__str__()}"
+                    if self.model.model_id:
+                        header += f"_{self.model.model_id}"
                 savefile.write(header + "\n")
                 for i in range(self.model.config.T):
                     line = f"{i:3}"
@@ -158,13 +163,8 @@ class Statistics:
         for item in self.data:
             print(f"\t{item:20} {self.data[item].get_description()}")
 
-    def get_plot_formats(self, display: bool = False):
-        if display:
-            print(self.model.log.colors.remark(f"\t{'name':20} "))
-            for item in StatsBankSector.get_plot_formats():
-                print(f"\t{item}")
-        else:
-            return StatsBankSector.get_plot_formats()
+    def get_default_plot_method(self):
+        return PlotMethods('default')
 
     def enable_plotting(self, plot_format: str, plot_min: int = None, plot_max: int = None, plot_what: str = ""):
         self.do_plot = plot_format
@@ -179,11 +179,10 @@ class Statistics:
         self.export_description = export_description
         if self.model.log.progress_bar and not self.do_plot and not self.export_datafile:
             # if no debug, and no output to file and no plots, then why you execute this?
-            self.do_plot = StatsBankSector.get_plot_formats()[0]  # by default, the first one type
+            self.do_plot = self.get_default_plot_method()
             self.model.log.warning("--plot enabled due to lack of any output", before_start=True)
         if not self.model.test:
             self.model.log.step(self.current_status_save(), before_start=True)
-
 
     def finish_model(self, export_datafile=None, export_description=None):
         if not self.model.test:
@@ -192,9 +191,9 @@ class Statistics:
 
     def clear_output_dir(self):
         for file in [f for f in os.listdir(self.OUTPUT_DIRECTORY)]:
-            if os.path.isfile(self.OUTPUT_DIRECTORY+"/"+file):
-                self.model.log.warning(f"Removing {self.OUTPUT_DIRECTORY+'/'+file}", before_start=True)
-                os.remove(self.OUTPUT_DIRECTORY+"/"+file)
+            if os.path.isfile(self.OUTPUT_DIRECTORY + "/" + file):
+                self.model.log.warning(f"Removing {self.OUTPUT_DIRECTORY + '/' + file}", before_start=True)
+                os.remove(self.OUTPUT_DIRECTORY + "/" + file)
 
 
 def mean(data):
@@ -203,7 +202,6 @@ def mean(data):
     for i, x in enumerate(data):
         result += x
     return result / i
-
 
 
 def allvalues(data):

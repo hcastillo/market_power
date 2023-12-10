@@ -7,7 +7,7 @@ ABM model tests to verify the functions inside firm
 import pytest
 from market_power.model import Model
 from market_power.firm import Firm
-from util.stats_array import StatsFirms
+from util.stats_array import StatsFirms, PlotMethods
 import numpy as np
 import os
 
@@ -28,19 +28,28 @@ class TestPlot:
         file_generated = array_to_plot.model.statistics.OUTPUT_DIRECTORY+"/firms_"+"description.png"
 
         assert os.path.isfile(file_generated), False
-        array_to_plot.plot("pyplot")
+        array_to_plot.plot(PlotMethods.pyplot)
         assert os.path.isfile(file_generated), True
-
         os.remove(file_generated)
 
     def plot_three_figures(self, array_to_plot):
-        array1 = StatsFirms(model, float, "other1", "name1", prepend="#")
-        array2 = StatsFirms(model, float, "other2", "name1", prepend="#")
+        array1 = StatsFirms(array_to_plot.model, float, "other1", "name1", prepend="#")
+        array2 = StatsFirms(array_to_plot.model, float, "other2", "name1", prepend="#")
         array_multiple = [array_to_plot, array1, array2]
         file0_generated = array_to_plot.model.statistics.OUTPUT_DIRECTORY+"/firms_"+"description.png"
         file1_generated = array_to_plot.model.statistics.OUTPUT_DIRECTORY+"/firms_"+"description.png"
         file2_generated = array_to_plot.model.statistics.OUTPUT_DIRECTORY+"/firms_"+"description.png"
         file_global = array_to_plot.model.statistics.OUTPUT_DIRECTORY+"/firms_"+"description.png"
-        assert os.path.isfile(file_generated), False
-        array_to_plot.plot("pyplot", array_multiple)
-        assert os.path.isfile(array_to_plot.model.statistics.OUTPUT_DIRECTORY+"/firms_"+"description.png"), True
+        assert os.path.isfile(file_global), False
+        assert os.path.isfile(file0_generated), False
+        assert os.path.isfile(file1_generated), False
+        assert os.path.isfile(file2_generated), False
+        array_to_plot.plot(PlotMethods.pyplot, multiple=array_multiple)
+        assert os.path.isfile(file_global), True
+        assert os.path.isfile(file0_generated), True
+        assert os.path.isfile(file1_generated), True
+        assert os.path.isfile(file2_generated), True
+        os.remove(file_global)
+        os.remove(file0_generated)
+        os.remove(file1_generated)
+        os.remove(file2_generated)

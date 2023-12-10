@@ -7,9 +7,10 @@ ABM model auxiliary file: logging facilities
 import logging
 import numpy as np
 import sys
-import os
 from progress.bar import Bar
 import colorama
+from util.stats_array import PlotMethods
+
 
 class Log:
     """
@@ -29,10 +30,20 @@ class Log:
             self.model = MockedModel()
         self.colors = LogColors()
 
-    def set_model(self, its_model):
+    def set_model(self, its_model, plot, num_model, multiple_models_will_be_run: False):
         if not self.what_keywords and its_model.log.what_keywords:
             self.what_keywords = its_model.log.what_keywords
         self.model = its_model
+        if multiple_models_will_be_run:
+            self.model.export_datafile = f"{self.OUTPUT_DIRECTORY}/model_{num_model}.txt"
+            self.model.statistics.export_datafile = self.model.export_datafile
+            self.model.statistics.interactive = False
+            self.model.statistics.multiple = True
+        else:
+            if plot == PlotMethods.gretl and not self.model.export_datafile:
+                self.model.export_datafile = f"{self.OUTPUT_DIRECTORY}/model.txt"
+            self.model.statistics.interactive = True
+            self.model.statistics.multiple = False
         self.model.log = self
 
     @staticmethod
@@ -73,7 +84,7 @@ class Log:
 
     def __format_t__(self, before_start=False):
         return f"     {self.model.get_id(short=True)}" if before_start \
-            else f"t={self.model.t+1:03}{self.model.get_id(short=True)}"
+            else f"t={self.model.t + 1:03}{self.model.get_id(short=True)}"
 
     def define_log(self, log: str, logfile: str = '', what=[]):
         formatter = logging.Formatter('%(levelname)s %(message)s')
@@ -97,14 +108,13 @@ class Log:
             ch.setFormatter(formatter)
             self.logger.addHandler(ch)
 
-
     def info_firm(self, firm, before_start=False):
         text = f"{firm.__str__()}  "
         if not before_start:
             if self.what_keywords and not self.model.test:
                 for elem in self.model.statistics.data:
                     if elem in self.what_keywords and elem.startswith('firms'):
-                        text += f" {elem.replace('firms_','')}="
+                        text += f" {elem.replace('firms_', '')}="
                         text += f"{self.format(self.model.statistics.data[elem].get_value(firm))}"
                 self.info(text, before_start)
 
@@ -125,7 +135,8 @@ class Log:
             if self.progress_bar:
                 self.progress_bar.finish()
             else:
-                self.info(f"finish: {self.model.get_id()} {self.model.model_title} T={self.model.config.T} N={self.model.config.N}")
+                self.info(f"finish: {self.model.get_id()} {self.model.model_title}" +
+                          f"T={self.model.config.T} N={self.model.config.N}")
 
 
 class MockedModel:
@@ -135,8 +146,13 @@ class MockedModel:
 
     statistics = None
     log = None
+    t = 0
+    config = None
 
-    def get_id(self):
+    def get_id_for_filename(self, filename):
+        return 0
+
+    def get_id(self, short=False):
         return ""
 
 
@@ -149,7 +165,6 @@ class LogColors:
 
     def remark(self, text):
         return colorama.Style.BRIGHT + text + colorama.Style.NORMAL
-
 
     def __init__(self):
         colorama.init(autoreset=True)
