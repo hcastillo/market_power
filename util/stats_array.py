@@ -25,15 +25,19 @@ class PlotMethods(str, Enum):
         match self.name:
             case PlotMethods.bokeh | PlotMethods.screen:
                 import bokeh.plotting
-                xx = []
-                yy = []
-                for i in range(plot_min, plot_max):
-                    if not np.isnan(data[i]):
-                        xx.append(i)
-                        yy.append(data[i])
+                from bokeh.palettes import Category20
                 p = bokeh.plotting.figure(title=title, x_axis_label="t", y_axis_label=y_label,
                                           sizing_mode="stretch_width", height=550)
-                p.line(xx, yy, color="blue", line_width=2)
+                if multiple:
+                    i = 0
+                    for element in multiple:
+                        xx, yy = StatsArray.get_plot_elements(multiple[element][multiple_key].data,
+                                                              plot_min, plot_max)
+                        p.line(xx, yy, color=Category20[20][i%20], line_width=2, legend_label=element)
+                        i += 1
+                else:
+                    xx, yy = StatsArray.get_plot_elements(data, plot_min, plot_max)
+                    p.line(xx, yy, color="blue", line_width=2)
                 if self.name == PlotMethods.screen:
                     bokeh.plotting.output_notebook()
                     bokeh.plotting.show(p)
