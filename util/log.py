@@ -8,7 +8,6 @@ import logging
 import numpy as np
 import sys
 from progress.bar import Bar
-import colorama
 from util.stats_array import PlotMethods
 
 
@@ -124,7 +123,7 @@ class Log:
             self.progress_bar = Bar(f"Executing {self.model.get_id()}", max=self.model.config.T)
 
     def step(self, log_info, before_start=False):
-        if not self.model.test:
+        if not self.model.test and self.model.statistics.interactive:
             if self.progress_bar:
                 self.progress_bar.next()
             else:
@@ -158,17 +157,27 @@ class MockedModel:
 
 
 class LogColors:
-    @staticmethod
-    def warning(text):
-        return colorama.Fore.YELLOW + text + colorama.Fore.RESET
+    colors = True
 
-    @staticmethod
-    def fail(text):
-        return colorama.Fore.RED + text + colorama.Fore.RESET
+    def warning(self, text):
+        if self.colors:
+            import colorama
+            return colorama.Fore.YELLOW + text + colorama.Fore.RESET
 
-    @staticmethod
-    def remark(text):
-        return colorama.Style.BRIGHT + text + colorama.Style.NORMAL
+    def fail(self, text):
+        if self.colors:
+            import colorama
+            return colorama.Fore.RED + text + colorama.Fore.RESET
+
+    def remark(self, text):
+        if self.colors:
+            import colorama
+            return colorama.Style.BRIGHT + text + colorama.Style.NORMAL
 
     def __init__(self):
-        colorama.init(autoreset=True)
+        try:
+            import colorama
+        except ImportError:
+            self.colors = False
+        else:
+            colorama.init(autoreset=True)

@@ -165,7 +165,7 @@ class Statistics:
     def get_default_plot_method(self):
         return PlotMethods('default')
 
-    def enable_plotting(self, plot_format: str, plot_min: int = None, plot_max: int = None, plot_what: str = ""):
+    def enable_plotting(self, plot_format: PlotMethods, plot_min: int = None, plot_max: int = None, plot_what: str = ""):
         self.do_plot = plot_format
         if plot_min and plot_min >= 0:
             self.plot_min = plot_min
