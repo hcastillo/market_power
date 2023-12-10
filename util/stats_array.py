@@ -84,7 +84,6 @@ class PlotMethods(str, Enum):
                     script.write(f"open {model.export_datafile}\n")
                     script.write("setobs 1 1 --special-time-series\n")
                     if multiple:
-                        import os
                         series_to_plot = f" {series_name}_0"
                         for i in range(1, len(multiple)):
                             another_model_filename = model.export_datafile.replace("_0.txt", f"_{i}.txt")
@@ -92,6 +91,8 @@ class PlotMethods(str, Enum):
                             series_to_plot += f" {series_name}_{i}"
                         script.write(f"gnuplot {series_to_plot} --time-series --with-lines\n")
                     else:
+                        if model.get_id_for_filename() != '':
+                            series_name += "_"+model.get_id_for_filename().replace("_", "")
                         script.write(f"gnuplot {series_name} --time-series --with-lines\n")
                     # script.write(f"quit()\n")
                 return filename + ".inp"
