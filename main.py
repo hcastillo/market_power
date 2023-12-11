@@ -14,7 +14,7 @@ from typing import List
 
 # noinspection SpellCheckingInspection
 def run_interactive(config: List[str] = typer.Argument(None, help="Change config value (i.e. alpha=3.1, ? to list)"),
-                    log: str = typer.Option(None, help="Log level messages (ERROR,WARNING,INFO,DEBUG)"),
+                    log: str = typer.Option(None, help="Log level messages (? to list)"),
                     logfile: str = typer.Option(None, help="File to send the logs to"),
                     log_what: str = typer.Option(None, help="What to log (apart from balances, ? to list)"),
                     save: str = typer.Option(None, help="Save the output of this execution"),
@@ -25,7 +25,7 @@ def run_interactive(config: List[str] = typer.Argument(None, help="Change config
                     clear: bool = typer.Option(False, help="Clear the output folder before execute anything"),
                     n: int = typer.Option(Config.N, help="Number of firms"),
                     t: int = typer.Option(Config.T, help="Time repetitions")):
-    logger = Log()
+    logger = Log(Model.default())
     models, title = manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax,
                                          plot_what, plot, logger, config)
     if clear:

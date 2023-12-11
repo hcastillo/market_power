@@ -18,15 +18,12 @@ class Log:
     logger = logging.getLogger("model")
     OUTPUT_DIRECTORY = "output"
     model = None
-    log_level = "ERROR"
+    log_level = "WARN"  # default if not other chosen
     progress_bar = None
     what_keywords = []
 
-    def __init__(self, model=None):
-        if model:
-            self.model = model
-        else:
-            self.model = MockedModel()
+    def __init__(self, model):
+        self.model = model
         self.colors = LogColors()
 
     def set_model(self, its_model, plot, num_model, multiple_models_will_be_run: False):
@@ -59,6 +56,12 @@ class Log:
 
     @staticmethod
     def get_level(option):
+        if option == "?":
+            for level in list(logging._nameToLevel.keys()):
+                if hasattr(Log, level.lower()):
+                    print(f"\t{level}", "(default)" if level == Log.log_level else "")
+            sys.exit(0)
+
         try:
             return getattr(logging, option.upper())
         except AttributeError:
@@ -76,6 +79,10 @@ class Log:
     def warning(self, text, before_start=False):
         if text and not self.model.test:
             self.logger.warning(f" {self.__format_t__(before_start)} {text}")
+
+    def error_minor(self, text, before_start=False):
+        if text and not self.model.test and not self.progress_bar:
+            self.logger.error(f" {self.__format_t__(before_start)} {text}")
 
     def error(self, text, before_start=False):
         if text:
@@ -136,24 +143,8 @@ class Log:
                 self.progress_bar.finish()
             else:
                 self.info(f"finish: {self.model.get_id()} {self.model.model_title}" +
-                          f"T={self.model.config.T} N={self.model.config.N}")
-
-
-class MockedModel:
-    test = True
-    model_title = ""
-    before_start = True
-
-    statistics = None
-    log = None
-    t = 0
-    config = None
-
-    def get_id_for_filename(self, _):
-        return 0
-
-    def get_id(self, _):
-        return ""
+                          f"T={self.model.config.T} N={self.model.config.N} " +
+                          f"bank_failures={self.model.bank_sector.bank_failures}")
 
 
 class LogColors:

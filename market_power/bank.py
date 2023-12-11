@@ -14,7 +14,8 @@ class BankSector:
         self.profits = 0.0
         self.totalA = 0.0
         self.totalK = 0.0
-        self.failures = 0
+        self.firms_failed_in_step = 0
+        self.bank_failures = 0
         self.A = A_i0 if A_i0 else self.model.config.bank_sector_A_i0
         self.L = self.determine_new_credit_suppy()
         self.D = self.determine_deposits()
@@ -50,8 +51,9 @@ class BankSector:
         if net_worth < 0:
             # raise Exception(f"bank_sector failed at t={self.model.t+1} A=A + profits - bad_debt " +
             #                 f"--> {net_worth}={self.A}+{self.profits}-{self.bad_debt}")
-            self.model.log.debug(f"bank_sector failed A=A_i0 ({self.model.config.bank_sector_A_i0})")
+            self.model.log.error_minor(f"bank_sector failed A=A_i0 ({self.model.config.bank_sector_A_i0})")
             net_worth = self.model.config.bank_sector_A_i0
+            self.bank_failures +=1
         return net_worth
 
     def __str__(self):
@@ -66,7 +68,7 @@ class BankSector:
 
     def initialize_step(self):
         self.bad_debt = 0
-        self.failures = 0
+        self.firms_failed_in_step = 0
         self.estimate_total_a_k()
 
     def determine_firm_capacity_loan(self, firm):
@@ -83,12 +85,14 @@ class BankSector:
 
     def add_bad_debt(self, firm):
         amount = firm.L - firm.K
-        if amount < 0:
+        if self.model.ste_mode:
             self.model.log.debug(f"bank_sector {firm} fails and bad_debt increases in {amount}")
-            self.bad_debt += -amount
+            self.bad_debt += amount
         else:
-            self.model.log.debug(f"bank_sector {firm} fails but no bad_debt is generated")
-        self.failures += 1
+            if amount < 0:
+                self.model.log.debug(f"bank_sector {firm} fails and bad_debt increases in {amount}")
+                self.bad_debt += -amount
+        self.firms_failed_in_step += 1
 
     def estimate_total_a_k(self):
         self.totalA = sum(float(firm.A) for firm in self.model.firms)

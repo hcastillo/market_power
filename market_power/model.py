@@ -29,6 +29,8 @@ class Model:
     model_id = ""
     model_title = ""
 
+    ste_mode = False
+
     def __init__(self, firm_class=Firm, model_id="", log=None, model_title="", **configuration):
         self.config = Config()
         if log:
@@ -85,7 +87,8 @@ class Model:
         self.statistics.add(what=BankSector, name="L", prepend="\n                bank    ")
         self.statistics.add(what=BankSector, name="A", prepend=" | ")
         self.statistics.add(what=BankSector, name="D", prepend="  ")
-        self.statistics.add(what=BankSector, name="failures", symbol="fail", prepend=" ", number_type=int)
+        self.statistics.add(what=BankSector, name="failures", attr_name="firms_failed_in_step",
+                            symbol="fail", prepend=" ", number_type=int)
         self.statistics.add(what=BankSector, name="profits", symbol="π", prepend="  ", plot=False, attr_name="profits")
         self.statistics.add(what=BankSector, name="bad debt",
                             symbol="bd", prepend=" ", plot=False, attr_name="bad_debt")
@@ -136,3 +139,14 @@ class Model:
             return f"{self.model_id}_"
         else:
             return ""
+
+    @staticmethod
+    def default():
+        model_default = Model()
+        model_default.test = True
+        model_default.model_title = ""
+        model_default.model_description = ""
+        model_default.log = None
+        model_default.t = 0
+        model_default.model_id= ""
+        return model_default
