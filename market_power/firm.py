@@ -44,15 +44,11 @@ class Firm:
         self.u = self.determine_u()
         self.pi = self.determine_profits()
         self.A = self.determine_net_worth()
-        if self.model.ste_mode:
-            self.balance_firm()
+        self.K = self.adjust_capital()
         if self.is_bankrupted():
             self.set_failed()
-        else:
-            if not self.model.ste_mode:
-                self.K = self.adjust_capital()  #hec
 
-    def balance_firm(self):
+    def balance_firm(self): #TODO
         # balance sheet adjustment
         if self.pi >= 0:
             if self.K <= (self.A + self.L):

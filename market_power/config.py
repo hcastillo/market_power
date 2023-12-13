@@ -28,13 +28,15 @@ class Config:
     m: float = 0.03  # percentage of K that should be in cash
 
     # bank sector:                   balance sheet => L = A + D
-    bank_sector_A_i0: float = 4*T*N  # L and D are set inside bank.py
+    bank_sector_A_i0: float = 1200000*T*N  # L and D are set inside bank.py
     r_i0: float = 0.02  # initial rate of interest charged to firms by loans
     lambda_param: float = 0.3  # λ, to determine credit allotted for firms L=A/alfa, 0 < λ < 1
     alpha: float = 0.08  # α ratio equity/loan,  Ls=A/α
 
     # seed used:
     default_seed: int = 20579
+
+    # david parameters
 
     def __str__(self, separator=""):
         description = sys.argv[0] if not separator else ""

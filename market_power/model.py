@@ -29,7 +29,6 @@ class Model:
     model_id = ""
     model_title = ""
 
-    ste_mode = False
 
     def __init__(self, firm_class=Firm, model_id="", log=None, model_title="", **configuration):
         self.config = Config()

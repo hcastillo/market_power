@@ -46,12 +46,12 @@ class BankSector:
 
     def determine_net_worth(self):
         # (Equation 35) At = At-1 + profits - bad_debt
-        net_worth = self.A + self.profits - self.bad_debt
+        net_worth = self.A + self.profits- self.bad_debt
         self.model.log.debug(f"bank_sector A={net_worth}={self.A}+{self.profits}-{self.bad_debt}")
-        if net_worth < 0:
+        if net_worth <= 0:
             # raise Exception(f"bank_sector failed at t={self.model.t+1} A=A + profits - bad_debt " +
             #                 f"--> {net_worth}={self.A}+{self.profits}-{self.bad_debt}")
-            self.model.log.error_minor(f"bank_sector failed A=A_i0 ({self.model.config.bank_sector_A_i0})")
+            self.model.log.error_minor(f"bank_sector failed. A=A_i0 ({self.model.config.bank_sector_A_i0})")
             net_worth = self.model.config.bank_sector_A_i0
             self.bank_failures +=1
         return net_worth
@@ -75,23 +75,21 @@ class BankSector:
         # (Equation 11 of paper a new approach to business fluctuations)
         offeredL = (self.model.config.lambda_param * self.L * firm.K / self.totalK +
                     (1 - self.model.config.lambda_param) * self.L * firm.A / self.totalA)
-        self.model.log.debug(f"bank_sector {firm} offeredL={offeredL}")
+        self.model.log.debug(f"{firm} bank_sector offeredL={offeredL}")
         return offeredL
 
     def determine_new_credit_suppy(self):
         credit_supply = self.A / self.model.config.alpha
-        self.model.log.debug(f"bank_sector.L={credit_supply}")
+        self.model.log.debug(f"bank_sector L={credit_supply}")
         return credit_supply
 
     def add_bad_debt(self, firm):
         amount = firm.L - firm.K
-        if self.model.ste_mode:
-            self.model.log.debug(f"bank_sector {firm} fails and bad_debt increases in {amount}")
+        if amount > 0:
+            self.model.log.debug(f"{firm} fails and bank_sector.bad_debt increases in {amount}")
             self.bad_debt += amount
         else:
-            if amount < 0:
-                self.model.log.debug(f"bank_sector {firm} fails and bad_debt increases in {amount}")
-                self.bad_debt += -amount
+            self.model.log.debug(f"{firm} fails but no bad_debt")
         self.firms_failed_in_step += 1
 
     def estimate_total_a_k(self):
