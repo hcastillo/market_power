@@ -197,7 +197,7 @@ for el in elvalues:
                                 survive = np.zeros((Nfirms, 1))
                                 phiinicial = np.zeros((Nfirms, 1))
                                 phifinal = np.zeros((Nfirms, 1))
-                                surviverdata_M = np.empty( Nfirms )
+                                surviverdata_M = []
                                 surviverdata = []
                                 surviverdata_table = []
                                 pool_tax = 0
@@ -740,10 +740,10 @@ for el in elvalues:
                                         PL_M = np.c_[PL_M,PL[:,0]]
                                         OC_M = np.c_[OC_M,OC[:,0]]
                                         C_D_M = np.c_[C_D_M,C_D]
-                                        surviverdata_M = np.append(surviverdata_M,surviverdata)
+                                        surviverdata_M.append(surviverdata)
                                         if T == 1000:
                                             surviverdata_table = pd.DataFrame(surviverdata_M,
-                                                                              columns=['Periodssurvived','gr_phi','K',
+                                                                              index=['Periodssurvived','gr_phi','K',
                                                                                        'A', 'Lv', 't_death',
                                                                                        'firm_death', 'n_m', 'phi'])
 # ---
