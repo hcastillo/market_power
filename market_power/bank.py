@@ -14,7 +14,6 @@ class BankSector:
         self.profits = 0.0
         self.totalA = 0.0
         self.totalK = 0.0
-        self.firms_failed_in_step = 0
         self.bank_failures = 0
         self.A = A_i0 if A_i0 else self.model.config.bank_sector_A_i0
         self.L = self.determine_new_credit_suppy()
@@ -31,9 +30,12 @@ class BankSector:
     def determine_profits(self):
         # (Equation 34)
         profits_loans = 0.0
+        total_loans_of_firms = 0.0
         for firm in self.model.firms:
-            profits_loans += firm.r * firm.L
-        remunerations_of_deposits_and_networth = self.determine_average_interest_rate() * (self.D + self.A)
+            if not firm.failed:
+                profits_loans += firm.r * firm.L
+                total_loans_of_firms += firm.L
+        remunerations_of_deposits_and_networth = self.determine_average_interest_rate() * total_loans_of_firms
         result = profits_loans - remunerations_of_deposits_and_networth
         self.model.log.debug(f"bank_sector profits={result} = profits_loans({profits_loans}) " +
                              f"- remuneration_deposits_and_assets({remunerations_of_deposits_and_networth})")
@@ -46,14 +48,19 @@ class BankSector:
 
     def determine_net_worth(self):
         # (Equation 35) At = At-1 + profits - bad_debt
-        net_worth = self.A + self.profits- self.bad_debt
+        net_worth = self.A + self.profits - self.bad_debt
         self.model.log.debug(f"bank_sector A={net_worth}={self.A}+{self.profits}-{self.bad_debt}")
         if net_worth <= 0:
             # raise Exception(f"bank_sector failed at t={self.model.t+1} A=A + profits - bad_debt " +
             #                 f"--> {net_worth}={self.A}+{self.profits}-{self.bad_debt}")
-            self.model.log.error_minor(f"bank_sector failed. A=A_i0 ({self.model.config.bank_sector_A_i0})")
-            net_worth = self.model.config.bank_sector_A_i0
-            self.bank_failures +=1
+            self.model.log.error_minor(f"bank_sector failed with A={net_worth}")
+            self.bank_failures += 1
+            if self.model.config.bank_max_failures_allowed <= self.bank_failures:
+                self.model.log.warning(f"{net_worth} -> aborting")
+                self.model.abort_execution = True
+            else:
+                self.model.log.warning(f"A=A_i0 ({net_worth} -> {self.model.config.bank_sector_A_i0})")
+                net_worth = self.model.config.bank_sector_A_i0
         return net_worth
 
     def __str__(self):
@@ -68,7 +75,9 @@ class BankSector:
 
     def initialize_step(self):
         self.bad_debt = 0
-        self.firms_failed_in_step = 0
+        for firm in self.model.firms:
+            if firm.failed:
+                firm.__init__()
         self.estimate_total_a_k()
 
     def determine_firm_capacity_loan(self, firm):
@@ -90,7 +99,6 @@ class BankSector:
             self.bad_debt += amount
         else:
             self.model.log.debug(f"{firm} fails but no bad_debt")
-        self.firms_failed_in_step += 1
 
     def estimate_total_a_k(self):
         self.totalA = sum(float(firm.A) for firm in self.model.firms)

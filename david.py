@@ -633,7 +633,11 @@ for el in elvalues:
                                     if ind:
                                         firm_failed_liquidity = ind_second_year[ind]
                                     failureII[t, 0] = len(ind)
-                                    failureIII[t, 0] = failureII[t, 0]/len(ind_second_year)  # ++ojo++ division by zero
+                                    if len(ind_second_year)>0:
+                                        # ++ojo++ division by zero
+                                        failureIII[t, 0] = failureII[t, 0]/len(ind_second_year)
+                                    else:
+                                        failureIII[t, 0] = failureII[t, 0]/len(ind_second_year)
                                     F[ind, 0] = 1
                                     FF[ind, 0] = 2
                                     n_firms_shortaged_failed_by_equity[t, 0] = len(firm_failed_liquidity) - len(ind)
@@ -742,19 +746,22 @@ for el in elvalues:
                                         C_D_M = np.c_[C_D_M,C_D]
                                         surviverdata_M.append(surviverdata)
                                         if T == 1000:
-                                            surviverdata_table = pd.DataFrame(surviverdata_M,
-                                                                              index=['Periodssurvived','gr_phi','K',
-                                                                                       'A', 'Lv', 't_death',
-                                                                                       'firm_death', 'n_m', 'phi'])
-# ---
-                                        pool_tax_M.append(pool_tax)
-                                        gamma_M.append(gamma[:, 0])
-                                        dK_M.append(dK[:, 0])
-                                        sL_M.append(sL[:, 0])
-                                        C_M.append(C2[:, 0])
-                                        A_M.append(A[:, 0])
-                                        A_bank_M.append(A_bank[:, 0])
-                                        Y_M.append(Y[:, 0])
+                                            surviverdata = pd.DataFrame(
+                                                {'Periodssurvived': [], 'gr_phi': [], 'K': [], 'A': [], 'Lv': [],
+                                                 't_death': [], 'firm_death': [], 'n_m': [], 'phi': []})
+                                            # dataset = pd.DataFrame({'Column1': [], 'Column2': []})
+                                            # surviverdata_table = pd.DataFrame(surviverdata_M,
+                                            #                                   index=['Periodssurvived','gr_phi','K',
+                                            #                                            'A', 'Lv', 't_death',
+                                            #                                            'firm_death', 'n_m', 'phi'])
+                                        np.append(pool_tax_M,pool_tax)
+                                        np.append(gamma_M,gamma[:, 0])
+                                        np.append(dK_M,dK[:, 0])
+                                        np.append(sL_M,sL)
+                                        np.append(C_M,C2[:, 0])
+                                        np.append(A_M,A[:, 0])
+                                        np.append(A_bank_M,A_bank[:, 0])
+                                        np.append(Y_M,Y[:, 0])
                                         ind = np.where(F[:, 1] == 0)[0]
                                         gg = np.sum(P[:, 0]) / np.sum(A[:, 1])
                                         gg_M.append(gg)

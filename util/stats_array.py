@@ -227,7 +227,10 @@ class StatsFirms(StatsArray):
 
     def store_statistics(self):
         result = self.function(self.get_value(firm) for firm in self.model.firms)
-        self.data[self.model.t] = math.log(result) if self.logarithm else result
+        if self.logarithm:
+            self.data[self.model.t] = math.log(result) if result>0 else math.nan
+        else:
+            self.data[self.model.t] = result
         if self.show:
             return self.prepend + self.repr_function + self.__return_value_formatted__()
         else:

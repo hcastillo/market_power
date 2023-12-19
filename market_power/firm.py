@@ -17,6 +17,7 @@ class Firm:
         self.K = self.model.config.firms_K_i0
         self.A = self.model.config.firms_A_i0
         self.L = self.model.config.firms_L_i0
+        self.failed = False
         self.r = self.model.config.r_i0
         self.gamma = (self.model.config.w / self.model.config.k) + (self.model.config.g * self.r)
         self.phi = self.model.config.phi
@@ -143,7 +144,7 @@ class Firm:
     def set_failed(self):
         self.model.bank_sector.add_bad_debt(self)
         self.failures += 1
-        self.__init__()
+        self.failed = True
 
     def adjust_capital(self):
         newK = self.A + self.L

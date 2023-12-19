@@ -10,7 +10,7 @@ import sys
 
 class Config:
     T: int = 1000  # Time (1000)
-    N: int = 100  # Number of firms (100)
+    N: int = 100   # Number of firms (100)
 
     eta: float = 0.0001  # ŋ Inverse elasticity: ŋ=1/10000 -> perfect competition, ŋ=1/4 -> high market power
 
@@ -18,20 +18,23 @@ class Config:
     firms_K_i0: float = 5.0  # capital
     firms_A_i0: float = 1.0  # assets
     firms_L_i0: float = 4.0  # loans (from bank sector)
-    phi: float = 1.0  # Φ capital productivity: constant in this model without R&D
+    phi: float = 1.2  # Φ capital productivity: constant in this model without R&D
     threshold_bankrupt = 0  # A < threshold_bankrupt and firm will fail
     g: float = 1.0  # cost per unit of capital
     w: float = 1.0  # markdown interest rate (the higher it is, the monopolistic power of bank sector)
     k: float = 1.0  # capital intensity rate K/N
-    b: float = 1.0  # parameter of bankruptcy cost (b>0)
+    b: float = 0.015  # parameter of bankruptcy cost (b>0)
     beta: float = 0.02  # β skewness parameter -1 ... 1
-    m: float = 0.03  # percentage of K that should be in cash
+    m: float = 0.0  # percentage of K that should be in cash
 
     # bank sector:                   balance sheet => L = A + D
-    bank_sector_A_i0: float = 1200000*T*N  # L and D are set inside bank.py
+    bank_sector_A_i0: float = 1250000*T*N  # L and D are set inside bank.py
     r_i0: float = 0.02  # initial rate of interest charged to firms by loans
     lambda_param: float = 0.3  # λ, to determine credit allotted for firms L=A/alfa, 0 < λ < 1
     alpha: float = 0.08  # α ratio equity/loan,  Ls=A/α
+
+    # if you put 1, it will stop with T=X instead of arriving at the end:
+    bank_max_failures_allowed = 1
 
     # seed used:
     default_seed: int = 20579

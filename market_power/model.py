@@ -19,6 +19,7 @@ class Model:
     t: int = 0  # current value of time, t = 0..Model.config.T
     bank_sector: BankSector
     bankruptcies = []
+    abort_execution = False
 
     test = False  # it's true when we are inside a test
     log: Log = None
@@ -74,7 +75,7 @@ class Model:
         # what to plot and represent, and in which order
         self.statistics.add(what=Firm, name="K", prepend=" firms   ")
         self.statistics.add(what=Firm, name="A", prepend=" |")
-        self.statistics.add(what=Firm, name="L", prepend=" ")
+        self.statistics.add(what=Firm, name="L", prepend=" ") # logarithm=True)
         self.statistics.add(what=Firm, name="profits", prepend=" ", symbol="π", attr_name="pi")
         self.statistics.add(what=Firm, name="Y", prepend=" ")
         self.statistics.add(what=Firm, name="r", prepend=" ", function=statistics.mean)
@@ -83,14 +84,13 @@ class Model:
         self.statistics.add(what=Firm, name="desiredK", show=False)
         self.statistics.add(what=Firm, name="offeredL", show=False)
         self.statistics.add(what=Firm, name="demandL", show=False)
+        self.statistics.add(what=Firm, name="failures", attr_name="failed", symbol="fail", number_type=int, prepend=" ")
         self.statistics.add(what=BankSector, name="L", prepend="\n                bank    ")
         self.statistics.add(what=BankSector, name="A", prepend=" | ")
         self.statistics.add(what=BankSector, name="D", prepend="  ")
-        self.statistics.add(what=BankSector, name="failures", attr_name="firms_failed_in_step",
-                            symbol="fail", prepend=" ", number_type=int)
-        self.statistics.add(what=BankSector, name="profits", symbol="π", prepend="  ", plot=False, attr_name="profits")
+        self.statistics.add(what=BankSector, name="profits", symbol="π", prepend="  ", attr_name="profits")
         self.statistics.add(what=BankSector, name="bad debt",
-                            symbol="bd", prepend=" ", plot=False, attr_name="bad_debt")
+                            symbol="bd", prepend=" ", attr_name="bad_debt")
         self.config.__init__()
         random.seed(seed if seed else self.config.default_seed)
         if export_datafile:
@@ -119,6 +119,8 @@ class Model:
         self.initialize_model(export_datafile=export_datafile)
         for self.t in range(self.config.T):
             self.do_step()
+            if self.abort_execution:
+                break
         self.finish_model()
         return self.statistics.data, self.model_title
 
