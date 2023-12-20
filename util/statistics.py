@@ -38,8 +38,20 @@ class Statistics:
         # it returns also a string with the status
         result = ""
         for item in self.data:
-            result += self.data[item].store_statistics()
+            current_value = self.data[item].store_statistics()
+            if self.model.log.only_firms_or_bank:
+                if self.data[item].its_name.lower() == self.model.log.only_firms_or_bank.lower():
+                    result += current_value
+            else:
+                result += current_value
         return result
+
+    def current_status_save_after_failed_firms_removed(self):
+        result = ""
+        for item in self.data:
+            if self.data[item].its_name.lower() == "firms" and self.data[item].description != "failures":
+                result += self.data[item].store_statistics()
+        return result.replace("firms ", "      ")
 
     def add(self, what, name, prepend="", symbol=None, attr_name=None, number_type=float, function=sum,
             repr_function="Σ", plot=True, logarithm=False, show=True):
@@ -49,8 +61,8 @@ class Statistics:
             symbol = name.replace(" ", "_")
             if len(symbol) != len(name):
                 symbol = symbol.lower()
-        if not symbol.isascii():
-            symbol = name
+        # if not symbol.isascii():
+        #    symbol = name
         if not callable(function):
             raise TypeError("function parameter should be a callable type")
         if what == BankSector:
@@ -87,7 +99,7 @@ class Statistics:
                 header = " t"
                 for item in self.data:
                     header += "\t"
-                    header += f"{self.data[item].__str__()}"
+                    header += f"{self.data[item].name_for_files()}"
                     if self.model.model_id:
                         header += f"_{self.model.model_id}"
                 save_file.write(header + "\n")
@@ -129,6 +141,10 @@ class Statistics:
                     if progress_bar:
                         progress_bar.next()
 
+            if self.do_plot == PlotMethods.gretl:
+                plotted_files.append(self.data[list(self.data.keys())[0]].plot(plot_format=self.do_plot,
+                                                                               plot_min=self.plot_min,
+                                                                               plot_max=self.plot_max, generic=True))
             if progress_bar:
                 progress_bar.finish()
             if results_multiple or not self.model.statistics.multiple:
@@ -165,7 +181,8 @@ class Statistics:
     def get_default_plot_method(self):
         return PlotMethods('default')
 
-    def enable_plotting(self, plot_format: PlotMethods, plot_min: int = None, plot_max: int = None, plot_what: str = ""):
+    def enable_plotting(self, plot_format: PlotMethods, plot_min: int = None, plot_max: int = None,
+                        plot_what: str = ""):
         self.do_plot = plot_format
         if plot_min and plot_min >= 0:
             self.plot_min = plot_min
@@ -185,6 +202,7 @@ class Statistics:
 
     def finish_model(self, export_datafile=None, export_description=None):
         if not self.model.test:
+            self.remove_not_used_data_after_abortion()
             self.export_data(export_datafile=export_datafile, export_description=export_description)
             self.plot()
 
@@ -194,6 +212,12 @@ class Statistics:
                 self.model.log.warning(f"Removing {self.OUTPUT_DIRECTORY + '/' + file}", before_start=True)
                 os.remove(self.OUTPUT_DIRECTORY + "/" + file)
 
+    def remove_not_used_data_after_abortion(self):
+        if self.model.abort_execution:
+            self.model.config.T = self.model.t
+            for item in self.model.statistics.data:
+                self.model.statistics.data[item].data = self.model.statistics.data[item].data[:self.model.t+1]
+
 
 def mean(data):
     """ returns the mean of an array"""
@@ -201,6 +225,18 @@ def mean(data):
     for i, x in enumerate(data):
         result += x
     return result / i
+
+
+def _mode_of_a_list(array):
+    most = max(list(map(array.count, array)))
+    return list(set(filter(lambda x: array.count(x) == most, array)))
+
+
+def mode(data):
+    to_list = []
+    for _, x in enumerate(data):
+        to_list.append(round(x, 1))
+    return _mode_of_a_list(to_list)[0]
 
 
 def all_values(data):

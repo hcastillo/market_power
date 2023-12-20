@@ -84,18 +84,19 @@ class PlotMethods(str, Enum):
                     script.write(f"set workdir " + os.getcwd() + "\n")
                     script.write(f"open {model.export_datafile}\n")
                     script.write("setobs 1 1 --special-time-series\n")
-                    if multiple:
-                        series_to_plot = f" {series_name}_0"
-                        for i in range(1, len(multiple)):
-                            another_model_filename = model.export_datafile.replace("_0.txt", f"_{i}.txt")
-                            script.write(f"append {another_model_filename}\n")
-                            series_to_plot += f" {series_name}_{i}"
-                        script.write(f"gnuplot {series_to_plot} --time-series --with-lines\n")
-                    else:
-                        if model.get_id_for_filename() != '':
-                            series_name += "_" + model.get_id_for_filename().replace("_", "")
-                        script.write(f"gnuplot {series_name} --time-series --with-lines\n")
-                    script.write(f"exit()\n")
+                    if title is not None:
+                        if multiple:
+                            series_to_plot = f" {series_name}_0"
+                            for i in range(1, len(multiple)):
+                                another_model_filename = model.export_datafile.replace("_0.txt", f"_{i}.txt")
+                                script.write(f"append {another_model_filename}\n")
+                                series_to_plot += f" {series_name}_{i}"
+                            script.write(f"gnuplot {series_to_plot} --time-series --with-lines --output=display\n")
+                        else:
+                            if model.get_id_for_filename() != '':
+                                series_name += "_" + model.get_id_for_filename().replace("_", "")
+                            script.write(f"gnuplot {series_name} --time-series --with-lines --output=display\n")
+                        script.write(f"exit()\n")
                 return filename + ".inp"
 
             case _:
@@ -170,22 +171,26 @@ class StatsArray:
         return f"{self.repr_function if self.repr_function else ' '} {self.attr_name:10}"
 
     def plot(self, plot_format: PlotMethods, plot_min: int = None, plot_max: int = None, multiple=None,
-             multiple_key=None):
+             multiple_key=None, generic=False):
         if not plot_min or plot_min < 0:
             plot_min = 0
         if not plot_max or plot_max > self.model.config.T:
             plot_max = self.model.config.T
         if self.do_plot:
-            y_label = self.repr_function + self.description + "(ln)" if self.logarithm else ""
-            series_name = f"{self.its_name}{self.short_description.upper()}"
-            if multiple:
-                filename = self.model.statistics.OUTPUT_DIRECTORY + "/" + self.filename()
-                title = self.its_name + " " + self.repr_function + self.description
+            if generic:
+                y_label = ""
+                series_name = ""
+                filename = self.model.export_datafile.replace(".txt","")
+                title = None
             else:
+                y_label = self.repr_function + self.description + "(ln)" if self.logarithm else ""
+                series_name = f"{self.name_for_files()}"
                 filename = self.model.statistics.OUTPUT_DIRECTORY + "/" + \
                            self.model.get_id_for_filename() + self.filename()
                 title = self.its_name + " " + self.repr_function + self.description + self.model.model_title
-
+            if multiple:
+                filename = self.model.statistics.OUTPUT_DIRECTORY + "/" + self.filename()
+                title = self.its_name + " " + self.repr_function + self.description
             return plot_format.plot(plot_min, plot_max, filename, title, y_label, series_name, self.data,
                                     self.model, multiple, multiple_key)
         return None
@@ -212,6 +217,13 @@ class StatsArray:
         else:
             return self.short_description.upper()
 
+
+    def name_for_files(self):
+        if self.its_name != "":
+            return self.its_name + self.description.upper().replace(" ", "")
+        else:
+            return self.description.upper().replace(" ", "")
+
     def filename(self):
         return self.its_name.lower() + "_" + self.description.lower().replace(" ", "_")
 
@@ -228,7 +240,7 @@ class StatsFirms(StatsArray):
     def store_statistics(self):
         result = self.function(self.get_value(firm) for firm in self.model.firms)
         if self.logarithm:
-            self.data[self.model.t] = math.log(result) if result>0 else math.nan
+            self.data[self.model.t] = math.log(result) if result > 0 else math.nan
         else:
             self.data[self.model.t] = result
         if self.show:

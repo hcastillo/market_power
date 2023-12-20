@@ -14,6 +14,8 @@ class BankSector:
         self.profits = 0.0
         self.totalA = 0.0
         self.totalK = 0.0
+        self.mean_firmK = self.model.config.firms_K_i0
+        self.mean_firmA = self.model.config.firms_A_i0
         self.bank_failures = 0
         self.A = A_i0 if A_i0 else self.model.config.bank_sector_A_i0
         self.L = self.determine_new_credit_suppy()
@@ -36,7 +38,7 @@ class BankSector:
                 profits_loans += firm.r * firm.L
                 total_loans_of_firms += firm.L
         remunerations_of_deposits_and_networth = self.determine_average_interest_rate() * total_loans_of_firms
-        result = profits_loans - remunerations_of_deposits_and_networth
+        result = profits_loans *0.75 #remunerations_of_deposits_and_networth
         self.model.log.debug(f"bank_sector profits={result} = profits_loans({profits_loans}) " +
                              f"- remuneration_deposits_and_assets({remunerations_of_deposits_and_networth})")
         return result
@@ -56,7 +58,7 @@ class BankSector:
             self.model.log.error_minor(f"bank_sector failed with A={net_worth}")
             self.bank_failures += 1
             if self.model.config.bank_max_failures_allowed <= self.bank_failures:
-                self.model.log.warning(f"{net_worth} -> aborting")
+                self.model.log.warning(f"bank_sector A={net_worth} -> aborting")
                 self.model.abort_execution = True
             else:
                 self.model.log.warning(f"A=A_i0 ({net_worth} -> {self.model.config.bank_sector_A_i0})")
@@ -75,9 +77,6 @@ class BankSector:
 
     def initialize_step(self):
         self.bad_debt = 0
-        for firm in self.model.firms:
-            if firm.failed:
-                firm.__init__()
         self.estimate_total_a_k()
 
     def determine_firm_capacity_loan(self, firm):
@@ -100,7 +99,17 @@ class BankSector:
         else:
             self.model.log.debug(f"{firm} fails but no bad_debt")
 
-    def estimate_total_a_k(self):
-        self.totalA = sum(float(firm.A) for firm in self.model.firms)
-        self.totalK = sum(float(firm.K) for firm in self.model.firms)
-        self.model.log.debug(f"bank_sector Σ firm.A={self.totalA} Σ firm.K={self.totalK}")
+    def estimate_total_a_k(self, info=True):
+        total_firms_not_failed = 0
+        self.totalA = 0
+        self.totalK = 0
+        for firm in self.model.firms:
+            if not firm.failed:
+                self.totalA += firm.A
+                self.totalK += firm.K
+                total_firms_not_failed += 1
+        self.mean_firmK = self.totalK / total_firms_not_failed
+        self.mean_firmA = self.totalA / total_firms_not_failed
+        if info:
+            self.model.log.debug(f"bank_sector Σfirms={total_firms_not_failed} "+
+                                 f"firm.A={self.totalA} Σ firm.K={self.totalK}")

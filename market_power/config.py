@@ -17,7 +17,7 @@ class Config:
     # firms:                 balance sheet => K = A + L
     firms_K_i0: float = 5.0  # capital
     firms_A_i0: float = 1.0  # assets
-    firms_L_i0: float = 4.0  # loans (from bank sector)
+    ## firms_L_i0: float = 4.0  # loans (from bank sector)  L = k-A
     phi: float = 1.2  # Φ capital productivity: constant in this model without R&D
     threshold_bankrupt = 0  # A < threshold_bankrupt and firm will fail
     g: float = 1.0  # cost per unit of capital
@@ -28,7 +28,7 @@ class Config:
     m: float = 0.0  # percentage of K that should be in cash
 
     # bank sector:                   balance sheet => L = A + D
-    bank_sector_A_i0: float = 1250000*T*N  # L and D are set inside bank.py
+    bank_sector_A_i0: float = 75000*T*N  # L and D are set inside bank.py  8000000*T*N
     r_i0: float = 0.02  # initial rate of interest charged to firms by loans
     lambda_param: float = 0.3  # λ, to determine credit allotted for firms L=A/alfa, 0 < λ < 1
     alpha: float = 0.08  # α ratio equity/loan,  Ls=A/α
@@ -37,7 +37,7 @@ class Config:
     bank_max_failures_allowed = 1
 
     # seed used:
-    default_seed: int = 20579
+    default_seed: int = 20571
 
     # david parameters
 

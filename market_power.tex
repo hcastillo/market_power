@@ -36,19 +36,6 @@
 \newcommand{\Title}{Market Power ABM}
 
 
-\hypersetup{colorlinks=false}
-
-\ifpdf\hypersetup{
-    pdftitle = {\Title},%
-    pdfsubject = {\Title},%
-    pdfkeywords = {stochastic logic programs, UPV },
-    pdfauthor = {\textcopyright\ \Author},
-    pdfcreator = {\LaTeX},
-    pdfproducer = {pdfeTeX-0.\the\pdftexversion\pdftexrevision}
-   }
-\pdfinfo{/CreationDate (\today)}
-\fi
-
 \pagestyle{plain}
 
 
@@ -98,14 +85,14 @@ With the intention of obtaining a framework that allows to execute ABM in Python
 
 
 
-\begin{tikzpicture}[node distance=1.5cm]
+\begin{tikzpicture}[node distance=1.5cm,remember picture,overlay]
       \tikzstyle{startstop} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=red!30]
       \tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30]
       \tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30]
       \tikzstyle{decision} = [diamond, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=green!30]
       \tikzstyle{arrow} = [thick,->,>=stealth]
 
-      \node (start) [startstop, xshift=-3cm] {Start};
+      \node (start) [startstop, xshift=-1cm] {Start};
       \node (in1) [io, below of=start] { $ \forall t=0 \dots T $ };
       \draw [arrow] (start) -- (in1);
       \node (pro1) [process, right of=in1, xshift=3cm] {   $ L_{t}^{s}=\frac{   A_{t-1}^{b} }{\alpha } $  };
@@ -120,6 +107,9 @@ With the intention of obtaining a framework that allows to execute ABM in Python
       \draw [arrow] (pro3) -- (stop);
 
 \end{tikzpicture}
+
+\pagebreak 
+more text
 
 
 \end{document}

@@ -21,6 +21,7 @@ class Log:
     log_level = "WARN"  # default if not other chosen
     progress_bar = None
     what_keywords = []
+    only_firms_or_bank = False
 
     def __init__(self, model):
         self.model = model
@@ -30,6 +31,7 @@ class Log:
         if not self.what_keywords and its_model.log.what_keywords:
             self.what_keywords = its_model.log.what_keywords
         self.model = its_model
+        self.model.statistics.do_plot
         if multiple_models_will_be_run:
             self.model.export_datafile = f"{self.OUTPUT_DIRECTORY}/model_{num_model}.txt"
             self.model.statistics.export_datafile = self.model.export_datafile
@@ -142,7 +144,8 @@ class Log:
             if self.progress_bar:
                 self.progress_bar.finish()
             else:
-                self.info(f"finish: {self.model.get_id()} {self.model.model_title}" +
+                extra_info = "" if not self.model.abort_execution else "ABORTED EXECUTION "
+                self.info(f"{extra_info}finish: {self.model.get_id()} {self.model.model_title}" +
                           f"T={self.model.config.T} N={self.model.config.N} " +
                           f"bank_failures={self.model.bank_sector.bank_failures}")
 

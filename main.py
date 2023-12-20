@@ -69,10 +69,13 @@ def check_what(logger, what, log_or_plot):
                         print(logger.colors.remark(f"\t{'name':20} Σ=summation ¯=average, Ξ=logarithm scale"))
                     for valid_values in mock_model.statistics.data:
                         print(f"\t{valid_values:20} {mock_model.statistics.data[valid_values].get_description()}")
+                    raise typer.Exit()
+                elif item.lower() == "bank" or item.lower() == "firms":
+                    logger.only_firms_or_bank = item.lower()
                 else:
                     valid_values = {str(key) for key, value in mock_model.statistics.data.items()}
                     logger.error(f"{log_or_plot}_what must be one of {valid_values}", before_start=True)
-                raise typer.Exit()
+                    raise typer.Exit()
             else:
                 result.append(item)
     return result

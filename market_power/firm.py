@@ -9,20 +9,27 @@ import random
 
 
 class Firm:
-    def __init__(self, new_id=None, its_model=None):
+    def __init__(self, new_id=None, its_model=None, K=None, A=None):
         if its_model:
             self.id = new_id
             self.model = its_model
             self.failures = 0
-        self.K = self.model.config.firms_K_i0
-        self.A = self.model.config.firms_A_i0
-        self.L = self.model.config.firms_L_i0
+        self.K = self.model.config.firms_K_i0 if K is None else K
+        self.A = self.model.config.firms_A_i0 if A is None else A
+        self.L = self.K - self.A  # self.model.config.firms_L_i0
         self.failed = False
         self.r = self.model.config.r_i0
         self.gamma = (self.model.config.w / self.model.config.k) + (self.model.config.g * self.r)
         self.phi = self.model.config.phi
-        self.pi = self.c = self.Y = self.u = self.gap_of_L = 0.0
-        self.desiredK = self.demandL = self.offeredL = self.I = 0.0
+        self.pi = 0.0
+        self.c = 0.0
+        self.Y = 0.0
+        self.u = 0.0
+        self.gap_of_L = 0.0
+        self.desiredK = 0.0
+        self.demandL = 0.0
+        self.offeredL = 0.0
+        self.I = 0.0
 
     def __str__(self, short: bool = False):
         init = "firm#" if not short else "#"
@@ -45,7 +52,9 @@ class Firm:
         self.u = self.determine_u()
         self.pi = self.determine_profits()
         self.A = self.determine_net_worth()
-        self.K = self.adjust_capital()
+        #self.K = self.adjust_capital()
+        self.balance_firm()
+        self.Y = self.determine_output() # second time
         if self.is_bankrupted():
             self.set_failed()
 
@@ -71,7 +80,7 @@ class Firm:
         return c
 
     def determine_output(self):
-        output = self.phi * self.desiredK
+        output = self.phi * self.K
         self.model.log.debug(f"{self} Y={output}")
         return output
 
@@ -102,11 +111,7 @@ class Firm:
     def determine_demand_loan(self):
         # (Over equation 33)
         demandL = self.L + (1 + self.model.config.m) * self.I - self.pi
-        if demandL < 0:
-            self.model.log.debug(f"{self} demandL<0 ({demandL}), so  demandL={self.L} (prev)")
-            demandL = self.L
-        else:
-            self.model.log.debug(f"{self} demandL={demandL}")
+        self.model.log.debug(f"{self} demandL={demandL}")
         return demandL
 
     def determine_new_loan(self):
@@ -116,8 +121,11 @@ class Firm:
             return self.offeredL
         else:
             self.gap_of_L = 0.0
-            self.model.log.debug(f"{self} L=dL={self.demandL}")
-            return self.demandL
+            if self.demandL < 0:
+                return self.L
+            else:
+                self.model.log.debug(f"{self} L=dL={self.demandL}")
+                return self.demandL
 
     def determine_u(self):
         # stochastic demand [0,2]
@@ -127,10 +135,14 @@ class Firm:
 
     def determine_profits(self):
         # (Equation 24)  , but with Y = phi*K and simplifying
-        profits = self.u * (self.model.config.eta + (1 - self.model.config.eta) * self.model.config.phi * self.K) - \
-                  self.gamma * self.K
+        profits = (self.u * (self.model.config.eta + (1 - self.model.config.eta) * self.model.config.phi * self.K)) - \
+                  (self.gamma * self.K)
+        # profits = self.u * (self.model.config.eta + ((1 - self.model.config.eta) * self.Y)) - \
+        #          ((self.gamma / self.model.config.phi) * self.Y)
         self.model.log.debug(f"{self} π={profits}")
         return profits
+
+
 
     def determine_net_worth(self):
         # (Equation 8)
@@ -147,6 +159,15 @@ class Firm:
         self.failed = True
 
     def adjust_capital(self):
-        newK = self.A + self.L
-        self.model.log.debug(f"{self} K={newK}")
-        return newK
+        if self.L < 0:
+            self.A += abs(self.demandL)
+            self.L = 0
+            # we increment network in the amount we reduce the loans
+            # the loans are now 0
+            self.model.log.debug(f"{self} L<0 -> so A+={-self.demandL} and L=0. K={self.K}")
+            return self.A
+        else:
+            newK = self.A + self.L
+            self.model.log.debug(f"{self} K={newK}")
+            return newK
+
