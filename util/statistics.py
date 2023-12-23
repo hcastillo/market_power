@@ -5,10 +5,11 @@ ABM model auxiliary file: to have statistics and plot
 @author:  hector@bith.net
 """
 from progress.bar import Bar
-
 from market_power.bank import BankSector
-from util.stats_array import StatsFirms, StatsBankSector, PlotMethods
+from market_power.firm import Firm
+from util.stats_array import StatsFirms, StatsBankSector, StatsSpecificFirm, PlotMethods
 import os
+import numpy as np
 
 
 class Statistics:
@@ -38,7 +39,7 @@ class Statistics:
         # it returns also a string with the status
         result = ""
         for item in self.data:
-            current_value = self.data[item].store_statistics()
+            current_value = self.data[item].get_statistics()
             if self.model.log.only_firms_or_bank:
                 if self.data[item].its_name.lower() == self.model.log.only_firms_or_bank.lower():
                     result += current_value
@@ -50,7 +51,7 @@ class Statistics:
         result = ""
         for item in self.data:
             if self.data[item].its_name.lower() == "firms" and self.data[item].description != "failures":
-                result += self.data[item].store_statistics()
+                result += self.data[item].get_statistics(store=False)
         return result.replace("firms ", "      ")
 
     def add(self, what, name, prepend="", symbol=None, attr_name=None, number_type=float, function=sum,
@@ -65,17 +66,25 @@ class Statistics:
         #    symbol = name
         if not callable(function):
             raise TypeError("function parameter should be a callable type")
-        if what == BankSector:
+        if what == "bank":
             self.data["bank_" + name.replace(" ", "_")] = StatsBankSector(self.model, number_type, name, symbol,
                                                                           prepend=prepend, plot=plot,
                                                                           attr_name=attr_name, logarithm=logarithm,
                                                                           show=show)
-        else:
+        elif what == "firms":
             self.data["firms_" + name.replace(" ", "_")] = StatsFirms(self.model, number_type, name, symbol,
                                                                       prepend=prepend, function=function,
                                                                       repr_function=repr_function,
                                                                       plot=plot, attr_name=attr_name,
                                                                       logarithm=logarithm, show=show)
+        else:
+            try:
+                num_firm = int(what.replace("firm_", ""))
+            except ValueError:
+                raise ValueError(f"invalid number: I expected a text as firmX with X=[0..{self.model.config.N - 1}]")
+            if num_firm < 0 or num_firm >= self.model.config.N:
+                raise ValueError(f"invalid number: should be [0..{self.model.config.N - 1}]")
+            self.data[what +"_"+ name] = StatsSpecificFirm(self.model, number_type, name, symbol, firm_number=num_firm)
 
     def get_export_path(self, filename):
         if not filename.startswith(Statistics.OUTPUT_DIRECTORY):
@@ -145,6 +154,7 @@ class Statistics:
                 plotted_files.append(self.data[list(self.data.keys())[0]].plot(plot_format=self.do_plot,
                                                                                plot_min=self.plot_min,
                                                                                plot_max=self.plot_max, generic=True))
+
             if progress_bar:
                 progress_bar.finish()
             if results_multiple or not self.model.statistics.multiple:
@@ -216,7 +226,7 @@ class Statistics:
         if self.model.abort_execution:
             self.model.config.T = self.model.t
             for item in self.model.statistics.data:
-                self.model.statistics.data[item].data = self.model.statistics.data[item].data[:self.model.t+1]
+                self.model.statistics.data[item].data = self.model.statistics.data[item].data[:self.model.t + 1]
 
 
 def mean(data):

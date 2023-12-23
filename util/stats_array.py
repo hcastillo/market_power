@@ -30,13 +30,13 @@ class PlotMethods(str, Enum):
                 p = bokeh.plotting.figure(title=title, x_axis_label="t", y_axis_label=y_label,
                                           sizing_mode="stretch_width", height=550)
                 if not multiple:
-                    xx, yy = StatsArray.get_plot_elements(data, plot_min, plot_max)
+                    xx, yy = StatsBaseClass.get_plot_elements(data, plot_min, plot_max)
                     p.line(xx, yy, color="blue", line_width=2)
                 else:
                     i = 0
                     for element in multiple:
-                        xx, yy = StatsArray.get_plot_elements(multiple[element][multiple_key].data,
-                                                              plot_min, plot_max)
+                        xx, yy = StatsBaseClass.get_plot_elements(multiple[element][multiple_key].data,
+                                                                  plot_min, plot_max)
                         p.line(xx, yy, color=Category20[20][i % 20], line_width=2, legend_label=element)
                         i += 1
                 if self.name == PlotMethods.screen:
@@ -63,13 +63,13 @@ class PlotMethods(str, Enum):
                     datasets = []
                     for element in multiple:
                         datasets.append(
-                            graph.add_dataset(StatsArray.get_plot_elements(multiple[element][multiple_key].data,
-                                                                           plot_min, plot_max, two_list=False),
+                            graph.add_dataset(StatsBaseClass.get_plot_elements(multiple[element][multiple_key].data,
+                                                                               plot_min, plot_max, two_list=False),
                                               legend=element))
                         datasets[-1].symbol.fill_color = i
                         i += 1
                 else:
-                    graph.add_dataset(StatsArray.get_plot_elements(data, plot_min, plot_max, two_list=False))
+                    graph.add_dataset(StatsBaseClass.get_plot_elements(data, plot_min, plot_max, two_list=False))
                     graph.yaxis.label.text = 'y_label'
                 graph.autoscalex()
                 graph.autoscaley()
@@ -105,12 +105,12 @@ class PlotMethods(str, Enum):
                 xx = []
                 if multiple:
                     for element in multiple:
-                        xx, yy = StatsArray.get_plot_elements(multiple[element][multiple_key].data,
-                                                              plot_min, plot_max)
+                        xx, yy = StatsBaseClass.get_plot_elements(multiple[element][multiple_key].data,
+                                                                  plot_min, plot_max)
                         plt.plot(xx, yy, label=element)
                     plt.legend()
                 else:
-                    xx, yy = StatsArray.get_plot_elements(data, plot_min, plot_max)
+                    xx, yy = StatsBaseClass.get_plot_elements(data, plot_min, plot_max)
                     plt.plot(xx, yy)
                     plt.ylabel(y_label)
                 plt.xticks(xx)
@@ -130,7 +130,7 @@ class PlotMethods(str, Enum):
             sys.argv.append(PlotMethods('default').name)
 
 
-class StatsArray:
+class StatsBaseClass:
     def __init__(self, its_model, data_type, description,
                  short_description, prepend="", plot=True, attr_name=None, logarithm=False, show=True):
         self.description = description
@@ -138,6 +138,7 @@ class StatsArray:
         self.model = its_model
         self.prepend = prepend
         self.its_name = ""
+        self.function = None
         self.repr_function = ""
         self.show = show
         self.logarithm = logarithm
@@ -180,7 +181,7 @@ class StatsArray:
             if generic:
                 y_label = ""
                 series_name = ""
-                filename = self.model.export_datafile.replace(".txt","")
+                filename = self.model.export_datafile.replace(".txt", "")
                 title = None
             else:
                 y_label = self.repr_function + self.description + "(ln)" if self.logarithm else ""
@@ -217,7 +218,6 @@ class StatsArray:
         else:
             return self.short_description.upper()
 
-
     def name_for_files(self):
         if self.its_name != "":
             return self.its_name + self.description.upper().replace(" ", "")
@@ -227,41 +227,59 @@ class StatsArray:
     def filename(self):
         return self.its_name.lower() + "_" + self.description.lower().replace(" ", "_")
 
-
-class StatsFirms(StatsArray):
-    def __init__(self, its_model, data_type, description, short_description,
-                 prepend="", plot=True, attr_name=None, function=sum, repr_function="Σ", logarithm=False, show=True):
-        super().__init__(its_model, data_type, description, short_description,
-                         prepend, plot, attr_name, logarithm, show)
-        self.function = function
-        self.its_name = "Firms"
-        self.repr_function = repr_function
-
-    def store_statistics(self):
-        result = self.function(self.get_value(firm) for firm in self.model.firms)
-        if self.logarithm:
-            self.data[self.model.t] = math.log(result) if result > 0 else math.nan
-        else:
-            self.data[self.model.t] = result
+    def get_statistics(self, store=True):
+        value = self._calculate_statistics()
+        if store:
+            self.data[self.model.t] = value
         if self.show:
             return self.prepend + self.repr_function + self.__return_value_formatted__()
         else:
             return ""
 
 
-class StatsBankSector(StatsArray):
+class StatsFirms(StatsBaseClass):
+    def __init__(self, its_model, data_type, description, short_description,
+                 prepend="", plot=True, attr_name=None, function=sum, repr_function="Σ", logarithm=False, show=True):
+        super().__init__(its_model, data_type, description, short_description,
+                         prepend, plot, attr_name, logarithm, show)
+        self.function = function
+        self.repr_function = repr_function
+        self.its_name = "Firms"
+
+    def _calculate_statistics(self):
+        result = self.function(self.get_value(firm) for firm in self.model.firms)
+        if self.logarithm:
+            return math.log(result) if result > 0 else math.nan
+        else:
+            return result
+
+
+class StatsBankSector(StatsBaseClass):
     def __init__(self, its_model, data_type, description, short_description,
                  prepend="", plot=True, attr_name=None, logarithm=False, show=True):
         super().__init__(its_model, data_type, description, short_description,
                          prepend, plot, attr_name, logarithm, show)
-        self.function = None
         self.its_name = "Bank"
-        self.repr_function = ""
 
-    def store_statistics(self):
+    def _calculate_statistics(self):
         result = getattr(self.model.bank_sector, self.attr_name)
-        self.data[self.model.t] = math.log(result) if self.logarithm else result
-        if self.show:
-            return self.prepend + self.__return_value_formatted__()
+        if self.logarithm:
+            return math.log(result) if result > 0 else math.nan
         else:
-            return ""
+            return result
+
+
+class StatsSpecificFirm(StatsBaseClass):
+    def __init__(self, its_model, data_type, description, short_description, firm_number,
+                 prepend="", plot=True, attr_name=None, logarithm=False, show=False):
+        super().__init__(its_model, data_type, description, short_description,
+                         prepend, plot, attr_name, logarithm, show)
+        self.firm_number = firm_number
+        self.its_name = f"Firm_{firm_number}"
+
+    def _calculate_statistics(self):
+        result = self.get_value(self.model.firms[self.firm_number])
+        if self.logarithm:
+            return math.log(result) if result > 0 else math.nan
+        else:
+            return result

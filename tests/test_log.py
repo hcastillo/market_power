@@ -20,6 +20,7 @@ class TestLog(unittest.TestCase):
         self.assertEqual(self.log.format(0.0), "  0.000")
         self.assertEqual(self.log.format(974.0), "974.000")
         self.assertEqual(self.log.format(2974.0), "2974.00")
+        self.assertEqual(self.log.format(939393000), "9.394e8")
 
 
 if __name__ == '__main__':

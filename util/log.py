@@ -54,6 +54,8 @@ class Log:
                 result = result[:-1]
             while len(result) > 7 and result.find('.') > 0:
                 result = result[:-1]
+        if len(result)>7:
+            result = f"{number:.3E}".replace("E+0","e").replace("E+","e")
         return result if result[-1] != '.' else f' {result[:-1]}'
 
     @staticmethod
