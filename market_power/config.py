@@ -17,7 +17,7 @@ class Config:
     # firms:                 balance sheet => K = A + L
     firms_K_i0: float = 5.0  # capital
     firms_A_i0: float = 1.0  # assets
-    ## firms_L_i0: float = 4.0  # loans (from bank sector)  L = k-A
+    # firms_L_i0: float = 4.0  # loans (from bank sector)  L = k-A
     phi: float = 1.2  # Φ capital productivity: constant in this model without R&D
     threshold_bankrupt = 0  # A < threshold_bankrupt and firm will fail
     g: float = 1.0  # cost per unit of capital
@@ -28,11 +28,13 @@ class Config:
     m: float = 0.0  # percentage of K that should be in cash
 
     # bank sector:                   balance sheet => L = A + D
-    bank_sector_A_i0: float = 75000*T*N  # L and D are set inside bank.py  8000000*T*N
+    bank_sector_A_i0: float = 500  # L and D are set inside bank.py
     r_i0: float = 0.02  # initial rate of interest charged to firms by loans
     lambda_param: float = 0.3  # λ, to determine credit allotted for firms L=A/alfa, 0 < λ < 1
     alpha: float = 0.08  # α ratio equity/loan,  Ls=A/α
-
+    # if you put False or 0, the rate will be the average, as equation 34 says,
+    # if it is a number, this fixed value will be used:
+    rate_for_bank_deposits_and_networth: float = 0.04
     # if you put 1, it will stop with T=X instead of arriving at the end:
     bank_max_failures_allowed = 1
 

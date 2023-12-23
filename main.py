@@ -17,7 +17,8 @@ def run_interactive(config: List[str] = typer.Argument(None, help="Change config
                     log: str = typer.Option(None, help="Log level messages (? to list)"),
                     logfile: str = typer.Option(None, help="File to send the logs to"),
                     log_what: str = typer.Option(None, help="What to log (apart from balances, ? to list)"),
-                    save: str = typer.Option(None, help="Save the output of this execution"),
+                    save: str = typer.Option(None, help="Save the output in csv format"),
+                    readable: bool = typer.Option(False, help="Saves the output in a human readable format"),
                     plot: PlotMethods = typer.Option(None, help="Save the plot (? to list formats)"),
                     plot_tmin: int = typer.Option(None, help="Min. time to represent in the plots"),
                     plot_tmax: int = typer.Option(None, help="Max. time to represent in the plots"),
@@ -33,6 +34,8 @@ def run_interactive(config: List[str] = typer.Argument(None, help="Change config
     results = {}
     for i in range(len(models)):
         logger.set_model(models[i], plot, i, len(models) != 1)
+        if readable:
+            models[i].statistics.readable_file_format = True
         result, name_of_result = run(models[i], save)
         results[name_of_result] = result
     if len(models) > 1 and (plot or plot_what):

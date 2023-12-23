@@ -30,6 +30,8 @@ class Statistics:
         self.export_description = None
         self.do_plot = False
         self.interactive = True
+        self.readable_file_format = False
+        self.file_fields_separator = ","
 
     def info_status(self, before_start=False):
         for firm in self.model.firms:
@@ -84,7 +86,9 @@ class Statistics:
                 raise ValueError(f"invalid number: I expected a text as firmX with X=[0..{self.model.config.N - 1}]")
             if num_firm < 0 or num_firm >= self.model.config.N:
                 raise ValueError(f"invalid number: should be [0..{self.model.config.N - 1}]")
-            self.data[what +"_"+ name] = StatsSpecificFirm(self.model, number_type, name, symbol, firm_number=num_firm)
+            self.data[what + "_" + name] = StatsSpecificFirm(self.model, number_type, name, symbol,
+                                                             prepend=prepend, plot=plot, attr_name=attr_name,
+                                                             logarithm=logarithm, show=show, firm_number=num_firm)
 
     def get_export_path(self, filename):
         if not filename.startswith(Statistics.OUTPUT_DIRECTORY):
@@ -105,22 +109,35 @@ class Statistics:
                     save_file.write(f"# {export_description}\n")
                 else:
                     save_file.write(f"# {__name__} T={self.model.config.T} N={self.model.config.N}\n")
-                header = " t"
+                header = "  t"
                 for item in self.data:
-                    header += "\t"
-                    header += f"{self.data[item].name_for_files()}"
                     if self.model.model_id:
-                        header += f"_{self.model.model_id}"
+                        header += self._format_field(self.data[item].name_for_files() + f"_{self.model.model_id}")
+                    else:
+                        header += self._format_field(self.data[item].name_for_files())
                 save_file.write(header + "\n")
                 for i in range(self.model.config.T):
-                    line = f"{i:3}"
+                    line = f"{i:>3}"
                     for item in self.data:
-                        line += "\t" + self.data[item][i]
+                        # line += f"{self.file_fields_separator}{self.data[item].data[i]}"
+                        line += self._format_value(item, i)
                     save_file.write(line + "\n")
                     if progress_bar:
                         progress_bar.next()
             if progress_bar:
                 progress_bar.finish()
+
+    def _format_field(self, value):
+        if self.readable_file_format:
+            return f"  {value:>10}"
+        else:
+            return f"{self.file_fields_separator}{value}"
+
+    def _format_value(self, item, position):
+        if self.readable_file_format:
+            return self._format_field(self.data[item][position])
+        else:
+            return self._format_field(self.data[item].data[position])
 
     def plot(self, results_multiple=None):
         if self.do_plot:

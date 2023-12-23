@@ -52,13 +52,13 @@ class Firm:
         self.u = self.determine_u()
         self.pi = self.determine_profits()
         self.A = self.determine_net_worth()
-        #self.K = self.adjust_capital()
+        # self.K = self.adjust_capital()
         self.balance_firm()
-        self.Y = self.determine_output() # second time
+        self.Y = self.determine_output()  # second time
         if self.is_bankrupted():
             self.set_failed()
 
-    def balance_firm(self): #TODO
+    def balance_firm(self):  # TODO
         # balance sheet adjustment
         if self.pi >= 0:
             if self.K <= (self.A + self.L):
@@ -122,10 +122,20 @@ class Firm:
         else:
             self.gap_of_L = 0.0
             if self.demandL < 0:
-                return self.L
+                return self.reduce_loans_with_bank(self.demandL)
             else:
                 self.model.log.debug(f"{self} L=dL={self.demandL}")
                 return self.demandL
+
+    def reduce_loans_with_bank(self, negative_demand_of_L):
+        self.model.bank_sector.return_loan_from_firm(-negative_demand_of_L, self)
+        new_loan = self.L + negative_demand_of_L
+        if new_loan < 0:
+            self.model.log.debug(f"{self} L=0,dL=0")
+            return 0
+        else:
+            self.model.log.debug(f"{self} L={new_loan},dL=0")
+            return new_loan
 
     def determine_u(self):
         # stochastic demand [0,2]
@@ -141,8 +151,6 @@ class Firm:
         #          ((self.gamma / self.model.config.phi) * self.Y)
         self.model.log.debug(f"{self} π={profits}")
         return profits
-
-
 
     def determine_net_worth(self):
         # (Equation 8)
@@ -170,4 +178,3 @@ class Firm:
             newK = self.A + self.L
             self.model.log.debug(f"{self} K={newK}")
             return newK
-

@@ -219,10 +219,11 @@ class StatsBaseClass:
             return self.short_description.upper()
 
     def name_for_files(self):
+        text = self.short_description if self.short_description.isascii() else self.description
         if self.its_name != "":
-            return self.its_name + self.description.upper().replace(" ", "")
+            return self.its_name + text.upper().replace(" ", "")
         else:
-            return self.description.upper().replace(" ", "")
+            return text.upper().replace(" ", "")
 
     def filename(self):
         return self.its_name.lower() + "_" + self.description.lower().replace(" ", "_")
@@ -275,7 +276,7 @@ class StatsSpecificFirm(StatsBaseClass):
         super().__init__(its_model, data_type, description, short_description,
                          prepend, plot, attr_name, logarithm, show)
         self.firm_number = firm_number
-        self.its_name = f"Firm_{firm_number}"
+        self.its_name = f"Firm{firm_number}_"
 
     def _calculate_statistics(self):
         result = self.get_value(self.model.firms[self.firm_number])
