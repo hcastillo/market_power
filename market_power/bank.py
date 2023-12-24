@@ -17,6 +17,7 @@ class BankSector:
         self.mean_firmK = self.model.config.firms_K_i0
         self.mean_firmA = self.model.config.firms_A_i0
         self.bank_failures = 0
+        self.total_returned_l = 0
         self.A = A_i0 if A_i0 else self.model.config.bank_sector_A_i0
         self.L = self.determine_new_credit_suppy()
         self.D = self.determine_deposits()
@@ -29,7 +30,6 @@ class BankSector:
         # L = A + D, ----> D = L-A
         return self.L - self.A
 
-
     def determine_profits(self):
         # (Equation 34)
         profits_loans = 0.0
@@ -38,7 +38,8 @@ class BankSector:
             if not firm.failed:
                 profits_loans += firm.r * firm.L
                 total_loans_of_firms += firm.L
-        remunerations_of_deposits_and_networth = self.determine_average_interest_rate() * total_loans_of_firms
+        remunerations_of_deposits_and_networth = self.determine_average_interest_rate() * \
+                                                 (total_loans_of_firms + self.total_returned_l)
         result = profits_loans - remunerations_of_deposits_and_networth
         self.model.log.debug(f"bank_sector profits={result} = profits_loans({profits_loans}) " +
                              f"- remuneration_deposits_and_assets({remunerations_of_deposits_and_networth})")
@@ -98,6 +99,7 @@ class BankSector:
     def initialize_step(self):
         self.bad_debt = 0
         self.estimate_total_a_k()
+        self.total_returned_l = 0
 
     def determine_firm_capacity_loan(self, firm):
         # (Equation 11 of paper a new approach to business fluctuations)
@@ -124,7 +126,8 @@ class BankSector:
         amount_with_interests = amount_of_loan_to_return + firm_that_returns.r * amount_of_loan_to_return
         self.A += amount_with_interests
         self.L -= amount_of_loan_to_return
-        self.model.log.debug(f"{firm_that_returns} returns loan: L-={amount_of_loan_to_return}"+
+        self.total_returned_l += amount_of_loan_to_return
+        self.model.log.debug(f"{firm_that_returns} returns loan: L-={amount_of_loan_to_return}" +
                              f",A+={amount_with_interests}")
 
     def estimate_total_a_k(self, info=True):
@@ -139,5 +142,5 @@ class BankSector:
         self.mean_firmK = self.totalK / total_firms_not_failed
         self.mean_firmA = self.totalA / total_firms_not_failed
         if info:
-            self.model.log.debug(f"bank_sector Σfirms={total_firms_not_failed} "+
+            self.model.log.debug(f"bank_sector Σfirms={total_firms_not_failed} " +
                                  f"firm.A={self.totalA} Σ firm.K={self.totalK}")

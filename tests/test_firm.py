@@ -13,7 +13,7 @@ class TestFirm:
     def model_setup(self):
         model = Model()
         model.test = True
-        model.configure(N=2, T=2, w=0.005, alpha=0.08, eta=0.000001, phi=1.1, beta=0.02, g=1.1, k=1, b=1, m=0)
+        model.configure(N=2, T=2, w=0.005, alpha=0.08, eta=0.000001, phi=1.1, beta=0.02, g=1.1, k=1, b=1)
         yield model
 
     def test_firm_ok(self, model_setup):
@@ -32,7 +32,7 @@ class TestFirm:
         assert firm.demandL == 53.646391481518506
 
         firm.offeredL = model_setup.bank_sector.determine_firm_capacity_loan(firm)
-        assert firm.offeredL == 2500000.0
+        assert firm.offeredL == 3125.0
 
         firm_previous_K = firm.K
         firm.L += firm.determine_new_loan()

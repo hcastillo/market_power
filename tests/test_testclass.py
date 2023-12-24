@@ -11,7 +11,7 @@ import tests.market_power_testclass as test_class
 class BalanceAtCreationTestCase(test_class.MarketPowerTest):
 
     def setUp(self):
-        self.configureTest(N=10, T=1, bank_sector_A_i0=5, firms_L_i0=4)
+        self.configureTest(N=10, T=1, bank_sector_A_i0=5)
 
     def test_values(self):
         self.assertRaises(LookupError, self.configureTest, noexist=True)
