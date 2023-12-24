@@ -31,15 +31,17 @@ class Log:
         if not self.what_keywords and its_model.log.what_keywords:
             self.what_keywords = its_model.log.what_keywords
         self.model = its_model
-        self.model.statistics.do_plot
+        self.model.statistics.do_plot = plot
         if multiple_models_will_be_run:
-            self.model.export_datafile = f"{self.OUTPUT_DIRECTORY}/model_{num_model}.txt"
+            self.model.export_datafile = f"{self.OUTPUT_DIRECTORY}/model_{num_model}" + \
+                                         f"{self.model.statistics.export_datafile_extension}"
             self.model.statistics.export_datafile = self.model.export_datafile
             self.model.statistics.interactive = False
             self.model.statistics.multiple = True
         else:
             if plot == PlotMethods.gretl and not self.model.export_datafile:
-                self.model.export_datafile = f"{self.OUTPUT_DIRECTORY}/model.txt"
+                self.model.export_datafile = f"{self.OUTPUT_DIRECTORY}/" + \
+                                             f"model{self.model.statistics.export_datafile_extension}"
             self.model.statistics.interactive = True
             self.model.statistics.multiple = False
         self.model.log = self

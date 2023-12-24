@@ -52,20 +52,11 @@ class Firm:
         self.u = self.determine_u()
         self.pi = self.determine_profits()
         self.A = self.determine_net_worth()
-        # self.K = self.adjust_capital()
-        self.balance_firm()
+        self.K = self.adjust_capital()
+        # self.balance_firm()
         self.Y = self.determine_output()  # second time
         if self.is_bankrupted():
             self.set_failed()
-
-    def balance_firm(self):  # TODO
-        # balance sheet adjustment
-        if self.pi >= 0:
-            if self.K <= (self.A + self.L):
-                self.K = (self.A + self.L)
-        else:
-            if self.K >= (self.A + self.L):
-                self.K = (self.A + self.L)
 
     def determine_cost_per_unit_of_capital(self):
         # (Before equation 2)  gamma
@@ -87,10 +78,6 @@ class Firm:
     def determine_interest_rate(self):
         # (Equation 33)
         rate = self.model.config.beta * self.L / self.A
-        # if rate > 0.10:
-        #     rate = 0.10
-        # if rate < 0.01:
-        #     rate = 0.01
         self.model.log.debug(f"{self} r={rate}")
         return rate
 
@@ -110,7 +97,7 @@ class Firm:
 
     def determine_demand_loan(self):
         # (Over equation 33)
-        demandL = self.L + (1 + self.model.config.m) * self.I - self.pi
+        demandL = self.L + self.I - self.pi
         self.model.log.debug(f"{self} demandL={demandL}")
         return demandL
 
@@ -167,14 +154,6 @@ class Firm:
         self.failed = True
 
     def adjust_capital(self):
-        if self.L < 0:
-            self.A += abs(self.demandL)
-            self.L = 0
-            # we increment network in the amount we reduce the loans
-            # the loans are now 0
-            self.model.log.debug(f"{self} L<0 -> so A+={-self.demandL} and L=0. K={self.K}")
-            return self.A
-        else:
-            newK = self.A + self.L
-            self.model.log.debug(f"{self} K={newK}")
-            return newK
+        newK = self.A + self.L
+        self.model.log.debug(f"{self} K={newK}")
+        return newK

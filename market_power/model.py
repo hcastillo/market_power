@@ -89,6 +89,7 @@ class Model:
         self.statistics.add(what="firms", name="u", function=statistics.mean, repr_function="¯")
         self.statistics.add(what="firms", name="desiredK", symbol="dK", show=False)
         self.statistics.add(what="firms", name="offeredL", symbol="oL", show=False)
+        self.statistics.add(what="firms", name="gap_of_L", show=False)
         self.statistics.add(what="firms", name="demandL", symbol="dL", show=False)
         self.statistics.add(what="firms", name="failures", attr_name="failed", symbol="fail",
                             number_type=int, prepend=" ")

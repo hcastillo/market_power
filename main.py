@@ -35,7 +35,7 @@ def run_interactive(config: List[str] = typer.Argument(None, help="Change config
     for i in range(len(models)):
         logger.set_model(models[i], plot, i, len(models) != 1)
         if readable:
-            models[i].statistics.readable_file_format = True
+            models[i].statistics.set_file_readable()
         result, name_of_result = run(models[i], save)
         results[name_of_result] = result
     if len(models) > 1 and (plot or plot_what):

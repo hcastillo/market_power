@@ -29,6 +29,7 @@ class BankSector:
         # L = A + D, ----> D = L-A
         return self.L - self.A
 
+
     def determine_profits(self):
         # (Equation 34)
         profits_loans = 0.0
@@ -43,12 +44,29 @@ class BankSector:
                              f"- remuneration_deposits_and_assets({remunerations_of_deposits_and_networth})")
         return result
 
+    # def determine_profits(self):
+    #     # (Equation 34)
+    #     profits_loans = 0.0
+    #     total_loans_of_firms = 0.0
+    #     for firm in self.model.firms:
+    #         if not firm.failed:
+    #             profits_loans += firm.r * firm.L
+    #             total_loans_of_firms += firm.L
+    #     remunerations_of_deposits_and_networth = self.determine_average_interest_rate() * (self.A+self.D)/2
+    #     if self.A + profits_loans - remunerations_of_deposits_and_networth - self.bad_debt < 0:
+    #         remunerations_of_deposits_and_networth = 0
+    #         profits_loans = 0
+    #     result = profits_loans - remunerations_of_deposits_and_networth
+    #     self.model.log.debug(f"bank_sector profits={result} = profits_loans({profits_loans}) " +
+    #                          f"- remuneration_deposits_and_assets({remunerations_of_deposits_and_networth})")
+    #     return result
+
     def determine_average_interest_rate(self):
         if self.model.config.rate_for_bank_deposits_and_networth:
+            return self.model.config.rate_for_bank_deposits_and_networth
+        else:
             avg_r = sum(firm.r for firm in self.model.firms) / len(self.model.firms)
             return avg_r if avg_r > self.model.config.r_i0 else self.model.config.r_i0
-        else:
-            return 0.04
 
     def determine_net_worth(self):
         # (Equation 35) At = At-1 + profits - bad_debt
@@ -98,11 +116,12 @@ class BankSector:
         if amount > 0:
             self.model.log.debug(f"{firm} fails and bank_sector.bad_debt increases in {amount}")
             self.bad_debt += amount
+            self.L -= amount
         else:
             self.model.log.debug(f"{firm} fails but no bad_debt")
 
     def return_loan_from_firm(self, amount_of_loan_to_return, firm_that_returns):
-        amount_with_interests = amount_of_loan_to_return # + firm_that_returns.r * amount_of_loan_to_return
+        amount_with_interests = amount_of_loan_to_return + firm_that_returns.r * amount_of_loan_to_return
         self.A += amount_with_interests
         self.L -= amount_of_loan_to_return
         self.model.log.debug(f"{firm_that_returns} returns loan: L-={amount_of_loan_to_return}"+

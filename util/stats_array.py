@@ -6,6 +6,7 @@ ABM model auxiliary file: logging facilities
 """
 import numpy as np
 import math
+import os
 from enum import Enum
 
 
@@ -80,15 +81,16 @@ class PlotMethods(str, Enum):
 
             case PlotMethods.gretl:
                 with open(filename + ".inp", 'w', encoding="utf-8") as script:
-                    import os
-                    script.write(f"set workdir " + os.getcwd() + "\n")
-                    script.write(f"open {model.export_datafile}\n")
+                    #script.write(f"set workdir " + os.getcwd() + "\n")
+                    script.write(f"open {os.path.basename(model.export_datafile)}\n")
                     script.write("setobs 1 1 --special-time-series\n")
                     if title is not None:
                         if multiple:
                             series_to_plot = f" {series_name}_0"
                             for i in range(1, len(multiple)):
-                                another_model_filename = model.export_datafile.replace("_0.txt", f"_{i}.txt")
+                                another_model_filename = model.export_datafile.replace(
+                                    f"_0{model.statistics.export_datafile_extension}",
+                                    f"_{i}{model.statistics.export_datafile_extension}")
                                 script.write(f"append {another_model_filename}\n")
                                 series_to_plot += f" {series_name}_{i}"
                             script.write(f"gnuplot {series_to_plot} --time-series --with-lines --output=display\n")
@@ -181,13 +183,13 @@ class StatsBaseClass:
             if generic:
                 y_label = ""
                 series_name = ""
-                filename = self.model.export_datafile.replace(".txt", "")
+                filename = self.model.export_datafile.replace(self.model.statistics.export_datafile_extension, "")
                 title = None
             else:
                 y_label = self.repr_function + self.description + "(ln)" if self.logarithm else ""
                 series_name = f"{self.name_for_files()}"
-                filename = self.model.statistics.OUTPUT_DIRECTORY + "/" + \
-                           self.model.get_id_for_filename() + self.filename()
+                filename = (self.model.statistics.OUTPUT_DIRECTORY + "/" + self.model.get_id_for_filename() +
+                            self.filename())
                 title = self.its_name + " " + self.repr_function + self.description + self.model.model_title
             if multiple:
                 filename = self.model.statistics.OUTPUT_DIRECTORY + "/" + self.filename()

@@ -5,11 +5,9 @@ ABM model auxiliary file: to have statistics and plot
 @author:  hector@bith.net
 """
 from progress.bar import Bar
-from market_power.bank import BankSector
-from market_power.firm import Firm
 from util.stats_array import StatsFirms, StatsBankSector, StatsSpecificFirm, PlotMethods
 import os
-import numpy as np
+import subprocess
 
 
 class Statistics:
@@ -23,7 +21,6 @@ class Statistics:
         self.multiple = False
         self.plot_max = None
         self.plot_what = []
-        import os
         if not os.path.isdir(self.OUTPUT_DIRECTORY):
             os.mkdir(self.OUTPUT_DIRECTORY)
         self.export_datafile = None
@@ -31,7 +28,14 @@ class Statistics:
         self.do_plot = False
         self.interactive = True
         self.readable_file_format = False
-        self.file_fields_separator = ","
+        self.export_datafile_fields_separator = ","
+        self.export_datafile_extension = ".csv"
+
+    def set_file_readable(self):
+        self.readable_file_format = True
+        self.export_datafile_extension = ".txt"
+        if self.model.export_datafile:
+            self.model.export_datafile = self.model.export_datafile.replace(".csv",".txt")
 
     def info_status(self, before_start=False):
         for firm in self.model.firms:
@@ -95,7 +99,8 @@ class Statistics:
             filename = f"{Statistics.OUTPUT_DIRECTORY}/{self.model.get_id_for_filename()}{filename}"
         else:
             filename = f"{self.model.get_id_for_filename()}{filename}"
-        return filename if filename.endswith('.txt') else f"{filename}.txt"
+        return filename if filename.endswith(self.export_datafile_extension) \
+                           else f"{filename}{self.export_datafile_extension}"
 
     def export_data(self, export_datafile=None, export_description=None):
         if export_datafile:
@@ -131,7 +136,7 @@ class Statistics:
         if self.readable_file_format:
             return f"  {value:>10}"
         else:
-            return f"{self.file_fields_separator}{value}"
+            return f"{self.export_datafile_fields_separator}{value}"
 
     def _format_value(self, item, position):
         if self.readable_file_format:
@@ -190,13 +195,10 @@ class Statistics:
                 if 'program' in config[file_extension]:
                     executable = config[file_extension]['program']
                     if executable.lower() == "default":
-                        import os
                         if os.name == 'nt':
                             plot_format_array[0] = plot_format_array[0].replace('/', '\\')
                         os.startfile(plot_format_array[0], 'open')
                     else:
-                        import subprocess
-                        import os.path
                         if os.path.exists(executable):
                             subprocess.run([executable, plot_format_array[0]], stdout=subprocess.DEVNULL, shell=True)
 
@@ -236,7 +238,7 @@ class Statistics:
     def clear_output_dir(self):
         for file in [f for f in os.listdir(self.OUTPUT_DIRECTORY)]:
             if os.path.isfile(self.OUTPUT_DIRECTORY + "/" + file):
-                self.model.log.warning(f"Removing {self.OUTPUT_DIRECTORY + '/' + file}", before_start=True)
+                self.model.log.info(f"Removing {self.OUTPUT_DIRECTORY + '/' + file}", before_start=True)
                 os.remove(self.OUTPUT_DIRECTORY + "/" + file)
 
     def remove_not_used_data_after_abortion(self):

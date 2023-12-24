@@ -25,7 +25,7 @@ class Config:
     k: float = 1.0  # capital intensity rate K/N
     b: float = 0.015  # parameter of bankruptcy cost (b>0)
     beta: float = 0.02  # β skewness parameter -1 ... 1
-    m: float = 0.0  # percentage of K that should be in cash
+    # m: float = 0.0  # percentage of K that should be in cash
 
     # bank sector:                   balance sheet => L = A + D
     bank_sector_A_i0: float = 500  # L and D are set inside bank.py
@@ -34,7 +34,8 @@ class Config:
     alpha: float = 0.08  # α ratio equity/loan,  Ls=A/α
     # if you put False or 0, the rate will be the average, as equation 34 says,
     # if it is a number, this fixed value will be used:
-    rate_for_bank_deposits_and_networth: float = 0.04
+    #rate_for_bank_deposits_and_networth: float = 0.04
+    rate_for_bank_deposits_and_networth: float = 0
     # if you put 1, it will stop with T=X instead of arriving at the end:
     bank_max_failures_allowed = 1
 
