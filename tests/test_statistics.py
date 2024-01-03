@@ -9,7 +9,7 @@ from market_power.model import Model
 from market_power.firm import Firm
 from market_power.bank import BankSector
 from util.stats_array import StatsFirms, StatsBankSector
-from util.statistics import Statistics
+from util.stats_mp import Stats_MP
 
 
 class TestLog(unittest.TestCase):
@@ -18,7 +18,7 @@ class TestLog(unittest.TestCase):
         self.model = Model(N=2, T=2, bank_sector_A_i0=20, firms_A_i0=2)
         self.log = Log(self.model)
         self.model.test = True
-        self.statistics = Statistics(self.model)
+        self.statistics = Stats_MP(self.model)
 
         self.statistics.add(what="firms", name="K", prepend="*text*")
         self.statistics.add(what="firms", name="A")

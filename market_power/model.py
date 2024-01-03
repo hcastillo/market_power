@@ -9,10 +9,9 @@ from market_power.bank import BankSector
 from market_power.config import Config
 from market_power.firm import Firm
 from util.log import Log
-from util.statistics import Statistics
+from util.stats_mp import Stats_MP
 import random
 import statistics
-
 
 class Model:
     firms = []
@@ -23,7 +22,7 @@ class Model:
 
     test = False  # it's true when we are inside a test
     log: Log = None
-    statistics: Statistics = None
+    statistics: Stats_MP = None
     config: Config = None
     export_datafile = None
     export_description = None
@@ -41,7 +40,7 @@ class Model:
         self.model_title = model_title
         self.firm_class = firm_class
         self.test = test
-        self.statistics = Statistics(self)
+        self.statistics = Stats_MP(self)
         if configuration:
             self.configure(**configuration)
 

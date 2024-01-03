@@ -4,13 +4,13 @@
 ABM model auxiliary file: to have statistics and plot
 @author:  hector@bith.net
 """
-from progress.bar import Bar
-from util.stats_array import StatsFirms, StatsBankSector, StatsSpecificFirm, PlotMethods
 import os
 import subprocess
+from progress.bar import Bar
+from util.stats_array import StatsFirms, StatsBankSector, StatsSpecificFirm, PlotMethods
 
 
-class Statistics:
+class Stats_MP:
     OUTPUT_DIRECTORY = "output"
 
     # This time the idea is to use pandas to store the statistics
@@ -95,8 +95,8 @@ class Statistics:
                                                              logarithm=logarithm, show=show, firm_number=num_firm)
 
     def get_export_path(self, filename):
-        if not filename.startswith(Statistics.OUTPUT_DIRECTORY):
-            filename = f"{Statistics.OUTPUT_DIRECTORY}/{self.model.get_id_for_filename()}{filename}"
+        if not filename.startswith(Stats_MP.OUTPUT_DIRECTORY):
+            filename = f"{Stats_MP.OUTPUT_DIRECTORY}/{self.model.get_id_for_filename()}{filename}"
         else:
             filename = f"{self.model.get_id_for_filename()}{filename}"
         return filename if filename.endswith(self.export_datafile_extension) \
@@ -247,29 +247,3 @@ class Statistics:
             for item in self.model.statistics.data:
                 self.model.statistics.data[item].data = self.model.statistics.data[item].data[:self.model.t + 1]
 
-
-def mean(data):
-    """ returns the mean of an array"""
-    result = i = 0
-    for i, x in enumerate(data):
-        result += x
-    return result / i
-
-
-def _mode_of_a_list(array):
-    most = max(list(map(array.count, array)))
-    return list(set(filter(lambda x: array.count(x) == most, array)))
-
-
-def mode(data):
-    to_list = []
-    for _, x in enumerate(data):
-        to_list.append(round(x, 1))
-    return _mode_of_a_list(to_list)[0]
-
-
-def all_values(data):
-    result = []
-    for i in enumerate(data):
-        result.append(i)
-    return result

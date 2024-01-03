@@ -16,9 +16,9 @@ class Calibration:
     analyze_data = ['firms_Y', 'firms_L']
     parameters = {
         # value : [stepping, min,max]
-        'phi': [0.05, 1.00, 1.3],
-        'k': [0.2, 1.04, 1.10],
-        'alpha': [0.01, 0.07, 0.09],
+        'eta': [0.1, 0.0001, 0.9],
+        # 'k': [0.2, 1.04, 1.10],
+        # 'alpha': [0.01, 0.07, 0.09],
     }
 
     @staticmethod
