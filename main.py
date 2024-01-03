@@ -171,6 +171,7 @@ def cartesian_product(my_dictionary):
 
 def is_notebook():
     try:
+        # noinspection PyStatementEffect
         __IPYTHON__
         return get_ipython().__class__.__name__ != "SpyderShell"
     except NameError:

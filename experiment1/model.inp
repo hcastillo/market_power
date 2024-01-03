@@ -1,0 +1,2 @@
+open model.csv
+setobs 1 1 --special-time-series
