@@ -8,7 +8,9 @@ from market_power.model import Model
 from market_power.config import Config
 from util.log import Log
 from util.stats_array import PlotMethods
+import util.utilities as utilities
 import typer
+import statistics
 from typing import List
 
 
@@ -27,8 +29,8 @@ def run_interactive(config: List[str] = typer.Argument(None, help="Change config
                     n: int = typer.Option(Config.N, help="Number of firms"),
                     t: int = typer.Option(Config.T, help="Time repetitions")):
     logger = Log(Model.default())
-    models, title = manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax,
-                                         plot_what, plot, logger, config)
+    models, title = utilities.manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax,
+                                                   plot_what, plot, logger, config)
     if clear:
         do_clear_of_output_directory()
     results = {}
@@ -55,130 +57,52 @@ def do_clear_of_output_directory():
     model.statistics.clear_output_dir()
 
 
+# def special_stats_function(model,data):
+#     """
+#     function called each time at the end of each step, before clearing the bankrupted firms
+#     not used in this code (to use it, uncomment the reference upper, as model.statistics.function = special...
+#     :param model: Model object
+#     :param data: direct reference to model.statistics.data
+#     :return:
+#     """
+#     avg_A = data['firms_A'][model.t]
+#     for firm in model.firms:
+#         if firm.A < 0 and avg_A<abs(firm.A):
+#             print(model.t,firm,firm.A,firm.gamma,model.bank_sector.bad_debt,firm.Y,firm.u,firm.Aprev)
+
+
+def manage_stats_options(model):
+    model.statistics.add(what="bank", name="L", prepend="bank    ")
+    model.statistics.add(what="bank", name="A", prepend=" | ")
+    model.statistics.add(what="bank", name="D", prepend="  ")
+    model.statistics.add(what="bank", name="profits", symbol="π", prepend="  ", attr_name="profits")
+    model.statistics.add(what="bank", name="bad debt",
+                         symbol="bd", prepend=" ", attr_name="bad_debt")
+    model.statistics.add(what="firms", name="K", prepend="\n              firms   ", logarithm=True)
+    model.statistics.add(what="firms", name="A", prepend=" |")
+    model.statistics.add(what="firms", name="L", prepend=" ", logarithm=True)
+    model.statistics.add(what="firms", name="profits", prepend=" ", symbol="π", attr_name="pi")
+    model.statistics.add(what="firms", name="Y", prepend=" ", logarithm=True)
+    model.statistics.add(what="firms", name="r", prepend=" ", function=statistics.mean)
+    model.statistics.add(what="firms", name="I", prepend=" ")
+    model.statistics.add(what="firms", name="gamma", prepend=" ", function=statistics.mean, symbol="γ")
+    model.statistics.add(what="firms", name="u", function=statistics.mean, repr_function="¯")
+    model.statistics.add(what="firms", name="desiredK", symbol="dK", show=False)
+    model.statistics.add(what="firms", name="offeredL", symbol="oL", show=False)
+    model.statistics.add(what="firms", name="gap_of_L", show=False)
+    model.statistics.add(what="firms", name="demandL", symbol="dL", show=False)
+    model.statistics.add(what="firms", name="failures", attr_name="failed", symbol="fail",
+                         number_type=int, prepend=" ")
+    # model.statistics.function = special_stats_function
+
+
 def run(model, save=None):
+    manage_stats_options(model)
     return model.run(export_datafile=save)
 
 
-def check_what(logger, what, log_or_plot):
-    result = []
-    if what:
-        mock_model = Model(log=logger)
-        mock_model.test = True
-        mock_model.initialize_model(export_datafile="mock")
-        for item in what.split(","):
-            if item not in mock_model.statistics.data:
-                if item == '?':
-                    if log_or_plot == 'plot':
-                        print(logger.colors.remark(f"\t{'name':20} Σ=summation ¯=average, Ξ=logarithm scale"))
-                    for valid_values in mock_model.statistics.data:
-                        print(f"\t{valid_values:20} {mock_model.statistics.data[valid_values].get_description()}")
-                    raise typer.Exit()
-                elif item.lower() == "bank" or item.lower() == "firms":
-                    logger.only_firms_or_bank = item.lower()
-                else:
-                    valid_values = {str(key) for key, value in mock_model.statistics.data.items()}
-                    logger.error(f"{log_or_plot}_what must be one of {valid_values}", before_start=True)
-                    raise typer.Exit()
-            else:
-                result.append(item)
-    return result
 
-
-def manage_plot_options(model, plot_tmin, plot_tmax, plot_what, plot, logger):
-    plot_what = check_what(logger, plot_what, "plot")
-    if (plot_tmin or plot_tmax or plot_what) and not plot:
-        # if not enabled plot with a specific format, we assume the first type: pyplot
-        plot = model.statistics.get_default_plot_method()
-    if plot:
-        model.statistics.enable_plotting(plot_format=plot, plot_min=plot_tmin,
-                                         plot_max=plot_tmax, plot_what=plot_what)
-
-
-def manage_log_options(model, log, log_what, logfile, logger):
-    log_what = check_what(logger, log_what, "log")
-    if log_what and not log:
-        log = "INFO"
-    if not log:
-        log = "ERROR"
-    model.log.define_log(log=log, logfile=logfile, what=log_what)
-
-
-# noinspection SpellCheckingInspection
-def manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax, plot_what, plot, logger, config_list):
-    params_only_present_once = {}
-    params_present_multiple = {}
-    mock_model = Model()
-    if config_list:
-        config_list.sort()
-        for item in config_list:
-            if item == '?':
-                print(mock_model.config.__str__(separator="\n"))
-                raise typer.Exit()
-            try:
-                name_config, value_config = item.split("=")
-            except ValueError:
-                logger.error("A config value for the model should be passed as parameter=value", before_start=True)
-                raise typer.Exit(-1)
-            try:
-                getattr(mock_model.config, name_config)
-            except AttributeError:
-                logger.error(f"Configuration has no {name_config} parameter", before_start=True)
-                raise typer.Exit(-1)
-            try:
-                setattr(mock_model.config, name_config, float(value_config))
-                if name_config in params_only_present_once:
-                    params_present_multiple[name_config] = [params_only_present_once[name_config], float(value_config)]
-                    del params_only_present_once[name_config]
-                else:
-                    if name_config in params_present_multiple:
-                        params_present_multiple[name_config].append(float(value_config))
-                    else:
-                        params_only_present_once[name_config] = float(value_config)
-            except ValueError:
-                logger.error(f"Value given for {value_config} is not valid", before_start=True)
-                raise typer.Exit(-1)
-    models = []
-    num_combinations = 0
-    combinations = []
-    title = "" if num_combinations == 1 else f"{params_present_multiple}"
-    for item in cartesian_product(params_present_multiple):
-        combinations.append(item)
-        num_combinations += 1
-    for i in range(num_combinations):
-        one_combination_of_multiple_params = combinations[i]
-        if num_combinations > 1:
-            model = Model(model_id=f"{i}", model_title=f"{one_combination_of_multiple_params}", log=logger)
-        else:
-            model = Model()
-        if t != model.config.T:
-            model.config.T = t
-        if n != model.config.N:
-            model.config.N = n
-        manage_log_options(model, log, log_what, logfile, logger)
-        manage_plot_options(model, plot_tmin, plot_tmax, plot_what, plot, logger)
-        for param in params_only_present_once:
-            setattr(model.config, param, params_only_present_once[param])
-        for param in one_combination_of_multiple_params:
-            setattr(model.config, param, one_combination_of_multiple_params[param])
-        models.append(model)
-    return models, title
-
-
-def cartesian_product(my_dictionary):
-    from itertools import product
-    return (dict(zip(my_dictionary.keys(), values)) for values in product(*my_dictionary.values()))
-
-
-def is_notebook():
-    try:
-        # noinspection PyStatementEffect
-        __IPYTHON__
-        return get_ipython().__class__.__name__ != "SpyderShell"
-    except NameError:
-        return False
-
-
-if is_notebook():
+if utilities.is_notebook():
     run_notebook()
 else:
     if __name__ == "__main__":

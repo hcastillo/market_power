@@ -11,7 +11,6 @@ from market_power.firm import Firm
 from util.log import Log
 from util.stats_mp import Stats_MP
 import random
-import statistics
 
 class Model:
     firms = []
@@ -70,32 +69,6 @@ class Model:
 
     def initialize_model(self, seed=None,
                          export_datafile=None, export_description=None):
-        # what to plot and represent, and in which order
-        self.statistics.add(what="bank", name="L", prepend="bank    ")
-        self.statistics.add(what="bank", name="A", prepend=" | ")
-        self.statistics.add(what="bank", name="D", prepend="  ")
-        self.statistics.add(what="bank", name="profits", symbol="π", prepend="  ", attr_name="profits")
-        self.statistics.add(what="bank", name="bad debt",
-                            symbol="bd", prepend=" ", attr_name="bad_debt")
-        self.statistics.add(what="firms", name="K", prepend="\n              firms   ", logarithm=True)
-        self.statistics.add(what="firms", name="A", prepend=" |")
-        self.statistics.add(what="firms", name="L", prepend=" ", logarithm=True)
-        self.statistics.add(what="firms", name="profits", prepend=" ", symbol="π", attr_name="pi")
-        self.statistics.add(what="firms", name="Y", prepend=" ", logarithm=True)
-        self.statistics.add(what="firms", name="r", prepend=" ", function=statistics.mean)
-        self.statistics.add(what="firms", name="I", prepend=" ")
-        self.statistics.add(what="firms", name="gamma", prepend=" ", function=statistics.mean, symbol="γ")
-        self.statistics.add(what="firms", name="u", function=statistics.mean, repr_function="¯")
-        self.statistics.add(what="firms", name="desiredK", symbol="dK", show=False)
-        self.statistics.add(what="firms", name="offeredL", symbol="oL", show=False)
-        self.statistics.add(what="firms", name="gap_of_L", show=False)
-        self.statistics.add(what="firms", name="demandL", symbol="dL", show=False)
-        self.statistics.add(what="firms", name="failures", attr_name="failed", symbol="fail",
-                            number_type=int, prepend=" ")
-        # self.statistics.add(what="firm_63", name="L", prepend=" ", show=False)
-        # self.statistics.add(what="firm_63", name="K", prepend=" ", show=False)
-        # self.statistics.add(what="firm_63", name="A", prepend=" ", show=False)
-        # self.statistics.add(what="firm_63", attr_name="is_bankrupted", name="fail", prepend=" ", show=False)
         self.config.__init__()
         random.seed(seed if seed else self.config.default_seed)
         if export_datafile:
@@ -112,12 +85,23 @@ class Model:
     def do_step(self):
         self.bank_sector.initialize_step()
         for firm in self.firms:
-            firm.do_step()
+            firm.do_step1()
+        self.obtain_sum_a_for_balancing_later()
+        for firm in self.firms:
+            firm.do_step2()
         self.bank_sector.determine_step_results()
         step_info = self.statistics.current_status_save()
         self.remove_failed_firms()
         step_info += self.statistics.current_status_save_after_failed_firms_removed()
         self.log.step(step_info)
+
+    def obtain_sum_a_for_balancing_later(self):
+        self.total_A = 0
+        self.negative_A = 0
+        for firm in self.firms:
+            self.total_A += firm.A
+            if firm.A < 0:
+                self.negative_A += firm.A
 
     def finish_model(self):
         self.log.finish_model()

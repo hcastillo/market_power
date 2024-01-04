@@ -17,6 +17,7 @@ class Stats_MP:
     def __init__(self, its_model):
         self.model = its_model
         self.data = {}
+        self.function = None
         self.plot_min = 0
         self.multiple = False
         self.plot_max = None
@@ -35,7 +36,7 @@ class Stats_MP:
         self.readable_file_format = True
         self.export_datafile_extension = ".txt"
         if self.model.export_datafile:
-            self.model.export_datafile = self.model.export_datafile.replace(".csv",".txt")
+            self.model.export_datafile = self.model.export_datafile.replace(".csv", ".txt")
 
     def info_status(self, before_start=False):
         for firm in self.model.firms:
@@ -51,6 +52,9 @@ class Stats_MP:
                     result += current_value
             else:
                 result += current_value
+
+        if self.function:
+            self.function(self.model, self.data)
         return result
 
     def current_status_save_after_failed_firms_removed(self):
@@ -59,6 +63,7 @@ class Stats_MP:
             if self.data[item].its_name.lower() == "firms" and self.data[item].description != "failures":
                 result += self.data[item].get_statistics(store=False)
         return result.replace("firms ", "      ")
+
 
     def add(self, what, name, prepend="", symbol=None, attr_name=None, number_type=float, function=sum,
             repr_function="Σ", plot=True, logarithm=False, show=True):
@@ -100,7 +105,7 @@ class Stats_MP:
         else:
             filename = f"{self.model.get_id_for_filename()}{filename}"
         return filename if filename.endswith(self.export_datafile_extension) \
-                           else f"{filename}{self.export_datafile_extension}"
+            else f"{filename}{self.export_datafile_extension}"
 
     def export_data(self, export_datafile=None, export_description=None):
         if export_datafile:
@@ -246,4 +251,3 @@ class Stats_MP:
             self.model.config.T = self.model.t
             for item in self.model.statistics.data:
                 self.model.statistics.data[item].data = self.model.statistics.data[item].data[:self.model.t + 1]
-
