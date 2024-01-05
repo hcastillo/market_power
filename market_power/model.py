@@ -9,7 +9,7 @@ from market_power.bank import BankSector
 from market_power.config import Config
 from market_power.firm import Firm
 from util.log import Log
-from util.stats_mp import Stats_MP
+from util.stats import Stats
 import random
 
 class Model:
@@ -21,7 +21,7 @@ class Model:
 
     test = False  # it's true when we are inside a test
     log: Log = None
-    statistics: Stats_MP = None
+    statistics: Stats = None
     config: Config = None
     export_datafile = None
     export_description = None
@@ -39,7 +39,7 @@ class Model:
         self.model_title = model_title
         self.firm_class = firm_class
         self.test = test
-        self.statistics = Stats_MP(self)
+        self.statistics = Stats(self)
         if configuration:
             self.configure(**configuration)
 
@@ -114,7 +114,7 @@ class Model:
             if self.abort_execution:
                 break
         self.finish_model()
-        return self.statistics.data, self.model_title
+        return self.statistics.dataframe, self.model_title
 
     def remove_failed_firms(self):
         self.bank_sector.estimate_total_a_k(info=False)

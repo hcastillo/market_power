@@ -36,7 +36,7 @@ class PlotMethods(str, Enum):
                 else:
                     i = 0
                     for element in multiple:
-                        xx, yy = StatsBaseClass.get_plot_elements(multiple[element][multiple_key].data,
+                        xx, yy = StatsBaseClass.get_plot_elements(multiple[element][multiple_key].stats_items,
                                                                   plot_min, plot_max)
                         p.line(xx, yy, color=Category20[20][i % 20], line_width=2, legend_label=element)
                         i += 1
@@ -64,9 +64,9 @@ class PlotMethods(str, Enum):
                     datasets = []
                     for element in multiple:
                         datasets.append(
-                            graph.add_dataset(StatsBaseClass.get_plot_elements(multiple[element][multiple_key].data,
-                                                                               plot_min, plot_max, two_list=False),
-                                              legend=element))
+                            graph.add_dataset(StatsBaseClass.get_plot_elements(
+                                multiple[element][multiple_key].stats_items,plot_min, plot_max, two_list=False),
+                                legend=element))
                         datasets[-1].symbol.fill_color = i
                         i += 1
                 else:
@@ -81,7 +81,6 @@ class PlotMethods(str, Enum):
 
             case PlotMethods.gretl:
                 with open(filename + ".inp", 'w', encoding="utf-8") as script:
-                    #script.write(f"set workdir " + os.getcwd() + "\n")
                     script.write(f"open {os.path.basename(model.export_datafile)}\n")
                     script.write("setobs 1 1 --special-time-series\n")
                     if title is not None:
@@ -107,7 +106,7 @@ class PlotMethods(str, Enum):
                 xx = []
                 if multiple:
                     for element in multiple:
-                        xx, yy = StatsBaseClass.get_plot_elements(multiple[element][multiple_key].data,
+                        xx, yy = StatsBaseClass.get_plot_elements(multiple[element][multiple_key].stats_items,
                                                                   plot_min, plot_max)
                         plt.plot(xx, yy, label=element)
                     plt.legend()
@@ -133,14 +132,16 @@ class PlotMethods(str, Enum):
 
 
 class StatsBaseClass:
-    def __init__(self, its_model, data_type, description,
-                 short_description, prepend="", plot=True, attr_name=None, logarithm=False, show=True):
+    def __init__(self, its_model, description,
+                 short_description, column_name, prepend="", number_type=float,
+                 plot=True, attr_name=None, logarithm=False, show=True):
         self.description = description
         self.short_description = short_description
         self.model = its_model
         self.prepend = prepend
         self.its_name = ""
         self.function = None
+        self.column_name = column_name
         self.repr_function = ""
         self.show = show
         self.logarithm = logarithm
@@ -148,7 +149,10 @@ class StatsBaseClass:
             self.attr_name = attr_name
         else:
             self.attr_name = self.short_description
-        self.data = np.zeros(its_model.config.T, dtype=data_type)
+        if self.column_name not in its_model.statistics.dataframe.keys():
+            its_model.statistics.dataframe.insert(len(its_model.statistics.dataframe.keys()),
+                                                  self.column_name, 0.0 if number_type == float else 0, True)
+        #self.data = np.zeros(its_model.config.T, dtype=data_type)
         self.do_plot = plot
 
     def get_value(self, firm):
@@ -161,14 +165,14 @@ class StatsBaseClass:
     def __return_value_formatted__(self):
         result = f"{self.short_description}"
         result += "Ξ" if self.logarithm else "="
-        result += f"{self.model.log.format(self.data[self.model.t])}"
+        result += f"{self.model.log.format(self.model.statistics.dataframe[self.column_name][self.model.t])}"
         return result
 
     def __getitem__(self, t):
-        return self.model.log.format(self.data[t])
+        return self.model.log.format(self.model.statistics.dataframe[self.column_name][t])
 
     def __get__(self):
-        return self.data
+        return self.model.statistics.dataframe[self.column_name]
 
     def get_description(self):
         return f"{self.repr_function if self.repr_function else ' '} {self.attr_name:10}"
@@ -194,7 +198,8 @@ class StatsBaseClass:
             if multiple:
                 filename = self.model.statistics.OUTPUT_DIRECTORY + "/" + self.filename()
                 title = self.its_name + " " + self.repr_function + self.description
-            return plot_format.plot(plot_min, plot_max, filename, title, y_label, series_name, self.data,
+            return plot_format.plot(plot_min, plot_max, filename, title, y_label, series_name,
+                                    self.model.statistics.dataframe[self.column_name],
                                     self.model, multiple, multiple_key)
         return None
 
@@ -233,7 +238,9 @@ class StatsBaseClass:
     def get_statistics(self, store=True):
         value = self._calculate_statistics()
         if store:
-            self.data[self.model.t] = value
+            if self.model.t >= len(self.model.statistics.dataframe):
+                self.model.statistics.dataframe.loc[self.model.t] = 0.0
+            self.model.statistics.dataframe[self.column_name][self.model.t] = value
         if self.show:
             return self.prepend + self.repr_function + self.__return_value_formatted__()
         else:
@@ -241,10 +248,11 @@ class StatsBaseClass:
 
 
 class StatsFirms(StatsBaseClass):
-    def __init__(self, its_model, data_type, description, short_description,
-                 prepend="", plot=True, attr_name=None, function=sum, repr_function="Σ", logarithm=False, show=True):
-        super().__init__(its_model, data_type, description, short_description,
-                         prepend, plot, attr_name, logarithm, show)
+    def __init__(self, its_model, description, short_description, column_name,
+                 prepend="", number_type=float, plot=True, attr_name=None, function=sum,
+                 repr_function="Σ", logarithm=False, show=True):
+        super().__init__(its_model, description, short_description, column_name,
+                         prepend, number_type, plot, attr_name, logarithm, show)
         self.function = function
         self.repr_function = repr_function
         self.its_name = "Firms"
@@ -258,10 +266,10 @@ class StatsFirms(StatsBaseClass):
 
 
 class StatsBankSector(StatsBaseClass):
-    def __init__(self, its_model, data_type, description, short_description,
-                 prepend="", plot=True, attr_name=None, logarithm=False, show=True):
-        super().__init__(its_model, data_type, description, short_description,
-                         prepend, plot, attr_name, logarithm, show)
+    def __init__(self, its_model, description, short_description, column_name,
+                 prepend="", number_type=float, plot=True, attr_name=None, logarithm=False, show=True):
+        super().__init__(its_model, description, short_description, column_name,
+                         prepend, number_type, plot, attr_name, logarithm, show)
         self.its_name = "Bank"
 
     def _calculate_statistics(self):
@@ -273,10 +281,10 @@ class StatsBankSector(StatsBaseClass):
 
 
 class StatsSpecificFirm(StatsBaseClass):
-    def __init__(self, its_model, data_type, description, short_description, firm_number,
-                 prepend="", plot=True, attr_name=None, logarithm=False, show=False):
-        super().__init__(its_model, data_type, description, short_description,
-                         prepend, plot, attr_name, logarithm, show)
+    def __init__(self, its_model, description, short_description, column_name, firm_number,
+                 prepend="", number_type=float, plot=True, attr_name=None, logarithm=False, show=False):
+        super().__init__(its_model, description, short_description, column_name,
+                         prepend, number_type, plot, attr_name, logarithm, show)
         self.firm_number = firm_number
         self.its_name = f"Firm{firm_number}_"
 

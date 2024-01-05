@@ -125,10 +125,10 @@ class Log:
         text = f"{firm.__str__()}  "
         if not before_start:
             if self.what_keywords and not self.model.test:
-                for elem in self.model.statistics.data:
+                for elem in self.model.statistics.stats_items:
                     if elem in self.what_keywords and elem.startswith('firms'):
                         text += f" {elem.replace('firms_', '')}="
-                        text += f"{self.format(self.model.statistics.data[elem].get_value(firm))}"
+                        text += f"{self.format(self.model.statistics.stats_items[elem].get_value(firm))}"
                 self.info(text, before_start)
 
     def initialize_model(self):

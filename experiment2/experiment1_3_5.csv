@@ -1,2 +1,0 @@
-# experiment2.py N=100 T=1000 alpha=0.08 b=0.05 bank_max_failures_allowed=1 bank_sector_A_i0=500 beta=0.02 default_seed=5166 eta=0.0001 firms_A_i0=1.0 firms_K_i0=5.0 g=1.0 k=1.0 lambda_param=0.3 phi=1.2 r_i0=0.02 rate_for_bank_deposits_and_networth=0 threshold_bankrupt=0 w=1.0
-  t,BankL,BankA,BankD,BankPROFITS,BankBD,FirmsK,FirmsA,FirmsL,FirmsPROFITS,FirmsY,FirmsR,FirmsI,FirmsGAMMA,FirmsU,FirmsDK,FirmsOL,FirmsGAP_OF_L,FirmsDL,FirmsFAIL

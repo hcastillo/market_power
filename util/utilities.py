@@ -33,17 +33,17 @@ def check_what(logger, what, log_or_plot):
         mock_model.test = True
         mock_model.initialize_model(export_datafile="mock")
         for item in what.split(","):
-            if item not in mock_model.statistics.data:
+            if item not in mock_model.statistics.stats_items:
                 if item == '?':
                     if log_or_plot == 'plot':
                         print(logger.colors.remark(f"\t{'name':20} Σ=summation ¯=average, Ξ=logarithm scale"))
-                    for valid_values in mock_model.statistics.data:
-                        print(f"\t{valid_values:20} {mock_model.statistics.data[valid_values].get_description()}")
+                    for valid_values in mock_model.statistics.stats_items:
+                        print(f"\t{valid_values:20} {mock_model.statistics.stats_items[valid_values].get_description()}")
                     raise typer.Exit()
                 elif item.lower() == "bank" or item.lower() == "firms":
                     logger.only_firms_or_bank = item.lower()
                 else:
-                    valid_values = {str(key) for key, value in mock_model.statistics.data.items()}
+                    valid_values = {str(key) for key, value in mock_model.statistics.stats_items.items()}
                     logger.error(f"{log_or_plot}_what must be one of {valid_values}", before_start=True)
                     raise typer.Exit()
             else:

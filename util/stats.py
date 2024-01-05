@@ -8,16 +8,18 @@ import os
 import subprocess
 from progress.bar import Bar
 from util.stats_array import StatsFirms, StatsBankSector, StatsSpecificFirm, PlotMethods
+import pandas as pd
 
 
-class Stats_MP:
+class Stats:
     OUTPUT_DIRECTORY = "output"
 
     # This time the idea is to use pandas to store the statistics
     def __init__(self, its_model):
         self.model = its_model
-        self.data = {}
-        self.function = None
+        self.dataframe = pd.DataFrame([])
+        self.stats_items = {}
+        self.external_function_to_obtain_stats = None
         self.plot_min = 0
         self.multiple = False
         self.plot_max = None
@@ -45,49 +47,55 @@ class Stats_MP:
     def current_status_save(self):
         # it returns also a string with the status
         result = ""
-        for item in self.data:
-            current_value = self.data[item].get_statistics()
+        for item in self.stats_items:
+            current_value = self.stats_items[item].get_statistics()
             if self.model.log.only_firms_or_bank:
-                if self.data[item].its_name.lower() == self.model.log.only_firms_or_bank.lower():
+                if self.stats_items[item].its_name.lower() == self.model.log.only_firms_or_bank.lower():
                     result += current_value
             else:
                 result += current_value
 
-        if self.function:
-            self.function(self.model, self.data)
+        # if it is defined an external function, it will receive the data to analyze it:
+        if self.external_function_to_obtain_stats:
+            self.external_function_to_obtain_stats(self.model, self.stats_items)
         return result
 
     def current_status_save_after_failed_firms_removed(self):
         result = ""
-        for item in self.data:
-            if self.data[item].its_name.lower() == "firms" and self.data[item].description != "failures":
-                result += self.data[item].get_statistics(store=False)
+        for item in self.stats_items:
+            if self.stats_items[item].its_name.lower() == "firms" and self.stats_items[item].description != "failures":
+                result += self.stats_items[item].get_statistics(store=False)
         return result.replace("firms ", "      ")
 
-
-    def add(self, what, name, prepend="", symbol=None, attr_name=None, number_type=float, function=sum,
-            repr_function="Σ", plot=True, logarithm=False, show=True):
+    def add(self, what, name, prepend="", symbol=None, attr_name=None, function=sum,
+            repr_function="Σ", number_type=float, plot=True, logarithm=False, show=True):
         if not attr_name:
             attr_name = name
         if not symbol:
             symbol = name.replace(" ", "_")
             if len(symbol) != len(name):
                 symbol = symbol.lower()
-        # if not symbol.isascii():
-        #    symbol = name
         if not callable(function):
             raise TypeError("function parameter should be a callable type")
         if what == "bank":
-            self.data["bank_" + name.replace(" ", "_")] = StatsBankSector(self.model, number_type, name, symbol,
-                                                                          prepend=prepend, plot=plot,
-                                                                          attr_name=attr_name, logarithm=logarithm,
-                                                                          show=show)
+            self.stats_items["bank_" + name.replace(" ", "_")] = StatsBankSector(self.model, name, symbol,
+                                                                                 prepend=prepend, plot=plot,
+                                                                                 number_type=number_type,
+                                                                                 attr_name=attr_name,
+                                                                                 logarithm=logarithm,
+                                                                                 show=show,
+                                                                                 column_name="bank_" +
+                                                                                              name.replace(" ", "_"))
         elif what == "firms":
-            self.data["firms_" + name.replace(" ", "_")] = StatsFirms(self.model, number_type, name, symbol,
-                                                                      prepend=prepend, function=function,
-                                                                      repr_function=repr_function,
-                                                                      plot=plot, attr_name=attr_name,
-                                                                      logarithm=logarithm, show=show)
+            self.stats_items["firms_" + name.replace(" ", "_")] = StatsFirms(self.model, name, symbol,
+                                                                             prepend=prepend, function=function,
+                                                                             repr_function=repr_function,
+                                                                             number_type=number_type,
+                                                                             plot=plot, attr_name=attr_name,
+                                                                             logarithm=logarithm,
+                                                                             column_name="firms_" +
+                                                                                         name.replace(" ", "_"),
+                                                                             show=show)
         else:
             try:
                 num_firm = int(what.replace("firm_", ""))
@@ -95,13 +103,16 @@ class Stats_MP:
                 raise ValueError(f"invalid number: I expected a text as firmX with X=[0..{self.model.config.N - 1}]")
             if num_firm < 0 or num_firm >= self.model.config.N:
                 raise ValueError(f"invalid number: should be [0..{self.model.config.N - 1}]")
-            self.data[what + "_" + name] = StatsSpecificFirm(self.model, number_type, name, symbol,
-                                                             prepend=prepend, plot=plot, attr_name=attr_name,
-                                                             logarithm=logarithm, show=show, firm_number=num_firm)
+            self.stats_items[what + "_" + name] = StatsSpecificFirm(self.model, name, symbol,
+                                                                    prepend=prepend, plot=plot, attr_name=attr_name,
+                                                                    logarithm=logarithm, show=show,
+                                                                    number_type=number_type,
+                                                                    column_name=what + "_" + name,
+                                                                    firm_number=num_firm)
 
     def get_export_path(self, filename):
-        if not filename.startswith(Stats_MP.OUTPUT_DIRECTORY):
-            filename = f"{Stats_MP.OUTPUT_DIRECTORY}/{self.model.get_id_for_filename()}{filename}"
+        if not filename.startswith(Stats.OUTPUT_DIRECTORY):
+            filename = f"{Stats.OUTPUT_DIRECTORY}/{self.model.get_id_for_filename()}{filename}"
         else:
             filename = f"{self.model.get_id_for_filename()}{filename}"
         return filename if filename.endswith(self.export_datafile_extension) \
@@ -120,15 +131,16 @@ class Stats_MP:
                 else:
                     save_file.write(f"# {__name__} T={self.model.config.T} N={self.model.config.N}\n")
                 header = "  t"
-                for item in self.data:
+                for item in self.stats_items:
                     if self.model.model_id:
-                        header += self._format_field(self.data[item].name_for_files() + f"_{self.model.model_id}")
+                        header += self._format_field(
+                            self.stats_items[item].name_for_files() + f"_{self.model.model_id}")
                     else:
-                        header += self._format_field(self.data[item].name_for_files())
+                        header += self._format_field(self.stats_items[item].name_for_files())
                 save_file.write(header + "\n")
                 for i in range(self.model.config.T):
                     line = f"{i:>3}"
-                    for item in self.data:
+                    for item in self.stats_items:
                         # line += f"{self.file_fields_separator}{self.data[item].data[i]}"
                         line += self._format_value(item, i)
                     save_file.write(line + "\n")
@@ -145,19 +157,19 @@ class Stats_MP:
 
     def _format_value(self, item, position):
         if self.readable_file_format:
-            return self._format_field(self.data[item][position])
+            return self._format_field(self.stats_items[item][position])
         else:
-            return self._format_field(self.data[item].data[position])
+            return self._format_field(self.dataframe[item][position])
 
     def plot(self, results_multiple=None):
         if self.do_plot:
             if self.plot_what:
                 what_to_plot = 0
-                for item in self.data:
+                for item in self.stats_items:
                     if item in self.plot_what:
                         what_to_plot += 1
             else:
-                what_to_plot = len(self.data)
+                what_to_plot = len(self.stats_items)
             plotted_files = []
             text = f"Saving {self.do_plot} plots"
             if self.interactive:
@@ -165,22 +177,24 @@ class Stats_MP:
                                    max=what_to_plot)
             else:
                 progress_bar = None
-            for item in self.data:
+            for item in self.stats_items:
                 if not self.plot_what or item in self.plot_what:
                     if results_multiple:
-                        plotted_files.append(self.data[item].plot(plot_format=self.do_plot,
-                                                                  plot_min=self.plot_min, plot_max=self.plot_max,
-                                                                  multiple=results_multiple, multiple_key=item))
+                        plotted_files.append(self.stats_items[item].plot(plot_format=self.do_plot,
+                                                                         plot_min=self.plot_min, plot_max=self.plot_max,
+                                                                         multiple=results_multiple, multiple_key=item))
                     else:
-                        plotted_files.append(self.data[item].plot(plot_format=self.do_plot,
-                                                                  plot_min=self.plot_min, plot_max=self.plot_max))
+                        plotted_files.append(self.stats_items[item].plot(plot_format=self.do_plot,
+                                                                         plot_min=self.plot_min,
+                                                                         plot_max=self.plot_max))
                     if progress_bar:
                         progress_bar.next()
 
             if self.do_plot == PlotMethods.gretl:
-                plotted_files.append(self.data[list(self.data.keys())[0]].plot(plot_format=self.do_plot,
-                                                                               plot_min=self.plot_min,
-                                                                               plot_max=self.plot_max, generic=True))
+                plotted_files.append(self.stats_items[list(self.stats_items.keys())[0]].plot(plot_format=self.do_plot,
+                                                                                             plot_min=self.plot_min,
+                                                                                             plot_max=self.plot_max,
+                                                                                             generic=True))
 
             if progress_bar:
                 progress_bar.finish()
@@ -209,8 +223,8 @@ class Stats_MP:
 
     def get_what(self):
         print(self.model.log.colors.remark(f"\t{'name':20} Σ=summation ¯=average, Ξ=logarithm scale"))
-        for item in self.data:
-            print(f"\t{item:20} {self.data[item].get_description()}")
+        for item in self.stats_items:
+            print(f"\t{item:20} {self.stats_items[item].get_description()}")
 
     def get_default_plot_method(self):
         return PlotMethods('default')
@@ -249,5 +263,6 @@ class Stats_MP:
     def remove_not_used_data_after_abortion(self):
         if self.model.abort_execution:
             self.model.config.T = self.model.t
-            for item in self.model.statistics.data:
-                self.model.statistics.data[item].data = self.model.statistics.data[item].data[:self.model.t + 1]
+            for item in self.model.statistics.stats_items:
+                self.model.statistics.stats_items[item].stats_items = self.model.statistics.stats_items[
+                                                                          item].stats_items[:self.model.t + 1]
