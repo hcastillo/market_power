@@ -45,6 +45,7 @@ def run_interactive(config: List[str] = typer.Argument(None, help="Change config
 
 
 def run_notebook():
+    global model
     model = Model()
     # if we are running in a Notebook:
     model.statistics.enable_plotting(plot_format=PlotMethods.screen)
