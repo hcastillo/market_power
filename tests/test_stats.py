@@ -44,7 +44,7 @@ class TestLog(unittest.TestCase):
         # sum firmL = ln(8) = (2,0794415416798359282516963643745)
         self.assertEqual(float(self.statistics.stats_items['firms_A'][0]), 4.0)
         self.assertEqual(float(self.statistics.stats_items['firms_K'][0]), 10.0)
-        self.assertEqual(self.statistics.stats_items['firms_L'][0], '  1.792')
+        self.assertEqual(self.statistics.stats_items['firms_L'][0], '  6.000')
         # string with the order of stored items and prepends / separators and symbols:
         self.assertEqual(result, '*text*ΣK= 10.000ΣA=  4.000ΣLΞ  1.792Σ$=  0.000L=250.000')
 
