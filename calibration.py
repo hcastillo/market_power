@@ -13,8 +13,8 @@ import pandas as pd
 
 
 class Calibration:
-    N = 10
-    T = 100
+    N = 100
+    T = 1000
     ignore_t_less_than = 400
     parameters = {
         # if instead of a list, you want to use a range, use np.arange(start,stop,step) to generate the list:
@@ -64,6 +64,7 @@ class Calibration:
         model.configure(**values)
         Calibration.manage_stats_options(model)
         data, _ = model.run(export_datafile=description)
+        # data.to_csv("test.csv", index=False)
         if Calibration.constraints(data.loc[Calibration.ignore_t_less_than:], model, description, log_calibration):
             return data
         else:

@@ -57,15 +57,15 @@ class Experiment1:
     @staticmethod
     def plot(array_with_data, array_with_x_values, filename):
         for i in array_with_data:
-            y = []
-            e = []
+            mean = []
+            standard_deviation = []
             for j in array_with_data[i]:
                 # mean is 0, std is 1:
-                y.append(j[0])
-                e.append(j[1]/2)
+                mean.append(j[0])
+                standard_deviation.append(j[1]/2)
             plt.clf()
             plt.title(f"{i}")
-            plt.errorbar(array_with_x_values, y, e, linestyle='None', marker='^')
+            plt.errorbar(array_with_x_values, mean, standard_deviation, linestyle='None', marker='^')
             plt.savefig(f"{filename}_{i}.png", dpi=300)
 
     @staticmethod

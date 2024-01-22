@@ -8,7 +8,7 @@ from market_power.model import Model
 from market_power.config import Config
 from util.log import Log
 from util.stats_array import PlotMethods
-from util.utilities import is_notebook, manage_config_values
+import util.utilities as utilities
 import typer
 import statistics
 from typing import List
@@ -29,8 +29,8 @@ def run_interactive(config: List[str] = typer.Argument(None, help="Change config
                     n: int = typer.Option(Config.N, help="Number of firms"),
                     t: int = typer.Option(Config.T, help="Time repetitions")):
     logger = Log(Model.default())
-    models, title = manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax,
-                                         plot_what, plot, logger, config)
+    models, title = utilities.manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax,
+                                                   plot_what, plot, logger, config)
     if clear:
         do_clear_of_output_directory()
     results = {}
@@ -38,6 +38,7 @@ def run_interactive(config: List[str] = typer.Argument(None, help="Change config
         logger.set_model(models[i], plot, i, len(models) != 1)
         if readable:
             models[i].statistics.set_file_readable()
+        models[i].statistics.OUTPUT_DIRECTORY = "experiment4"
         result, name_of_result = run(models[i], save)
         results[name_of_result] = result
     if len(models) > 1 and (plot or plot_what):
@@ -57,21 +58,19 @@ def do_clear_of_output_directory():
     model.statistics.clear_output_dir()
 
 
-# def special_stats_function(model,data):
-#     """
-#     function called each time at the end of each step, before clearing the bankrupted firms
-#     not used in this code (to use it, uncomment the reference upper, as model.statistics.function = special...
-#     :param model: Model object
-#     :param data: direct reference to model.statistics.data
-#     :return:
-#     """
-#     avg_A = data['firms_A'][model.t]
-#     for firm in model.firms:
-#         if firm.A < 0 and avg_A<abs(firm.A):
-#             print(model.t,firm,firm.A,firm.gamma,model.bank_sector.bad_debt,firm.Y,firm.u,firm.Aprev)
+def detect_main_debt_firm(model, _data):
+    bigger_l = 0
+    bigger_l_firm = 0
+    for firm in model.firms:
+        if firm.L > bigger_l:
+            bigger_l_firm = firm.id
+            bigger_l = firm.L
+    return dict(firm_biggerL=bigger_l_firm, biggerL=bigger_l)
 
 
 def manage_stats_options(model):
+    model.statistics.OUTPUT_DIRECTORY = "experiment4"
+    model.export_datafile = "experiment4/model.csv"
     model.statistics.add(what="bank", name="L", prepend="bank    ")
     model.statistics.add(what="bank", name="A", prepend=" | ", logarithm=True)
     model.statistics.add(what="bank", name="D", prepend="  ")
@@ -87,13 +86,13 @@ def manage_stats_options(model):
     model.statistics.add(what="firms", name="I", prepend=" ")
     model.statistics.add(what="firms", name="gamma", prepend=" ", function=statistics.mean, symbol="γ")
     model.statistics.add(what="firms", name="u", function=statistics.mean, repr_function="¯")
-    model.statistics.add(what="firms", name="desiredK", symbol="dK", show=False)
+    model.statistics.add(what="firms", name="dK", symbol="dK", attr_name="desiredK", show=False)
     model.statistics.add(what="firms", name="offeredL", symbol="oL", show=False, function=statistics.mean)
     model.statistics.add(what="firms", name="gap_of_L", show=False)
     model.statistics.add(what="firms", name="demandL", symbol="dL", show=False, function=statistics.mean)
     model.statistics.add(what="firms", name="failures", attr_name="failed", symbol="fail",
                          number_type=int, prepend=" ")
-    # model.statistics.external_function_to_obtain_stats = special_stats_function
+    model.statistics.external_function_to_obtain_stats = detect_main_debt_firm
 
 
 def run(model, save=None):
@@ -101,7 +100,8 @@ def run(model, save=None):
     return model.run(export_datafile=save)
 
 
-if is_notebook():
+
+if utilities.is_notebook():
     run_notebook()
 else:
     if __name__ == "__main__":

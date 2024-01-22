@@ -34,8 +34,9 @@ class Config:
     alpha: float = 0.08  # α ratio equity/loan,  Ls=A/α
     # if you put False or 0, the rate will be the average, as equation 34 says,
     # if it is a number, this fixed value will be used:
-    #rate_for_bank_deposits_and_networth: float = 0.04
-    rate_for_bank_deposits_and_networth: float = 0
+    #
+    rate_for_bank_deposits_and_networth: float = 0.04
+    #rate_for_bank_deposits_and_networth: float = 0
     # if you put 1, it will stop with T=X instead of arriving at the end:
     bank_max_failures_allowed = 1
 

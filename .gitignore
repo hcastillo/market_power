@@ -166,6 +166,8 @@ auxiliar/*
 output/*
 experiment1/*
 experiment2/*
+experiment3/*
+experiment4/*
 calibration/*
 market_power.aux
 market_power.log

@@ -7,7 +7,7 @@ ABM model auxiliary file: to have statistics and plot
 import os
 import subprocess
 from progress.bar import Bar
-from util.stats_array import StatsFirms, StatsBankSector, StatsSpecificFirm, PlotMethods
+from util.stats_array import StatsFirms, StatsBankSector, StatsSpecificFirm, StatsSpecificData, PlotMethods
 import pandas as pd
 
 
@@ -57,7 +57,10 @@ class Stats:
 
         # if it is defined an external function, it will receive the data to analyze it:
         if self.external_function_to_obtain_stats:
-            self.external_function_to_obtain_stats(self.model, self.stats_items)
+            for item, value in self.external_function_to_obtain_stats(self.model, self.stats_items).items():
+                if item not in self.stats_items:
+                    self.stats_items[item] = StatsSpecificData(self.model, item)
+                self.dataframe[item][self.model.t] = value
         return result
 
     def current_status_save_after_failed_firms_removed(self):
@@ -130,6 +133,7 @@ class Stats:
                     save_file.write(f"# {export_description}\n")
                 else:
                     save_file.write(f"# {__name__} T={self.model.config.T} N={self.model.config.N}\n")
+                save_file.write(f"# pd.read_csv('file.csv',header=2)\n")
                 header = "  t"
                 for item in self.stats_items:
                     if self.model.model_id:
@@ -182,7 +186,8 @@ class Stats:
                     if results_multiple:
                         plotted_files.append(self.stats_items[item].plot(plot_format=self.do_plot,
                                                                          plot_min=self.plot_min, plot_max=self.plot_max,
-                                                                         multiple=results_multiple, multiple_key=item))
+                                                                         multiple=results_multiple,
+                                                                         multiple_key=item))
                     else:
                         plotted_files.append(self.stats_items[item].plot(plot_format=self.do_plot,
                                                                          plot_min=self.plot_min,
@@ -263,6 +268,4 @@ class Stats:
     def remove_not_used_data_after_abortion(self):
         if self.model.abort_execution:
             self.model.config.T = self.model.t
-            for item in self.model.statistics.stats_items:
-                self.model.statistics.stats_items[item].stats_items = self.model.statistics.stats_items[
-                                                                          item].stats_items[:self.model.t + 1]
+            self.dataframe = self.dataframe.head(self.model.t+1)

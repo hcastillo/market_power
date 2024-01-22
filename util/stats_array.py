@@ -23,7 +23,7 @@ class PlotMethods(str, Enum):
         return cls.pyplot
 
     def plot(self, plot_min, plot_max, filename, title, y_label, series_name,
-             data, model, multiple=None, multiple_key=None):
+             data, model, multiple=None, multiple_key=None, logarithm=False):
         match self.name:
             case PlotMethods.bokeh | PlotMethods.screen:
                 import bokeh.plotting
@@ -31,13 +31,13 @@ class PlotMethods(str, Enum):
                 p = bokeh.plotting.figure(title=title, x_axis_label="t", y_axis_label=y_label,
                                           sizing_mode="stretch_width", height=550)
                 if not multiple:
-                    xx, yy = StatsBaseClass.get_plot_elements(data, plot_min, plot_max)
+                    xx, yy = StatsBaseClass.get_plot_elements(data, plot_min, plot_max, logarithm)
                     p.line(xx, yy, color="blue", line_width=2)
                 else:
                     i = 0
                     for element in multiple:
                         xx, yy = StatsBaseClass.get_plot_elements(multiple[element][multiple_key].stats_items,
-                                                                  plot_min, plot_max)
+                                                                  plot_min, plot_max, logarithm)
                         p.line(xx, yy, color=Category20[20][i % 20], line_width=2, legend_label=element)
                         i += 1
                 if self.name == PlotMethods.screen:
@@ -65,12 +65,14 @@ class PlotMethods(str, Enum):
                     for element in multiple:
                         datasets.append(
                             graph.add_dataset(StatsBaseClass.get_plot_elements(
-                                multiple[element][multiple_key].stats_items,plot_min, plot_max, two_list=False),
-                                legend=element))
+                                multiple[element][multiple_key].stats_items,
+                                plot_min, plot_max, logarithm, two_list=False),
+                            legend=element))
                         datasets[-1].symbol.fill_color = i
                         i += 1
                 else:
-                    graph.add_dataset(StatsBaseClass.get_plot_elements(data, plot_min, plot_max, two_list=False))
+                    graph.add_dataset(StatsBaseClass.get_plot_elements(data, plot_min,
+                                                                       plot_max, logarithm, two_list=False))
                     graph.yaxis.label.text = 'y_label'
                 graph.autoscalex()
                 graph.autoscaley()
@@ -107,11 +109,11 @@ class PlotMethods(str, Enum):
                 if multiple:
                     for element in multiple:
                         xx, yy = StatsBaseClass.get_plot_elements(multiple[element][multiple_key].stats_items,
-                                                                  plot_min, plot_max)
+                                                                  plot_min, plot_max, logarithm)
                         plt.plot(xx, yy, label=element)
                     plt.legend()
                 else:
-                    xx, yy = StatsBaseClass.get_plot_elements(data, plot_min, plot_max)
+                    xx, yy = StatsBaseClass.get_plot_elements(data, plot_min, plot_max, logarithm)
                     plt.plot(xx, yy)
                     plt.ylabel(y_label)
                 plt.xticks(xx)
@@ -152,7 +154,6 @@ class StatsBaseClass:
         if self.column_name not in its_model.statistics.dataframe.keys():
             its_model.statistics.dataframe.insert(len(its_model.statistics.dataframe.keys()),
                                                   self.column_name, 0.0 if number_type == float else 0, True)
-        #self.data = np.zeros(its_model.config.T, dtype=data_type)
         self.do_plot = plot
 
     def get_value(self, firm):
@@ -165,7 +166,10 @@ class StatsBaseClass:
     def __return_value_formatted__(self):
         result = f"{self.short_description}"
         result += "Ξ" if self.logarithm else "="
-        result += f"{self.model.log.format(self.model.statistics.dataframe[self.column_name][self.model.t])}"
+        value = self.model.statistics.dataframe[self.column_name][self.model.t]
+        if self.logarithm:
+            value = math.log(value) if value>0 else math.nan
+        result += f"{self.model.log.format(value)}"
         return result
 
     def __getitem__(self, t):
@@ -200,24 +204,32 @@ class StatsBaseClass:
                 title = self.its_name + " " + self.repr_function + self.description
             return plot_format.plot(plot_min, plot_max, filename, title, y_label, series_name,
                                     self.model.statistics.dataframe[self.column_name],
-                                    self.model, multiple, multiple_key)
+                                    self.model, multiple, multiple_key, self.logarithm)
         return None
 
     @staticmethod
-    def get_plot_elements(the_array, plot_min, plot_max, two_list=True):
+    def get_plot_elements(the_array, plot_min, plot_max, logarithm, two_list=True):
         xx = []
         yy = []
         for i in range(plot_min, plot_max):
             if not np.isnan(the_array[i]):
                 if two_list:
                     xx.append(i)
-                    yy.append(the_array[i])
+                    yy.append(StatsBaseClass.get_the_item(the_array, i, logarithm))
                 else:
-                    xx.append((i, the_array[i]))
+                    xx.append((i, StatsBaseClass.get_the_item(the_array,i, logarithm)))
         if two_list:
             return xx, yy
         else:
             return xx
+
+    @staticmethod
+    def get_the_item(the_array, position, logarithm):
+        value = the_array[position]
+        if logarithm:
+            return math.log(value) if value > 0 else math.nan
+        else:
+            return value
 
     def __str__(self):
         if self.its_name != "":
@@ -258,11 +270,7 @@ class StatsFirms(StatsBaseClass):
         self.its_name = "Firms"
 
     def _calculate_statistics(self):
-        result = self.function(self.get_value(firm) for firm in self.model.firms)
-        if self.logarithm:
-            return math.log(result) if result > 0 else math.nan
-        else:
-            return result
+        return self.function(self.get_value(firm) for firm in self.model.firms)
 
 
 class StatsBankSector(StatsBaseClass):
@@ -273,11 +281,7 @@ class StatsBankSector(StatsBaseClass):
         self.its_name = "Bank"
 
     def _calculate_statistics(self):
-        result = getattr(self.model.bank_sector, self.attr_name)
-        if self.logarithm:
-            return math.log(result) if result > 0 else math.nan
-        else:
-            return result
+        return getattr(self.model.bank_sector, self.attr_name)
 
 
 class StatsSpecificFirm(StatsBaseClass):
@@ -289,8 +293,14 @@ class StatsSpecificFirm(StatsBaseClass):
         self.its_name = f"Firm{firm_number}_"
 
     def _calculate_statistics(self):
-        result = self.get_value(self.model.firms[self.firm_number])
-        if self.logarithm:
-            return math.log(result) if result > 0 else math.nan
-        else:
-            return result
+        return self.get_value(self.model.firms[self.firm_number])
+
+
+class StatsSpecificData(StatsBaseClass):
+    def __init__(self, its_model, description,
+                 number_type=float, plot=True, attr_name=None, logarithm=False, show=False):
+        super().__init__(its_model, description, description, description,
+                         "", number_type, plot, attr_name, logarithm, show)
+
+    def _calculate_statistics(self):
+        pass

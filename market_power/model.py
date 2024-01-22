@@ -70,6 +70,7 @@ class Model:
     def initialize_model(self, seed=None,
                          export_datafile=None, export_description=None):
         self.config.__init__()
+        self.abort_execution = False
         random.seed(seed if seed else self.config.default_seed)
         if export_datafile:
             self.export_datafile = export_datafile
@@ -98,10 +99,26 @@ class Model:
     def obtain_sum_a_for_balancing_later(self):
         self.total_A = 0
         self.negative_A = 0
+        self.most_negative_A = 0
+        self.most_negative_A_id = None
         for firm in self.firms:
             self.total_A += firm.A
-            if firm.A < 0:
-                self.negative_A += firm.A
+            if firm.A < self.most_negative_A:
+                self.most_negative_A = firm.A
+                self.most_negative_A_id = firm.id
+
+        # if this company has a negative A higher than the sum of all next companies, it can ruin the model, so we
+        # replace it's A by the next one, except of that value is 0
+        if abs(self.most_negative_A) > abs(self.total_A-self.most_negative_A):
+            next_most_negative = 0
+            for firm in self.firms:
+                if firm.id != self.most_negative_A_id and firm.A < next_most_negative:
+                    next_most_negative = firm.A
+            self.firms[self.most_negative_A_id].A = next_most_negative if next_most_negative < 0 else -0.1
+
+
+
+
 
     def finish_model(self):
         self.log.finish_model()

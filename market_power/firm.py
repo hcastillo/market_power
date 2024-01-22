@@ -54,7 +54,7 @@ class Firm:
         self.A = self.determine_net_worth()
 
     def do_step2(self):
-        self.A += self.adjust_net_worth()
+        ###self.A += self.adjust_net_worth()
         self.K = self.adjust_capital()
         self.Y = self.determine_output()  # second time
         if self.is_bankrupted():
