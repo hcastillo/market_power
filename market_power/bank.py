@@ -139,8 +139,11 @@ class BankSector:
                 self.totalA += firm.A
                 self.totalK += firm.K
                 total_firms_not_failed += 1
-        self.mean_firmK = self.totalK / total_firms_not_failed
-        self.mean_firmA = self.totalA / total_firms_not_failed
-        if info:
-            self.model.log.debug(f"bank_sector Σfirms={total_firms_not_failed} " +
-                                 f"firm.A={self.totalA} Σ firm.K={self.totalK}")
+        if total_firms_not_failed == 0:
+            self.model.log.error("all firms have failed: possibly your eta value is >0.25. try to reduce it")
+        else:
+            self.mean_firmK = self.totalK / total_firms_not_failed
+            self.mean_firmA = self.totalA / total_firms_not_failed
+            if info:
+                self.model.log.debug(f"bank_sector Σfirms={total_firms_not_failed} " +
+                                     f"firm.A={self.totalA} Σ firm.K={self.totalK}")
