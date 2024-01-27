@@ -6,7 +6,7 @@ ABM model: Non core functions used in some parts of the code
 @author: hector@bith.net
 """
 from market_power.model import Model
-
+import os
 
 def cartesian_product(my_dictionary):
     """
@@ -70,9 +70,17 @@ def manage_log_options(model, log, log_what, logfile, logger):
     model.log.define_log(log=log, logfile=logfile, what=log_what)
 
 
+def manage_directory(model, directory, clear):
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+    model.statistics.OUTPUT_DIRECTORY = directory
+    if clear:
+        model.statistics.clear_output_dir()
+
 
 # noinspection SpellCheckingInspection
-def manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax, plot_what, plot, logger, config_list):
+def manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax, plot_what, plot, logger,
+                         config_list, directory, clear):
     params_only_present_once = {}
     params_present_multiple = {}
     mock_model = Model()
@@ -122,6 +130,7 @@ def manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax, plo
             model.config.T = t
         if n != model.config.N:
             model.config.N = n
+        manage_directory(model, directory, clear)
         manage_log_options(model, log, log_what, logfile, logger)
         manage_plot_options(model, plot_tmin, plot_tmax, plot_what, plot, logger)
         for param in params_only_present_once:

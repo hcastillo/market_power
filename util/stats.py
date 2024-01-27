@@ -113,34 +113,33 @@ class Stats:
                                                                     column_name=what + "_" + name,
                                                                     firm_number=num_firm)
 
-    def get_export_path(self, filename):
-        if not filename.startswith(Stats.OUTPUT_DIRECTORY):
-            filename = f"{Stats.OUTPUT_DIRECTORY}/{self.model.get_id_for_filename()}{filename}"
-        else:
-            filename = f"{self.model.get_id_for_filename()}{filename}"
-        return filename if filename.endswith(self.export_datafile_extension) \
-            else f"{filename}{self.export_datafile_extension}"
+    def get_export_path(self):
+        return f"{self.OUTPUT_DIRECTORY}/{self.model.export_datafile}{self.export_datafile_extension}"
+
+    def determine_export_location(self, filename):
+        if filename:
+            filename = os.path.basename(filename)
+            if filename.endswith(self.export_datafile_extension):
+                filename = filename[:len(self.export_datafile_extension)]
+            self.model.export_datafile = filename + self.model.get_id_for_export()
 
     def export_data(self, export_datafile=None, export_description=None):
         if export_datafile:
             if self.interactive:
-                progress_bar = Bar('Saving output in ' + self.get_export_path(export_datafile),
+                progress_bar = Bar('Saving output in ' + self.get_export_path(),
                                    max=self.model.config.T)
             else:
                 progress_bar = None
-            with (open(export_datafile, 'w', encoding="utf-8") as save_file):
+            with (open(self.get_export_path(), 'w', encoding="utf-8") as save_file):
                 if export_description:
                     save_file.write(f"# {export_description}\n")
                 else:
                     save_file.write(f"# {__name__} T={self.model.config.T} N={self.model.config.N}\n")
-                save_file.write(f"# pd.read_csv('file.csv',header=2)\n")
+                save_file.write(f"# pd.read_csv('{self.model.export_datafile}"+
+                                f"{self.export_datafile_extension}',header=2)\n")
                 header = "  t"
                 for item in self.stats_items:
-                    if self.model.model_id:
-                        header += self._format_field(
-                            self.stats_items[item].name_for_files() + f"_{self.model.model_id}")
-                    else:
-                        header += self._format_field(self.stats_items[item].name_for_files())
+                    header += self._format_field(self.stats_items[item].name_for_files()+self.model.get_id_for_export())
                 save_file.write(header + "\n")
                 for i in range(self.model.config.T):
                     line = f"{i:>3}"
@@ -177,7 +176,7 @@ class Stats:
             plotted_files = []
             text = f"Saving {self.do_plot} plots"
             if self.interactive:
-                progress_bar = Bar(f"{text} in {self.OUTPUT_DIRECTORY}/{self.model.get_id_for_filename()}*",
+                progress_bar = Bar(f"{text} in {self.OUTPUT_DIRECTORY}/{self.model.get_id_for_export()}*",
                                    max=what_to_plot)
             else:
                 progress_bar = None
@@ -186,7 +185,7 @@ class Stats:
                     if results_multiple:
                         plotted_files.append(self.stats_items[item].plot(plot_format=self.do_plot,
                                                                          plot_min=self.plot_min, plot_max=self.plot_max,
-                                                                         multiple=results_multiple,
+                                                                         aggregated=results_multiple,
                                                                          multiple_key=item))
                     else:
                         plotted_files.append(self.stats_items[item].plot(plot_format=self.do_plot,
@@ -256,6 +255,7 @@ class Stats:
     def finish_model(self, export_datafile=None, export_description=None):
         if not self.model.test:
             self.remove_not_used_data_after_abortion()
+            self.determine_export_location(export_datafile)
             self.export_data(export_datafile=export_datafile, export_description=export_description)
             self.plot()
 

@@ -23,20 +23,20 @@ class PlotMethods(str, Enum):
         return cls.pyplot
 
     def plot(self, plot_min, plot_max, filename, title, y_label, series_name,
-             data, model, multiple=None, multiple_key=None, logarithm=False):
+             data, model, aggregated=None, multiple_key=None, logarithm=False):
         match self.name:
             case PlotMethods.bokeh | PlotMethods.screen:
                 import bokeh.plotting
                 from bokeh.palettes import Category20
                 p = bokeh.plotting.figure(title=title, x_axis_label="t", y_axis_label=y_label,
                                           sizing_mode="stretch_width", height=550)
-                if not multiple:
+                if not aggregated:
                     xx, yy = StatsBaseClass.get_plot_elements(data, plot_min, plot_max, logarithm)
                     p.line(xx, yy, color="blue", line_width=2)
                 else:
                     i = 0
-                    for element in multiple:
-                        xx, yy = StatsBaseClass.get_plot_elements(multiple[element][multiple_key].stats_items,
+                    for element in aggregated:
+                        xx, yy = StatsBaseClass.get_plot_elements(aggregated[element][multiple_key].stats_items,
                                                                   plot_min, plot_max, logarithm)
                         p.line(xx, yy, color=Category20[20][i % 20], line_width=2, legend_label=element)
                         i += 1
@@ -52,20 +52,20 @@ class PlotMethods(str, Enum):
                 from pygrace.project import Project
                 from pygrace.colors import ColorBrewerScheme
 
-                if multiple:
+                if aggregated:
                     plot = Project(colors=ColorBrewerScheme('Paired'))
                 else:
                     plot = Project()
 
                 graph = plot.add_graph()
                 graph.title.text = title.encode('ascii', 'replace').decode()
-                if multiple:
+                if aggregated:
                     i = 0
                     datasets = []
-                    for element in multiple:
+                    for element in aggregated:
                         datasets.append(
                             graph.add_dataset(StatsBaseClass.get_plot_elements(
-                                multiple[element][multiple_key].stats_items,
+                                aggregated[element][multiple_key].stats_items,
                                 plot_min, plot_max, logarithm, two_list=False),
                             legend=element))
                         datasets[-1].symbol.fill_color = i
@@ -83,21 +83,20 @@ class PlotMethods(str, Enum):
 
             case PlotMethods.gretl:
                 with open(filename + ".inp", 'w', encoding="utf-8") as script:
-                    script.write(f"open {os.path.basename(model.export_datafile)}\n")
+                    script.write(f"open {model.export_datafile}{model.statistics.export_datafile_extension}\n")
                     script.write("setobs 1 1 --special-time-series\n")
                     if title is not None:
-                        if multiple:
+                        if aggregated:
                             series_to_plot = f" {series_name}_0"
-                            for i in range(1, len(multiple)):
-                                another_model_filename = model.export_datafile.replace(
-                                    f"_0{model.statistics.export_datafile_extension}",
-                                    f"_{i}{model.statistics.export_datafile_extension}")
+                            for i in range(1, len(aggregated)):
+                                another_model_filename = model.export_datafile.replace("_0", f"_{i}") + \
+                                                         model.statistics.export_datafile_extension
                                 script.write(f"append {another_model_filename}\n")
                                 series_to_plot += f" {series_name}_{i}"
                             script.write(f"gnuplot {series_to_plot} --time-series --with-lines --output=display\n")
                         else:
-                            if model.get_id_for_filename() != '':
-                                series_name += "_" + model.get_id_for_filename().replace("_", "")
+                            if model.get_id_for_export() != '':
+                                series_name += "_" + model.get_id_for_export().replace("_", "")
                             script.write(f"gnuplot {series_name} --time-series --with-lines --output=display\n")
                         script.write(f"exit()\n")
                 return filename + ".inp"
@@ -106,9 +105,9 @@ class PlotMethods(str, Enum):
                 import matplotlib.pyplot as plt
                 plt.clf()
                 xx = []
-                if multiple:
-                    for element in multiple:
-                        xx, yy = StatsBaseClass.get_plot_elements(multiple[element][multiple_key].stats_items,
+                if aggregated:
+                    for element in aggregated:
+                        xx, yy = StatsBaseClass.get_plot_elements(aggregated[element][multiple_key],
                                                                   plot_min, plot_max, logarithm)
                         plt.plot(xx, yy, label=element)
                     plt.legend()
@@ -181,30 +180,31 @@ class StatsBaseClass:
     def get_description(self):
         return f"{self.repr_function if self.repr_function else ' '} {self.attr_name:10}"
 
-    def plot(self, plot_format: PlotMethods, plot_min: int = None, plot_max: int = None, multiple=None,
+    def plot(self, plot_format: PlotMethods, plot_min: int = None, plot_max: int = None, aggregated=None,
              multiple_key=None, generic=False):
         if not plot_min or plot_min < 0:
             plot_min = 0
         if not plot_max or plot_max > self.model.config.T:
             plot_max = self.model.config.T
         if self.do_plot:
+            filename = self.model.statistics.OUTPUT_DIRECTORY+"/"+self.model.export_datafile
             if generic:
                 y_label = ""
                 series_name = ""
-                filename = self.model.export_datafile.replace(self.model.statistics.export_datafile_extension, "")
                 title = None
             else:
                 y_label = self.repr_function + self.description + "(ln)" if self.logarithm else ""
                 series_name = f"{self.name_for_files()}"
-                filename = (self.model.statistics.OUTPUT_DIRECTORY + "/" + self.model.get_id_for_filename() +
-                            self.filename())
+                filename += "_" + self.filename()
                 title = self.its_name + " " + self.repr_function + self.description + self.model.model_title
-            if multiple:
-                filename = self.model.statistics.OUTPUT_DIRECTORY + "/" + self.filename()
+            if aggregated:
+                # aggregated is a combined plot of multiple models, i.e.: eta=0.1 eta=0.2, it will generate a
+                # plot as model_firms_a with the results of BOTH models for A, another file for L, etc:
+                filename = filename.replace(self.model.get_id_for_export(), "")
                 title = self.its_name + " " + self.repr_function + self.description
             return plot_format.plot(plot_min, plot_max, filename, title, y_label, series_name,
                                     self.model.statistics.dataframe[self.column_name],
-                                    self.model, multiple, multiple_key, self.logarithm)
+                                    self.model, aggregated, multiple_key, self.logarithm)
         return None
 
     @staticmethod
@@ -217,7 +217,7 @@ class StatsBaseClass:
                     xx.append(i)
                     yy.append(StatsBaseClass.get_the_item(the_array, i, logarithm))
                 else:
-                    xx.append((i, StatsBaseClass.get_the_item(the_array,i, logarithm)))
+                    xx.append((i, StatsBaseClass.get_the_item(the_array, i, logarithm)))
         if two_list:
             return xx, yy
         else:

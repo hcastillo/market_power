@@ -42,7 +42,7 @@ class TestPlot:
         assert os.path.isfile(file0_generated), False
         assert os.path.isfile(file1_generated), False
         assert os.path.isfile(file2_generated), False
-        array_to_plot.plot(PlotMethods.pyplot, multiple=array_multiple)
+        array_to_plot.plot(PlotMethods.pyplot, aggregated=array_multiple)
         assert os.path.isfile(file_global), True
         assert os.path.isfile(file0_generated), True
         assert os.path.isfile(file1_generated), True

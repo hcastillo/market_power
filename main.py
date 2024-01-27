@@ -20,6 +20,8 @@ def run_interactive(config: List[str] = typer.Argument(None, help="Change config
                     logfile: str = typer.Option(None, help="File to send the logs to"),
                     log_what: str = typer.Option(None, help="What to log (apart from balances, ? to list)"),
                     save: str = typer.Option(None, help="Save the output in csv format"),
+                    directory: str = typer.Option(Model.default().statistics.OUTPUT_DIRECTORY,
+                                                  help="Directory where it stores the output"),
                     readable: bool = typer.Option(False, help="Saves the output in a human readable format"),
                     plot: PlotMethods = typer.Option(None, help="Save the plot (? to list formats)"),
                     plot_tmin: int = typer.Option(None, help="Min. time to represent in the plots"),
@@ -30,18 +32,31 @@ def run_interactive(config: List[str] = typer.Argument(None, help="Change config
                     t: int = typer.Option(Config.T, help="Time repetitions")):
     logger = Log(Model.default())
     models, title = manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax,
-                                         plot_what, plot, logger, config)
-    if clear:
-        do_clear_of_output_directory()
+                                         plot_what, plot, logger, config, directory, clear)
     results = {}
     for i in range(len(models)):
-        logger.set_model(models[i], plot, i, len(models) != 1)
+        logger.set_model(models[i], plot, i, len(models))
         if readable:
             models[i].statistics.set_file_readable()
         result, name_of_result = run(models[i], save)
         results[name_of_result] = result
-    if len(models) > 1 and (plot or plot_what):
-        models[0].statistics.plot(results)
+    plot_aggregated_plots_and_description(models, results, plot, plot_what, logger)
+
+
+def plot_aggregated_plots_and_description(models, results, plot, plot_what, logger):
+    if len(models) > 1:
+        if plot or plot_what:
+            # plot the aggregated plots:
+            models[0].statistics.plot(results)
+        filename_for_description = models[0].statistics.OUTPUT_DIRECTORY + "/" + \
+                                   models[0].export_datafile.replace(models[0].get_id_for_export(),"") + ".info"
+        with open(filename_for_description, 'w', encoding="utf-8") as file_for_description:
+            results_description = list(results.keys())
+            for i in range(len(models)):
+                file_for_description.write(f"{models[i].export_datafile}" +
+                                           f"{models[i].statistics.export_datafile_extension}: " +
+                                           f"{results_description[i]}\n")
+        logger.progress_bar_multiple.next()
 
 
 def run_notebook():
@@ -53,9 +68,7 @@ def run_notebook():
     run(model)
 
 
-def do_clear_of_output_directory():
-    model = Model()
-    model.statistics.clear_output_dir()
+
 
 
 # def special_stats_function(model,data):

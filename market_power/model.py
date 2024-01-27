@@ -146,9 +146,9 @@ class Model:
         else:
             return "" if short else "model"
 
-    def get_id_for_filename(self):
+    def get_id_for_export(self):
         if self.model_id:
-            return f"{self.model_id}_"
+            return f"_{self.model_id}"
         else:
             return ""
 
