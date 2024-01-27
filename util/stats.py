@@ -230,9 +230,6 @@ class Stats:
         for item in self.stats_items:
             print(f"\t{item:20} {self.stats_items[item].get_description()}")
 
-    def get_default_plot_method(self):
-        return PlotMethods('default')
-
     def enable_plotting(self, plot_format: PlotMethods, plot_min: int = None, plot_max: int = None,
                         plot_what: str = ""):
         self.do_plot = plot_format
@@ -247,7 +244,7 @@ class Stats:
         self.export_description = export_description
         if self.model.log.progress_bar and not self.do_plot and not self.export_datafile:
             # if no debug, and no output to file and no plots, then why you execute this?
-            self.do_plot = self.get_default_plot_method()
+            self.do_plot = PlotMethods.get_default()
             self.model.log.warning("--plot enabled due to lack of any output", before_start=True)
         if not self.model.test:
             self.model.log.step(self.current_status_save(), before_start=True)

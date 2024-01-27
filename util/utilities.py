@@ -6,7 +6,7 @@ ABM model: Non core functions used in some parts of the code
 @author: hector@bith.net
 """
 from market_power.model import Model
-import os
+import os, sys
 
 def cartesian_product(my_dictionary):
     """
@@ -26,10 +26,12 @@ def is_notebook():
         return False
 
 
-def check_what(logger, what, log_or_plot):
+def check_what(logger, what, log_or_plot, stats_elements_function=None):
     result = []
     if what:
         mock_model = Model(log=logger)
+        if callable(stats_elements_function):
+            stats_elements_function(mock_model)
         mock_model.test = True
         mock_model.initialize_model(export_datafile="mock")
         for item in what.split(","):
@@ -39,20 +41,20 @@ def check_what(logger, what, log_or_plot):
                         print(logger.colors.remark(f"\t{'name':20} Σ=summation ¯=average, Ξ=logarithm scale"))
                     for valid_values in mock_model.statistics.stats_items:
                         print(f"\t{valid_values:20} {mock_model.statistics.stats_items[valid_values].get_description()}")
-                    raise typer.Exit()
+                    sys.exit(0)
                 elif item.lower() == "bank" or item.lower() == "firms":
                     logger.only_firms_or_bank = item.lower()
                 else:
                     valid_values = {str(key) for key, value in mock_model.statistics.stats_items.items()}
                     logger.error(f"{log_or_plot}_what must be one of {valid_values}", before_start=True)
-                    raise typer.Exit()
+                    sys.exit(-1)
             else:
                 result.append(item)
     return result
 
 
-def manage_plot_options(model, plot_tmin, plot_tmax, plot_what, plot, logger):
-    plot_what = check_what(logger, plot_what, "plot")
+def manage_plot_options(model, plot_tmin, plot_tmax, plot_what, plot, logger, stats_elements_function):
+    plot_what = check_what(logger, plot_what, "plot", stats_elements_function)
     if (plot_tmin or plot_tmax or plot_what) and not plot:
         # if not enabled plot with a specific format, we assume the first type: pyplot
         plot = model.statistics.get_default_plot_method()
@@ -80,26 +82,26 @@ def manage_directory(model, directory, clear):
 
 # noinspection SpellCheckingInspection
 def manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax, plot_what, plot, logger,
-                         config_list, directory, clear):
+                         stats_elements_function, config_list, directory, clear):
     params_only_present_once = {}
     params_present_multiple = {}
-    mock_model = Model()
+    mock_model = Model.default()
     if config_list:
         config_list.sort()
         for item in config_list:
             if item == '?':
                 print(mock_model.config.__str__(separator="\n"))
-                raise typer.Exit()
+                sys.exit(0)
             try:
                 name_config, value_config = item.split("=")
             except ValueError:
                 logger.error("A config value for the model should be passed as parameter=value", before_start=True)
-                raise typer.Exit(-1)
+                sys.exit(-1)
             try:
                 getattr(mock_model.config, name_config)
             except AttributeError:
-                logger.error(f"Configuration has no {name_config} parameter", before_start=True)
-                raise typer.Exit(-1)
+                logger.error(f"Configuration has no '{name_config}' parameter", before_start=True)
+                sys.exit(-1)
             try:
                 setattr(mock_model.config, name_config, float(value_config))
                 if name_config in params_only_present_once:
@@ -112,7 +114,8 @@ def manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax, plo
                         params_only_present_once[name_config] = float(value_config)
             except ValueError:
                 logger.error(f"Value given for {value_config} is not valid", before_start=True)
-                raise typer.Exit(-1)
+                sys.exit(-1)
+
     models = []
     num_combinations = 0
     combinations = []
@@ -132,7 +135,7 @@ def manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax, plo
             model.config.N = n
         manage_directory(model, directory, clear)
         manage_log_options(model, log, log_what, logfile, logger)
-        manage_plot_options(model, plot_tmin, plot_tmax, plot_what, plot, logger)
+        manage_plot_options(model, plot_tmin, plot_tmax, plot_what, plot, logger, stats_elements_function)
         for param in params_only_present_once:
             setattr(model.config, param, params_only_present_once[param])
         for param in one_combination_of_multiple_params:

@@ -9,38 +9,48 @@ from market_power.config import Config
 from util.log import Log
 from util.stats_array import PlotMethods
 from util.utilities import is_notebook, manage_config_values
-import typer
+import argparse
 import statistics
 from typing import List
 
 
 # noinspection SpellCheckingInspection
-def run_interactive(config: List[str] = typer.Argument(None, help="Change config value (i.e. alpha=3.1, ? to list)"),
-                    log: str = typer.Option(None, help="Log level messages (? to list)"),
-                    logfile: str = typer.Option(None, help="File to send the logs to"),
-                    log_what: str = typer.Option(None, help="What to log (apart from balances, ? to list)"),
-                    save: str = typer.Option(None, help="Save the output in csv format"),
-                    directory: str = typer.Option(Model.default().statistics.OUTPUT_DIRECTORY,
-                                                  help="Directory where it stores the output"),
-                    readable: bool = typer.Option(False, help="Saves the output in a human readable format"),
-                    plot: PlotMethods = typer.Option(None, help="Save the plot (? to list formats)"),
-                    plot_tmin: int = typer.Option(None, help="Min. time to represent in the plots"),
-                    plot_tmax: int = typer.Option(None, help="Max. time to represent in the plots"),
-                    plot_what: str = typer.Option("", help="What to plot (all if omitted, ? to list)"),
-                    clear: bool = typer.Option(False, help="Clear the output folder before execute anything"),
-                    n: int = typer.Option(Config.N, help="Number of firms"),
-                    t: int = typer.Option(Config.T, help="Time repetitions")):
+def run_interactive():
+    parser = argparse.ArgumentParser(description="Market Power ABM",
+                                     epilog="[0..n param=value] Change config value (i.e. alpha=3.1, ? to list)")
+    parser.add_argument('--log', default=None, help="Log level messages (? to list)")
+    parser.add_argument("--logfile", default=None, help="File to send the logs to"),
+    parser.add_argument('--log_what', default=None, help="What to log (apart from balances, ? to list)")
+    parser.add_argument('--save', default=None, help="Save the output in csv format")
+    parser.add_argument('--directory', default=Model.default().statistics.OUTPUT_DIRECTORY,
+                        help="Directory where it stores the output")
+    parser.add_argument('--readable', default=False, help="Saves the output in a human readable format",
+                        action=argparse.BooleanOptionalAction)
+    parser.add_argument('--plot', default=None, type=PlotMethods,
+                        help="Save the plot (? to list formats)")
+    parser.add_argument('--plot_tmin', type=int, default=None, help="Min. time to represent in the plots")
+    parser.add_argument('--plot_tmax', type=int, default=None, help="Max. time to represent in the plots")
+    parser.add_argument('--plot_what', default="", help="What to plot (all if omitted, ? to list)")
+    parser.add_argument('--clear', default=False, help="Clear the output folder before execute anything",
+                        action=argparse.BooleanOptionalAction)
+    parser.add_argument('--n', type=int, default=Config.N, help="Number of firms")
+    parser.add_argument('--t', type=int, default=Config.T, help="Time repetitions")
+    args, config = parser.parse_known_args()
+
+    #config: List[str] = typer.Argument(None, help=""),
+
     logger = Log(Model.default())
-    models, title = manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax,
-                                         plot_what, plot, logger, config, directory, clear)
+    models, title = manage_config_values(args.t, args.n, args.log, args.logfile, args.log_what, args.plot_tmin,
+                                         args.plot_tmax, args.plot_what, args.plot, logger, manage_stats_options,
+                                         config, args.directory, args.clear)
     results = {}
     for i in range(len(models)):
-        logger.set_model(models[i], plot, i, len(models))
-        if readable:
+        logger.set_model(models[i], args.plot, i, len(models))
+        if args.readable:
             models[i].statistics.set_file_readable()
-        result, name_of_result = run(models[i], save)
+        result, name_of_result = run(models[i], args.save)
         results[name_of_result] = result
-    plot_aggregated_plots_and_description(models, results, plot, plot_what, logger)
+    plot_aggregated_plots_and_description(models, results, args.plot, args.plot_what, logger)
 
 
 def plot_aggregated_plots_and_description(models, results, plot, plot_what, logger):
@@ -120,4 +130,4 @@ if is_notebook():
 else:
     if __name__ == "__main__":
         PlotMethods.check_sys_argv()
-        typer.run(run_interactive)
+        run_interactive()

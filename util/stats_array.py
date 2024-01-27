@@ -18,9 +18,16 @@ class PlotMethods(str, Enum):
     gretl = "gretl"
     screen = "screen"
 
-    @classmethod
-    def _missing_(cls, _):
-        return cls.pyplot
+    # @classmethod
+    #def _missing_(cls, _):
+    #    return cls.pyplot
+
+    @staticmethod
+    def get_default():
+        return PlotMethods('pyplot')
+
+    def __str__(self):
+        return self.value
 
     def plot(self, plot_min, plot_max, filename, title, y_label, series_name,
              data, model, aggregated=None, multiple_key=None, logarithm=False):
@@ -126,10 +133,15 @@ class PlotMethods(str, Enum):
     def check_sys_argv():
         import sys
         for i in range(len(sys.argv) - 1):
-            if sys.argv[i] == "--plot" and sys.argv[i + 1].startswith("-"):
-                sys.argv.insert(i + 1, PlotMethods('default').name)
+            if sys.argv[i] == "--plot":
+                if sys.argv[i + 1].startswith("-"):
+                    sys.argv.insert(i + 1, PlotMethods.get_default().name)
+                if sys.argv[i + 1] == '?':
+                    for item in [e.value for e in PlotMethods]:
+                        print(f"\t{item}")
+                    sys.exit(0)
         if sys.argv[-1] == '--plot':
-            sys.argv.append(PlotMethods('default').name)
+            sys.argv.append(PlotMethods.get_default().name)
 
 
 class StatsBaseClass:
