@@ -169,7 +169,4 @@ experiment2/*
 experiment3/*
 experiment4/*
 calibration/*
-market_power.aux
-market_power.log
-market_power.out
-market_power.synctex.gz
+old
