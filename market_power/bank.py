@@ -5,6 +5,7 @@ ABM model
 
 @author: hector@bith.net
 """
+import statistics
 
 
 class BankSector:
@@ -66,7 +67,7 @@ class BankSector:
         if self.model.config.rate_for_bank_deposits_and_networth:
             return self.model.config.rate_for_bank_deposits_and_networth
         else:
-            avg_r = sum(firm.r for firm in self.model.firms) / len(self.model.firms)
+            avg_r = statistics.mean(firm.r for firm in self.model.firms)
             return avg_r if avg_r > self.model.config.r_i0 else self.model.config.r_i0
 
     def determine_net_worth(self):
@@ -79,8 +80,7 @@ class BankSector:
             self.model.log.error_minor(f"bank_sector failed with A={net_worth}")
             self.bank_failures += 1
             if self.model.config.bank_max_failures_allowed <= self.bank_failures:
-                self.model.log.warning(f"bank_sector A={net_worth} -> aborting")
-                self.model.abort_execution = True
+                self.model.log.warning(self.model.abort(net_worth))
             else:
                 self.model.log.warning(f"A=A_i0 ({net_worth} -> {self.model.config.bank_sector_A_i0})")
                 net_worth = self.model.config.bank_sector_A_i0

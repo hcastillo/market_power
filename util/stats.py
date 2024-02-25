@@ -14,7 +14,6 @@ import pandas as pd
 class Stats:
     OUTPUT_DIRECTORY = "output"
 
-    # This time the idea is to use pandas to store the statistics
     def __init__(self, its_model):
         self.model = its_model
         self.dataframe = pd.DataFrame([])
@@ -37,8 +36,8 @@ class Stats:
     def set_file_readable(self):
         self.readable_file_format = True
         self.export_datafile_extension = ".txt"
-        if self.model.export_datafile:
-            self.model.export_datafile = self.model.export_datafile.replace(".csv", ".txt")
+        if self.export_datafile:
+            self.export_datafile = self.export_datafile.replace(".csv", ".txt")
 
     def info_status(self, before_start=False):
         for firm in self.model.firms:
@@ -114,28 +113,29 @@ class Stats:
                                                                     firm_number=num_firm)
 
     def get_export_path(self):
-        return f"{self.OUTPUT_DIRECTORY}/{self.model.export_datafile}{self.export_datafile_extension}"
+        return f"{self.OUTPUT_DIRECTORY}/{self.export_datafile}{self.export_datafile_extension}"
 
-    def determine_export_location(self, filename):
-        if filename:
-            filename = os.path.basename(filename)
+    def determine_export_location(self):
+        if self.export_datafile:
+            filename = os.path.basename(self.export_datafile)
             if filename.endswith(self.export_datafile_extension):
-                filename = filename[:len(self.export_datafile_extension)]
-            self.model.export_datafile = filename + self.model.get_id_for_export()
+                self.export_datafile = filename[:len(self.export_datafile_extension)]
+            self.export_datafile = filename + self.model.get_id_for_export()
 
-    def export_data(self, export_datafile=None, export_description=None):
-        if export_datafile:
+    def export_data(self):
+        if self.export_datafile:
             if self.interactive:
                 progress_bar = Bar('Saving output in ' + self.get_export_path(),
                                    max=self.model.config.T)
+                progress_bar.update()
             else:
                 progress_bar = None
             with (open(self.get_export_path(), 'w', encoding="utf-8") as save_file):
-                if export_description:
-                    save_file.write(f"# {export_description}\n")
+                if self.export_description:
+                    save_file.write(f"# {self.export_description}\n")
                 else:
                     save_file.write(f"# {__name__} T={self.model.config.T} N={self.model.config.N}\n")
-                save_file.write(f"# pd.read_csv('{self.model.export_datafile}"+
+                save_file.write(f"# pd.read_csv('{self.export_datafile}" +
                                 f"{self.export_datafile_extension}',header=2)\n")
                 header = "  t"
                 for item in self.stats_items:
@@ -144,7 +144,6 @@ class Stats:
                 for i in range(self.model.config.T):
                     line = f"{i:>3}"
                     for item in self.stats_items:
-                        # line += f"{self.file_fields_separator}{self.data[item].data[i]}"
                         line += self._format_value(item, i)
                     save_file.write(line + "\n")
                     if progress_bar:
@@ -178,6 +177,7 @@ class Stats:
             if self.interactive:
                 progress_bar = Bar(f"{text} in {self.OUTPUT_DIRECTORY}/{self.model.get_id_for_export()}*",
                                    max=what_to_plot)
+                progress_bar.update()
             else:
                 progress_bar = None
             for item in self.stats_items:
@@ -241,9 +241,7 @@ class Stats:
         if not self.export_datafile:
             self.export_datafile = "model"
 
-    def initialize_model(self, export_datafile=None, export_description=None):
-        self.export_datafile = export_datafile
-        self.export_description = export_description
+    def initialize_model(self):
         if self.model.log.progress_bar and not self.do_plot and not self.export_datafile:
             # if no debug, and no output to file and no plots, then why you execute this?
             self.do_plot = PlotMethods.get_default()
@@ -251,11 +249,11 @@ class Stats:
         if not self.model.test:
             self.model.log.step(self.current_status_save(), before_start=True)
 
-    def finish_model(self, export_datafile=None, export_description=None):
+    def finish_model(self):
         if not self.model.test:
             self.remove_not_used_data_after_abortion()
-            self.determine_export_location(export_datafile)
-            self.export_data(export_datafile=export_datafile, export_description=export_description)
+            self.determine_export_location()
+            self.export_data()
             self.plot()
 
     def clear_output_dir(self):
@@ -263,6 +261,9 @@ class Stats:
             if os.path.isfile(self.OUTPUT_DIRECTORY + "/" + file):
                 self.model.log.info(f"Removing {self.OUTPUT_DIRECTORY + '/' + file}", before_start=True)
                 os.remove(self.OUTPUT_DIRECTORY + "/" + file)
+
+    def define_output_directory(self, output_directory):
+        self.OUTPUT_DIRECTORY = output_directory
 
     def remove_not_used_data_after_abortion(self):
         if self.model.abort_execution:

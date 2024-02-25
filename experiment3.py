@@ -12,6 +12,7 @@ import util.utilities as utilities
 import statistics
 from market_power.model import Model
 import pandas as pd
+import warnings
 from progress.bar import Bar
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -25,7 +26,7 @@ class Experiment3:
     T = 1000
     MC = 10
     analyze_data = ['firms_Y', 'firms_A', 'firms_r']
-    OUTPUT_DIRECTORY = "experiment3/"
+    OUTPUT_DIRECTORY = "experiment3"
     beta = {
         # if instead of a list, you want to use a range, use np.arange(start,stop,step) to generate the list:
         # 'eta': np.arange(0.00001,0.9, 0.1) --> [0.0001, 0.1001, 0.2001... 0.9001]
@@ -54,6 +55,7 @@ class Experiment3:
                 xx.append(math.log(log_firm_a[j]))
                 yy.append(math.log(j + 1))
         plt.scatter(xx, yy, color=Experiment3.color_fader('yellow', 'blue', model.t / Experiment3.T))
+        return {}
 
 
     @staticmethod
@@ -78,6 +80,7 @@ class Experiment3:
         values["N"] = Experiment3.N
         model.statistics.interactive = False
         model.configure(**values)
+        model.statistics.define_output_directory(Experiment3.OUTPUT_DIRECTORY)
         Experiment3.manage_stats_options(model)
         if create_gradient_plot:
             plt.clf()
@@ -133,13 +136,14 @@ class Experiment3:
     def do(model: Model):
         if not os.path.isdir(Experiment3.OUTPUT_DIRECTORY):
             os.mkdir(Experiment3.OUTPUT_DIRECTORY)
-        log_experiment = open(f'{Experiment3.OUTPUT_DIRECTORY}experiment3.txt', 'w')
+        log_experiment = open(f'{Experiment3.OUTPUT_DIRECTORY}/experiment3.txt', 'w')
         num_models_analyzed = 0
         model.test = False
 
         progress_bar = Bar('Executing models', max=Experiment3.get_num_models(Experiment3.beta) *
                                                    Experiment3.get_num_models(Experiment3.eta))
-        Experiment3.generate_gradient_example(f"{Experiment3.OUTPUT_DIRECTORY}experiment3.csv")
+        progress_bar.update()
+        Experiment3.generate_gradient_example(f"{Experiment3.OUTPUT_DIRECTORY}/experiment3.csv")
         for beta in Experiment3.get_models(Experiment3.beta):
             results_to_plot = {}
             results_x_axis = []
@@ -152,16 +156,17 @@ class Experiment3:
                     mc_iteration = random.randint(9999, 20000)
                     values['default_seed'] = mc_iteration
                     result_mc = Experiment3.run_model(model,
-                                                      f"{Experiment3.OUTPUT_DIRECTORY}experiment3_{num_models_analyzed}_{i}.csv",
+                                                      f"{Experiment3.OUTPUT_DIRECTORY}/experiment3_{num_models_analyzed}_{i}",
                                                       values, i==0)
                     if len(result_mc) != Experiment3.T:
                         aborted_models += 1
                     result_iteration = pd.concat([result_iteration, result_mc])
                 Experiment3.plot_ddf(result_iteration, f"{beta}{eta}",
-                                     f"{Experiment3.OUTPUT_DIRECTORY}experiment3_{num_models_analyzed}_{i}")
+                                     f"{Experiment3.OUTPUT_DIRECTORY}/experiment3_{num_models_analyzed}_{i}")
                 result_iteration_values = ""
                 for k in result_iteration.keys():
                     mean_estimated = result_iteration[k].mean()
+                    warnings.filterwarnings('ignore')  # it generates RuntimeWarning: overflow encountered in multiply
                     std_estimated = result_iteration[k].std()
                     if k in results_to_plot:
                         results_to_plot[k].append([mean_estimated, std_estimated])
@@ -180,7 +185,7 @@ class Experiment3:
                 num_models_analyzed += 1
                 progress_bar.next()
             Experiment3.plot(results_to_plot, results_x_axis, beta, "eta",
-                             f"{Experiment3.OUTPUT_DIRECTORY}beta{beta['beta']}")
+                             f"{Experiment3.OUTPUT_DIRECTORY}/beta{beta['beta']}")
 
         log_experiment.close()
         progress_bar.finish()

@@ -4,10 +4,9 @@
 ABM model calibrator, using the model
 @author: hector@bith.net
 """
-import random
-
 import util.utilities as utilities
 import statistics
+import warnings
 from market_power.model import Model
 import numpy as np
 from progress.bar import Bar
@@ -20,12 +19,12 @@ class Experiment1:
     T = 1000
     MC = 10
     analyze_data = ['firms_Y', 'firms_r']
-    OUTPUT_DIRECTORY = "experiment1/"
+    OUTPUT_DIRECTORY = "experiment1"
     parameters = {
         # if instead of a list, you want to use a range, use np.arange(start,stop,step) to generate the list:
         # 'eta': np.arange(0.00001,0.9, 0.1) --> [0.0001, 0.1001, 0.2001... 0.9001]
         #
-        'eta': [0.0001, 0.1, 0.2, 0.3, 0.5, 0.6, 0.7, 0.8, 0.9]
+        'eta': [0.0001, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4]
     }
 
     @staticmethod
@@ -39,8 +38,20 @@ class Experiment1:
         values["N"] = Experiment1.N
         model.statistics.interactive = False
         model.configure(**values)
+        model.statistics.define_output_directory(Experiment1.OUTPUT_DIRECTORY)
         Experiment1.manage_stats_options(model)
-        data, _ = model.run(export_datafile=description)
+        number_of_tries_in_case_of_abort = 3
+        while number_of_tries_in_case_of_abort > 0:
+            data, _ = model.run(export_datafile=description)
+            if len(data) == Experiment1.T:
+                # when exactly T iterations of data are returned = OK
+                number_of_tries_in_case_of_abort -= 1
+            else:
+                # in case of aborted, we change the seed and run it again:
+                model.t = 0
+                model.config.default_seed += 1
+                model.abort_execution = False
+                model.config.T = Experiment1.T
         data_considered = {}
         for value in Experiment1.analyze_data:
             if value in data.keys():
@@ -57,14 +68,15 @@ class Experiment1:
     @staticmethod
     def plot(array_with_data, array_with_x_values, filename):
         for i in array_with_data:
+            use_logarithm = abs(array_with_data[i][0][0]-array_with_data[i][1][0]) > 1e10
             mean = []
             standard_deviation = []
             for j in array_with_data[i]:
                 # mean is 0, std is 1:
-                mean.append(j[0])
-                standard_deviation.append(j[1]/2)
+                mean.append(np.log(j[0]) if use_logarithm else j[0])
+                standard_deviation.append(np.log(j[1]/2) if use_logarithm else j[1]/2)
             plt.clf()
-            plt.title(f"{i}")
+            plt.title(f"log({i})" if use_logarithm else f"{i}")
             plt.errorbar(array_with_x_values, mean, standard_deviation, linestyle='None', marker='^')
             plt.savefig(f"{filename}_{i}.png", dpi=300)
 
@@ -80,20 +92,20 @@ class Experiment1:
     def do(model: Model):
         if not os.path.isdir(Experiment1.OUTPUT_DIRECTORY):
             os.mkdir(Experiment1.OUTPUT_DIRECTORY)
-        log_experiment = open(f'{Experiment1.OUTPUT_DIRECTORY}experiment1.txt', 'w')
+        log_experiment = open(f'{Experiment1.OUTPUT_DIRECTORY}/experiment1.txt', 'w')
         num_models_analyzed = 0
         model.test = False
-
         progress_bar = Bar('Executing models', max=Experiment1.get_num_models())
+        progress_bar.update()
         results_to_plot = Experiment1.empty_array_for_results(is_numpy=False)
         results_x_axis = []
         for values in Experiment1.get_models():
             result_iteration = Experiment1.empty_array_for_results()
             for i in range(Experiment1.MC):
-                mc_iteration = random.randint(9999, 20000)
+                mc_iteration = 16141 # random.randint(9999, 20000)
                 values['default_seed'] = mc_iteration
                 result_mc = Experiment1.run_model(model,
-                                                  f"{Experiment1.OUTPUT_DIRECTORY}experiment1_{num_models_analyzed}_{i}.csv",
+                                                  f"{Experiment1.OUTPUT_DIRECTORY}/experiment1_{num_models_analyzed}_{i}",
                                                   values)
                 for j in result_mc.keys():
                     result_iteration[j] = np.concatenate((result_iteration[j], result_mc[j]))
@@ -101,6 +113,7 @@ class Experiment1:
             result_iteration_values = ""
             for k in result_iteration.keys():
                 mean_estimated = np.mean(result_iteration[k])
+                warnings.filterwarnings('ignore')  # it generates RuntimeWarning: overflow encountered in multiply
                 std_estimated = np.std(result_iteration[k])
                 results_to_plot[k].append([mean_estimated, std_estimated])
                 result_iteration_values += f" {k}[avg:{mean_estimated},std:{std_estimated}]"
@@ -114,7 +127,7 @@ class Experiment1:
             print(f"model #{num_models_analyzed}: {values}: {result_iteration_values}", file=log_experiment)
             num_models_analyzed += 1
             progress_bar.next()
-        Experiment1.plot(results_to_plot, results_x_axis, f"{Experiment1.OUTPUT_DIRECTORY}experiment1")
+        Experiment1.plot(results_to_plot, results_x_axis, f"{Experiment1.OUTPUT_DIRECTORY}/experiment1")
         log_experiment.close()
         progress_bar.finish()
 

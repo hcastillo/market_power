@@ -39,17 +39,12 @@ class Log:
                     self.progress_bar_multiple = Bar(f"Executing {num_models} models", max=num_models)
                 else:
                     self.progress_bar_multiple.next()
-            #self.model.export_datafile = f"{self.OUTPUT_DIRECTORY}/model_{num_model}" + \
-            #                             f"{self.model.statistics.export_datafile_extension}"
-            #self.model.statistics.export_datafile = self.model.export_datafile
-            self.model.export_datafile = "model"
+            self.model.statistics.export_datafile = "model"
             self.model.statistics.interactive = False
             self.model.statistics.multiple = True
         else:
-            if plot == PlotMethods.gretl and not self.model.export_datafile:
-                #self.model.export_datafile = f"{self.OUTPUT_DIRECTORY}/" + \
-                #                             f"model{self.model.statistics.export_datafile_extension}"
-                self.model.export_datafile = "model"
+            if plot == PlotMethods.gretl and not self.model.statistics.export_datafile:
+                self.model.statistics.export_datafile = "model"
             self.model.statistics.interactive = True
             self.model.statistics.multiple = False
         self.model.log = self

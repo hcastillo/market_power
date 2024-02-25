@@ -37,7 +37,7 @@ def run_interactive():
     parser.add_argument('--t', type=int, default=Config.T, help="Time repetitions")
     args, config = parser.parse_known_args()
 
-    #config: List[str] = typer.Argument(None, help=""),
+    # config: List[str] = typer.Argument(None, help=""),
 
     logger = Log(Model.default())
     models, title = manage_config_values(args.t, args.n, args.log, args.logfile, args.log_what, args.plot_tmin,
@@ -59,7 +59,7 @@ def plot_aggregated_plots_and_description(models, results, plot, plot_what, logg
             # plot the aggregated plots:
             models[0].statistics.plot(results)
         filename_for_description = models[0].statistics.OUTPUT_DIRECTORY + "/" + \
-                                   models[0].export_datafile.replace(models[0].get_id_for_export(),"") + ".info"
+                                   models[0].export_datafile.replace(models[0].get_id_for_export(), "") + ".info"
         with open(filename_for_description, 'w', encoding="utf-8") as file_for_description:
             results_description = list(results.keys())
             for i in range(len(models)):
@@ -78,16 +78,13 @@ def run_notebook():
     run(model)
 
 
-
-
-
 # def special_stats_function(model,data):
 #     """
 #     function called each time at the end of each step, before clearing the bankrupted firms
 #     not used in this code (to use it, uncomment the reference upper, as model.statistics.function = special...
 #     :param model: Model object
 #     :param data: direct reference to model.statistics.data
-#     :return:
+#     :return: {} or a dict with values to add to stats dictionary
 #     """
 #     avg_A = data['firms_A'][model.t]
 #     for firm in model.firms:
@@ -100,7 +97,7 @@ def manage_stats_options(model):
     model.statistics.add(what="bank", name="A", prepend=" | ", logarithm=True)
     model.statistics.add(what="bank", name="D", prepend="  ")
     model.statistics.add(what="bank", name="profits", symbol="π", prepend="  ", attr_name="profits")
-    model.statistics.add(what="bank", name="bad debt",
+    model.statistics.add(what="bank", name="bad debt", logarithm=True,
                          symbol="bd", prepend=" ", attr_name="bad_debt")
     model.statistics.add(what="firms", name="K", prepend="\n              firms   ", logarithm=True)
     model.statistics.add(what="firms", name="A", prepend=" |")

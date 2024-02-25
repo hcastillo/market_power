@@ -90,13 +90,13 @@ class PlotMethods(str, Enum):
 
             case PlotMethods.gretl:
                 with open(filename + ".inp", 'w', encoding="utf-8") as script:
-                    script.write(f"open {model.export_datafile}{model.statistics.export_datafile_extension}\n")
+                    script.write(f"open {model.statistics.export_datafile}{model.statistics.export_datafile_extension}\n")
                     script.write("setobs 1 1 --special-time-series\n")
                     if title is not None:
                         if aggregated:
                             series_to_plot = f" {series_name}_0"
                             for i in range(1, len(aggregated)):
-                                another_model_filename = model.export_datafile.replace("_0", f"_{i}") + \
+                                another_model_filename = model.statistics.export_datafile.replace("_0", f"_{i}") + \
                                                          model.statistics.export_datafile_extension
                                 script.write(f"append {another_model_filename}\n")
                                 series_to_plot += f" {series_name}_{i}"
@@ -122,7 +122,7 @@ class PlotMethods(str, Enum):
                     xx, yy = StatsBaseClass.get_plot_elements(data, plot_min, plot_max, logarithm)
                     plt.plot(xx, yy)
                     plt.ylabel(y_label)
-                plt.xticks(xx)
+                # plt.xticks(xx)
                 plt.xlabel("t")
                 plt.title(title)
                 plt.savefig(filename + ".png")
@@ -190,7 +190,7 @@ class StatsBaseClass:
         return self.model.statistics.dataframe[self.column_name]
 
     def get_description(self):
-        return f"{self.repr_function if self.repr_function else ' '} {self.attr_name:10}"
+        return f"{self.repr_function if self.repr_function else ' '}{'Ξ' if self.logarithm else ' '}{self.attr_name:10}"
 
     def plot(self, plot_format: PlotMethods, plot_min: int = None, plot_max: int = None, aggregated=None,
              multiple_key=None, generic=False):
@@ -199,7 +199,7 @@ class StatsBaseClass:
         if not plot_max or plot_max > self.model.config.T:
             plot_max = self.model.config.T
         if self.do_plot:
-            filename = self.model.statistics.OUTPUT_DIRECTORY+"/"+self.model.export_datafile
+            filename = self.model.statistics.OUTPUT_DIRECTORY+"/"+self.model.statistics.export_datafile
             if generic:
                 y_label = ""
                 series_name = ""

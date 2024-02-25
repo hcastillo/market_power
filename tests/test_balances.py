@@ -30,7 +30,7 @@ class BalanceAtCreationTestCase(test_class.MarketPowerTest):
         #    bank.A=5, bank.L=4/0.08=62.5, bank.D=57.5
 
         self.doTest()
-        self.assertBankSector(A=-2.650020257540131, D=-30.47523296171151, L=-33.12525321925164)
+        self.assertBankSector(A=5, D=57.5, L=62.5)
 
 
 if __name__ == '__main__':

@@ -23,10 +23,9 @@ class Model:
     log: Log = None
     statistics: Stats = None
     config: Config = None
-    export_datafile = None
-    export_description = None
     model_id = ""
     model_title = ""
+    ABORTS_LOGFILE = "aborts.txt"
 
     def __init__(self, firm_class=Firm, test=False, model_id="", log=None, model_title="", **configuration):
         self.config = Config()
@@ -73,15 +72,32 @@ class Model:
         self.abort_execution = False
         random.seed(seed if seed else self.config.default_seed)
         if export_datafile:
-            self.export_datafile = export_datafile
-        self.export_description = str(self.config) if export_description is None else export_description
+            self.statistics.export_datafile = export_datafile
+        if export_description is None:
+            self.statistics.export_description = str(self.config)
+        else:
+            self.statistics.export_description = export_description
         self.firms = []
         for i in range(self.config.N):
             self.firms.append(self.firm_class(new_id=i, its_model=self))
         self.bank_sector = BankSector(self)
-        self.statistics.initialize_model(export_datafile=self.export_datafile,
-                                         export_description=self.export_description)
+        self.statistics.initialize_model()
         self.log.initialize_model()
+
+    def abort(self, current_bank_net_worth):
+        if not self.statistics.export_datafile:
+            # we will save this aborted model in any case (it's something to study):
+            counter = 0
+            self.statistics.export_datafile = self.statistics.OUTPUT_DIRECTORY+"/aborted_{}"
+            import os
+            while os.path.isfile(self.statistics.export_datafile.format(counter)):
+                counter += 1
+            self.statistics.export_datafile = self.statistics.export_datafile.format(counter)
+        message = f"bank_sector A={current_bank_net_worth} -> aborting {self.statistics.export_datafile}"
+        self.abort_execution = True
+        with (open(self.statistics.OUTPUT_DIRECTORY+"/"+self.ABORTS_LOGFILE, 'a', encoding="utf-8") as save_file):
+            save_file.write(f"# {message}\n")
+        return message
 
     def do_step(self):
         self.bank_sector.initialize_step()
@@ -122,7 +138,7 @@ class Model:
 
     def finish_model(self):
         self.log.finish_model()
-        self.statistics.finish_model(export_datafile=self.export_datafile, export_description=self.export_description)
+        self.statistics.finish_model()
 
     def run(self, export_datafile=None):
         self.initialize_model(export_datafile=export_datafile)
