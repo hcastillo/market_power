@@ -6,7 +6,10 @@ ABM model: Non core functions used in some parts of the code
 @author: hector@bith.net
 """
 from market_power.model import Model
-import os, sys
+from util.stats_array import PlotMethods
+import os
+import sys
+
 
 def cartesian_product(my_dictionary):
     """
@@ -40,7 +43,8 @@ def check_what(logger, what, log_or_plot, stats_elements_function=None):
                     if log_or_plot == 'plot':
                         print(logger.colors.remark(f"\t{'name':20} Σ=summation ¯=average, Ξ=logarithm scale"))
                     for valid_values in mock_model.statistics.stats_items:
-                        print(f"\t{valid_values:20} {mock_model.statistics.stats_items[valid_values].get_description()}")
+                        print(
+                            f"\t{valid_values:20} {mock_model.statistics.stats_items[valid_values].get_description()}")
                     sys.exit(0)
                 elif item.lower() == "bank" or item.lower() == "firms":
                     logger.only_firms_or_bank = item.lower()
@@ -57,7 +61,7 @@ def manage_plot_options(model, plot_tmin, plot_tmax, plot_what, plot, logger, st
     plot_what = check_what(logger, plot_what, "plot", stats_elements_function)
     if (plot_tmin or plot_tmax or plot_what) and not plot:
         # if not enabled plot with a specific format, we assume the first type: pyplot
-        plot = model.statistics.get_default_plot_method()
+        plot = PlotMethods.get_default()
     if plot:
         model.statistics.enable_plotting(plot_format=plot, plot_min=plot_tmin,
                                          plot_max=plot_tmax, plot_what=plot_what)

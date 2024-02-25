@@ -238,6 +238,8 @@ class Stats:
         if plot_max and plot_max <= self.model.config.T:
             self.plot_max = plot_max
         self.plot_what = plot_what
+        if not self.export_datafile:
+            self.export_datafile = "model"
 
     def initialize_model(self, export_datafile=None, export_description=None):
         self.export_datafile = export_datafile
