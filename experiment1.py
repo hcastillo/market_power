@@ -20,6 +20,7 @@ class Experiment1:
     MC = 10
     analyze_data = ['firms_Y', 'firms_r']
     OUTPUT_DIRECTORY = "experiment1"
+    number_of_tries_in_case_of_abort = 3
     parameters = {
         # if instead of a list, you want to use a range, use np.arange(start,stop,step) to generate the list:
         # 'eta': np.arange(0.00001,0.9, 0.1) --> [0.0001, 0.1001, 0.2001... 0.9001]
@@ -40,7 +41,7 @@ class Experiment1:
         model.configure(**values)
         model.statistics.define_output_directory(Experiment1.OUTPUT_DIRECTORY)
         Experiment1.manage_stats_options(model)
-        number_of_tries_in_case_of_abort = 3
+        number_of_tries_in_case_of_abort = Experiment1.number_of_tries_in_case_of_abort
         while number_of_tries_in_case_of_abort > 0:
             data, _ = model.run(export_datafile=description)
             if len(data) == Experiment1.T:
