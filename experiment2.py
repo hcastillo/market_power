@@ -284,6 +284,61 @@ class Experiment2:
             os.mkdir(Experiment2.OUTPUT_DIRECTORY+"/bad")
 
 
+
+    @staticmethod
+    def __get_value_from_all_executions__(filename, parameter_to_obtain):
+        result = 0
+        num = 0
+        std = 0
+        for file in glob.glob(rf'{Experiment2.OUTPUT_DIRECTORY}/*/{filename}_*.csv'):
+            data = pd.read_csv(f"{file}", header=2)
+            result += data[parameter_to_obtain].mean()
+            num += 1
+            std += data[parameter_to_obtain].std()
+        return result/num,std/num
+
+    @staticmethod
+    def plot_bankruptcy():
+        i = 0
+        results_y = {i: [] for i in Experiment2.eta['eta']}
+        deviation_y = {i: [] for i in Experiment2.eta['eta']}
+        results_x = []
+        xticks = []
+        for parameters_not_eta in Experiment2.get_models(Experiment2.parameters_not_eta):
+            if parameters_not_eta['w'] == 0.7:
+                results_x.append(i)
+                for eta in Experiment2.get_models(Experiment2.eta):
+                    values = parameters_not_eta.copy()
+                    values.update(eta)
+                    filename_for_iteration = Experiment2.get_filename_for_iteration(values)
+                    eta = eta['eta']
+                    fails, std = Experiment2.__get_value_from_all_executions__(filename_for_iteration, 'FirmsFAIL')
+                    results_y[eta].append(fails)
+                    deviation_y[eta].append(std)
+                    #print(i,filename_for_iteration)
+                valor_x = ""
+                valor_x = f"g={values['g']}\nk={values['k']}"
+                # if (x - 1) % 9 == 0:
+                #     valor_x = f"g={values['g']}\nk={values['k']}"
+                # if not valor and (x - 1) % 3 == 0:
+                #     valor = f"k={values['k']}"
+                if i % 3 == 0:
+                    if values['g']==1:
+                        xticks.append(f"$\\beta$={values['beta']}\ng={values['g']}")
+                    else:
+                        xticks.append(f"g={values['g']}")
+                else:
+                    xticks.append(f" ")
+                i += 1
+        plt.clf()
+        eta_colors = {0.0001: 'r', 0.1: 'b', 0.3: 'k'}
+        eta_markers = {0.0001: 'D', 0.1: '^', 0.3: 'o'}
+        for eta in Experiment2.eta['eta']:
+            plt.errorbar(results_x, results_y[eta], deviation_y[eta], linestyle='None', color=eta_colors[eta],
+                         marker=eta_markers[eta])
+        plt.xticks(range(len(xticks)), xticks, fontsize=6, rotation='vertical')
+        plt.savefig(Experiment2.OUTPUT_DIRECTORY+"\\plot_bankruptcies.png")
+
     @staticmethod
     def plot_surface():
         # import matplotlib.pyplot as plt
@@ -566,6 +621,8 @@ if __name__ == "__main__":
                         help="Execute the experiment")
     parser.add_argument('--plot_points', default=False, action=argparse.BooleanOptionalAction,
                         help="Plot the poins matrix")
+    parser.add_argument('--plot_bankruptcy', default=False, action=argparse.BooleanOptionalAction,
+                        help="Plot bankruptcy average")
     parser.add_argument('--plot_surface', default=False, action=argparse.BooleanOptionalAction,
                         help="Plot the GPD of all models in 3D")
     parser.add_argument('--statistics', default=False, action=argparse.BooleanOptionalAction,
@@ -583,5 +640,7 @@ if __name__ == "__main__":
         Experiment2.plot_points()
     elif args.plot_surface:
         Experiment2.plot_surface()
+    elif args.plot_bankruptcy:
+        Experiment2.plot_bankruptcy()
     elif args.do:
         Experiment2.do(Model(export_datafile="exec", test=True))

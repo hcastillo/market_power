@@ -21,7 +21,7 @@ class Config:
     phi: float = 1.2  # Φ capital productivity: constant in this model without R&D
     threshold_bankrupt = 0  # A < threshold_bankrupt and firm will fail
     g: float = 1.1  # cost per unit of capital
-    w: float = 0.5  # markdown interest rate (the higher it is, the monopolistic power of bank sector)
+    w: float = 0.5  # real wage
     k: float = 1.0  # capital intensity rate K/N
     b: float = 1  # parameter of bankruptcy cost (b>0)
     beta: float = 0.02  # β skewness parameter -1 ... 1
