@@ -48,10 +48,7 @@ class Stats:
         result = ""
         for item in self.stats_items:
             current_value = self.stats_items[item].get_statistics()
-            if self.model.log.only_firms_or_bank:
-                if self.stats_items[item].its_name.lower() == self.model.log.only_firms_or_bank.lower():
-                    result += current_value
-            else:
+            if not self.model.log.what_keywords or item in self.model.log.what_keywords:
                 result += current_value
 
         # if it is defined an external function, it will receive the data to analyze it:
@@ -66,6 +63,7 @@ class Stats:
         result = ""
         for item in self.stats_items:
             if self.stats_items[item].its_name.lower() == "firms" and self.stats_items[item].description != "failures":
+                # the number of failures it's OK, what we need is to obtain the statistics again of the firms:
                 result += self.stats_items[item].get_statistics(store=False)
         return result.replace("firms ", "      ")
 

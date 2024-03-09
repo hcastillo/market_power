@@ -109,7 +109,8 @@ class Model:
         self.bank_sector.determine_step_results()
         step_info = self.statistics.current_status_save()
         self.remove_failed_firms()
-        step_info += self.statistics.current_status_save_after_failed_firms_removed()
+        #step_info += self.statistics.current_status_save_after_failed_firms_removed()
+        self.statistics.current_status_save_after_failed_firms_removed()
         self.log.step(step_info)
 
     def obtain_sum_a_for_balancing_later(self):

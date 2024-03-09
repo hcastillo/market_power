@@ -21,7 +21,6 @@ class Log:
     log_level = "WARN"  # default if not other chosen
     progress_bar = None
     what_keywords = []
-    only_firms_or_bank = False
 
     def __init__(self, model):
         self.model = model
@@ -32,7 +31,8 @@ class Log:
         if not self.what_keywords and its_model.log.what_keywords:
             self.what_keywords = its_model.log.what_keywords
         self.model = its_model
-        self.model.statistics.do_plot = plot
+        if plot:
+            self.model.statistics.do_plot = plot
         if multiple_models_will_be_run:
             if not self.model.test:
                 if num_model == 0:
@@ -101,11 +101,11 @@ class Log:
         return f"     {self.model.get_id(short=True)}" if before_start \
             else f"t={self.model.t + 1:03}{self.model.get_id(short=True)}"
 
-    def define_log(self, log: str, logfile: str = '', what=[]):
+    def define_log(self, log: str, logfile: str = '', what=None):
         # noinspection SpellCheckingInspection
         formatter = logging.Formatter('%(levelname)s %(message)s')
         self.log_level = Log.get_level(log.upper())
-        self.what_keywords = what
+        self.what_keywords = what if what else []
         self.logger.setLevel(self.log_level)
         if self.logger.hasHandlers():
             self.logger.handlers.clear()
@@ -126,13 +126,16 @@ class Log:
 
     def info_firm(self, firm, before_start=False):
         text = f"{firm.__str__()}  "
-        if not before_start:
-            if self.what_keywords and not self.model.test:
-                for elem in self.model.statistics.stats_items:
-                    if elem in self.what_keywords and elem.startswith('firms'):
-                        text += f" {elem.replace('firms_', '')}="
-                        text += f"{self.format(self.model.statistics.stats_items[elem].get_value(firm))}"
+        if self.what_keywords and not self.model.test:
+            something_to_print = False
+            for elem in self.model.statistics.stats_items:
+                if elem in self.what_keywords and elem.startswith('firms'):
+                    text += f" {elem.replace('firms_', '')}="
+                    text += f"{self.format(self.model.statistics.stats_items[elem].get_value(firm))}"
+                    something_to_print = True
+            if something_to_print:
                 self.info(text, before_start)
+
 
     def initialize_model(self):
         if self.logger.level == Log.get_level("ERROR") and not self.model.test:

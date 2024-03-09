@@ -40,17 +40,22 @@ def check_what(logger, what, log_or_plot, stats_elements_function=None):
         for item in what.split(","):
             if item not in mock_model.statistics.stats_items:
                 if item == '?':
-                    if log_or_plot == 'plot':
-                        print(logger.colors.remark(f"\t{'name':20} Σ=summation ¯=average, Ξ=logarithm scale"))
-                    for valid_values in mock_model.statistics.stats_items:
+                    print(logger.colors.remark(f"\t{'name':20} Σ=summation ¯=average, Ξ=logarithm scale"))
+                    for valid_value in mock_model.statistics.stats_items:
                         print(
-                            f"\t{valid_values:20} {mock_model.statistics.stats_items[valid_values].get_description()}")
+                            f"\t{valid_value:20} {mock_model.statistics.stats_items[valid_value].get_description()}")
+                    print(f"\t{'firms':20} all the items related with firms but nothing from bank")
+                    print(f"\t{'bank':20} all the items related with bank but nothing from firms")
                     sys.exit(0)
                 elif item.lower() == "bank" or item.lower() == "firms":
-                    logger.only_firms_or_bank = item.lower()
+                    only_firms_or_bank = []
+                    for valid_value in mock_model.statistics.stats_items:
+                        if valid_value.startswith(item.lower()):
+                            only_firms_or_bank.append(valid_value)
+                    return only_firms_or_bank
                 else:
-                    valid_values = {str(key) for key, value in mock_model.statistics.stats_items.items()}
-                    logger.error(f"{log_or_plot}_what must be one of {valid_values}", before_start=True)
+                    valid_value = {str(key) for key, value in mock_model.statistics.stats_items.items()}
+                    logger.error(f"{log_or_plot}_what must be one of {valid_value}", before_start=True)
                     sys.exit(-1)
             else:
                 result.append(item)
@@ -67,8 +72,8 @@ def manage_plot_options(model, plot_tmin, plot_tmax, plot_what, plot, logger, st
                                          plot_max=plot_tmax, plot_what=plot_what)
 
 
-def manage_log_options(model, log, log_what, logfile, logger):
-    log_what = check_what(logger, log_what, "log")
+def manage_log_options(model, log, log_what, logfile, logger, stats_elements_function):
+    log_what = check_what(logger, log_what, "log", stats_elements_function)
     if log_what and not log:
         log = "INFO"
     if not log:
@@ -138,7 +143,7 @@ def manage_config_values(t, n, log, logfile, log_what, plot_tmin, plot_tmax, plo
         if n != model.config.N:
             model.config.N = n
         manage_directory(model, directory, clear)
-        manage_log_options(model, log, log_what, logfile, logger)
+        manage_log_options(model, log, log_what, logfile, logger, stats_elements_function)
         manage_plot_options(model, plot_tmin, plot_tmax, plot_what, plot, logger, stats_elements_function)
         for param in params_only_present_once:
             setattr(model.config, param, params_only_present_once[param])
