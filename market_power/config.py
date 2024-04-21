@@ -18,19 +18,19 @@ class Config:
     firms_K_i0: float = 5.0  # capital
     firms_A_i0: float = 1.0  # assets
     # firms_L_i0: float = 4.0  # loans (from bank sector)  L = k-A
-    phi: float = 1.2  # Φ capital productivity: constant in this model without R&D
+    phi: float = 1.2  # Φ capital productivity: constant in this model without R&D, used in K estimation
     threshold_bankrupt = 0  # A < threshold_bankrupt and firm will fail
-    g: float = 1.1  # cost per unit of capital
-    w: float = 0.5  # real wage
-    k: float = 1.0  # capital intensity rate K/N
-    b: float = 1  # parameter of bankruptcy cost (b>0)
-    beta: float = 0.02  # β skewness parameter -1 ... 1
+    g: float = 1.2  # cost per unit of capital, used in gamma
+    w: float = 0.7  # real wage, used in gamma
+    k: float = 1.0  # capital intensity rate K/N, used in gamma
+    b: float = 1  # parameter of bankruptcy cost (b>0) used in K
+    beta: float = 0.02  # β skewness parameter -1 ... 1  r=beta*L/A
     # m: float = 0.0  # percentage of K that should be in cash
 
     # bank sector:                   balance sheet => L = A + D
     bank_sector_A_i0: float = 500  # L and D are set inside bank.py
     r_i0: float = 0.02  # initial rate of interest charged to firms by loans
-    lambda_param: float = 0.3  # λ, to determine credit allotted for firms L=A/alfa, 0 < λ < 1
+    lambda_param: float = 0.3  # λ, to determine credit allotted for firms oL= lambda L .... 0 < λ < 1
     alpha: float = 0.08  # α ratio equity/loan,  Ls=A/α
     # if you put False or 0, the rate will be the average, as equation 34 says,
     # if it is a number, this fixed value will be used:

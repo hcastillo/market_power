@@ -11,7 +11,6 @@ from util.stats_array import PlotMethods
 from util.utilities import is_notebook, manage_config_values
 import argparse
 import statistics
-from typing import List
 
 
 # noinspection SpellCheckingInspection
@@ -97,6 +96,11 @@ def manage_stats_options(model):
     model.statistics.add(what="bank", name="A", prepend=" | ", logarithm=True)
     model.statistics.add(what="bank", name="D", prepend="  ")
     model.statistics.add(what="bank", name="profits", symbol="π", prepend="  ", attr_name="profits")
+    model.statistics.add(what="bank", name="ploans", symbol="π1", prepend="  ", attr_name="profits_loans")
+    model.statistics.add(what="bank", name="rdep", symbol="π2",
+                         prepend="  ", attr_name="remunerations_of_deposits_and_networth")
+    model.statistics.add(what="bank", name="bad debt", logarithm=True,
+                         symbol="bd", prepend=" ", attr_name="bad_debt")
     model.statistics.add(what="bank", name="bad debt", logarithm=True,
                          symbol="bd", prepend=" ", attr_name="bad_debt")
     model.statistics.add(what="firms", name="K", prepend="\n              firms   ", logarithm=True)
@@ -104,6 +108,7 @@ def manage_stats_options(model):
     model.statistics.add(what="firms", name="L", prepend=" ", logarithm=True)
     model.statistics.add(what="firms", name="profits", prepend=" ", symbol="π", attr_name="pi")
     model.statistics.add(what="firms", name="Y", prepend=" ", logarithm=True)
+
     model.statistics.add(what="firms", name="r", prepend=" ", function=statistics.mean)
     model.statistics.add(what="firms", name="I", prepend=" ")
     model.statistics.add(what="firms", name="gamma", prepend=" ", function=statistics.mean, symbol="γ")

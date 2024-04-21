@@ -13,6 +13,8 @@ class BankSector:
         self.model = its_model
         self.bad_debt = 0.0
         self.profits = 0.0
+        self.remunerations_of_deposits_and_networth = 0.0
+        self.profits_loans = 0.0
         self.totalA = 0.0
         self.totalK = 0.0
         self.mean_firmK = self.model.config.firms_K_i0
@@ -33,17 +35,17 @@ class BankSector:
 
     def determine_profits(self):
         # (Equation 34)
-        profits_loans = 0.0
+        self.profits_loans = 0.0
         total_loans_of_firms = 0.0
         for firm in self.model.firms:
             if not firm.failed:
-                profits_loans += firm.r * firm.L
+                self.profits_loans += firm.r * firm.L
                 total_loans_of_firms += firm.L
-        remunerations_of_deposits_and_networth = self.determine_average_interest_rate() * \
+        self.remunerations_of_deposits_and_networth = self.determine_average_interest_rate() * \
                                                  (total_loans_of_firms + self.total_returned_l)
-        result = profits_loans - remunerations_of_deposits_and_networth
-        self.model.log.debug(f"bank_sector profits={result} = profits_loans({profits_loans}) " +
-                             f"- remuneration_deposits_and_assets({remunerations_of_deposits_and_networth})")
+        result = self.profits_loans - self.remunerations_of_deposits_and_networth
+        self.model.log.debug(f"bank_sector profits={result} = profits_loans({self.profits_loans}) " +
+                             f"- remuneration_deposits_and_assets({self.remunerations_of_deposits_and_networth})")
         return result
 
     # def determine_profits(self):

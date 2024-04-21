@@ -117,7 +117,7 @@ class Stats:
         if self.export_datafile:
             filename = os.path.basename(self.export_datafile)
             if filename.endswith(self.export_datafile_extension):
-                self.export_datafile = filename[:len(self.export_datafile_extension)]
+                filename = filename[:-len(self.export_datafile_extension)]
             self.export_datafile = filename + self.model.get_id_for_export()
 
     def export_data(self):
