@@ -25,6 +25,8 @@ class Firm:
         self.c = 0.0
         self.Y = 0.0
         self.u = 0.0
+        self.MR = 0.0
+        self.MC = 0.0
         self.gap_of_L = 0.0
         self.desiredK = 0.0
         self.demandL = 0.0
@@ -51,6 +53,10 @@ class Firm:
         self.Y = self.determine_output()  # not used in pi, substituted by phi*K
         self.u = self.determine_u()
         self.pi = self.determine_profits()
+
+        self.MC = self.determine_marginal_cost()
+        self.MR = self.determine_marginal_revenue()
+
         self.A = self.determine_net_worth()
 
     def do_step2(self):
@@ -65,6 +71,18 @@ class Firm:
             return abs(self.model.total_A)*self.A/self.model.negative_A
         else:
             return 0
+
+    def determine_marginal_cost(self):
+        # (Equation 13, right part c*b)
+        return self.c + self.model.config.b / 2 * (
+            self.c * (2+self.model.config.eta) * self.Y**(1+self.model.config.eta)
+            -
+            self.A * (1+self.model.config.eta) * self.Y**(self.model.config.eta)
+        )
+
+    def determine_marginal_revenue(self):
+        # (Equation 13, left part MR)
+        return (1-self.model.config.eta)*self.Y**self.model.config.eta
 
     def determine_cost_per_unit_of_capital(self):
         # (Before equation 2)  gamma

@@ -115,6 +115,8 @@ def manage_stats_options(model):
     model.statistics.add(what="firms", name="u", function=statistics.mean, repr_function="¯")
     model.statistics.add(what="firms", name="desiredK", symbol="dK", show=False)
     model.statistics.add(what="firms", name="offeredL", symbol="oL", show=False, function=statistics.mean)
+    model.statistics.add(what="firms", name="MC", symbol="MC", show=False, function=statistics.mean)
+    model.statistics.add(what="firms", name="MR", symbol="MR", show=False, function=statistics.mean)
     model.statistics.add(what="firms", name="gap_of_L", show=False)
     model.statistics.add(what="firms", name="demandL", symbol="dL", show=False, function=statistics.mean)
     model.statistics.add(what="firms", name="failures", attr_name="failed", symbol="fail",
