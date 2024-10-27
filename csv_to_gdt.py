@@ -50,7 +50,7 @@ class CsvToGdtParser:
                 data = pd.read_csv(self.filename, header=ignored_lines, sep=";")
             # if still one column, we can try with 'tab' or spaces:
             if len(data.keys()) <= 1:
-                data = pd.read_csv(self.filename, header=ignored_lines, sep=r'\s{2,}')
+                data = pd.read_csv(self.filename, header=ignored_lines, sep=r'\s{2,}', engine='python')
             E = lxml.builder.ElementMaker()
             GRETLDATA = E.gretldata
             DESCRIPTION = E.description
