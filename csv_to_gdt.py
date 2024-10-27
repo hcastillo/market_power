@@ -25,10 +25,32 @@ class CsvToGdtParser:
         else:
             self.output = tempfile.NamedTemporaryFile(suffix=".gdt", mode="w", delete=False)
 
+    def __determine_comments_and_header__(self, filename):
+        # exploratory work: first we try to determine how many lines are starting with # in the file:
+        lines_with_comments = 0
+        with open(filename,"r") as file:
+            line = file.readline()
+            while line.startswith('#'):
+                lines_with_comments += 1
+                line = file.readline()
+        if line.strip()!='' and line.strip()[0].isdigit():
+            # this will be that the first column has numbers, so no header with variable names:
+            return None
+        else:
+            return lines_with_comments
+
     def process(self):
         # generate from csv the result:
         if os.path.isfile(self.filename):
-            data = pd.read_csv(self.filename, header=2)
+            ignored_lines = self.__determine_comments_and_header__(self.filename)
+            # open first with "," as a separator:
+            data = pd.read_csv(self.filename, header=ignored_lines)
+            # if only one column, surely we should try with ";":
+            if len(data.keys()) <= 1:
+                data = pd.read_csv(self.filename, header=ignored_lines, sep=";")
+            # if still one column, we can try with 'tab' or spaces:
+            if len(data.keys()) <= 1:
+                data = pd.read_csv(self.filename, header=ignored_lines, sep=r'\s{2,}')
             E = lxml.builder.ElementMaker()
             GRETLDATA = E.gretldata
             DESCRIPTION = E.description
@@ -40,17 +62,20 @@ class CsvToGdtParser:
 
             variables = VARIABLES(count=f"{len(data.keys())}")
             for i in data.keys():
-                variables.append(VARIABLE(name=f"{i.strip()}"))
+                if isinstance(i,int):
+                    variables.append(VARIABLE(name=f"v{i}"))
+                else:
+                    variables.append(VARIABLE(name=f"{i.strip()}"))
             observations = OBSERVATIONS(count=f"{len(data)}", labels="false")
             for i in range(len(data)):
                 string_obs = data[i:i+1].to_string().split('\n')
                 observations.append(OBS(string_obs[1][4:]))
             gdt_result=GRETLDATA(
-                         DESCRIPTION("Datos importados, 2024"),
+                         DESCRIPTION("Datos importados"),
                            variables,
                            observations,
                            version="1.4", name='prueba', frequency="special:1", startobs="1",
-                           endobs="1000", type="time-series"
+                           endobs=f"{len(data)}", type="time-series"
                         )
             self.output.write(
                 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE gretldata SYSTEM "gretldata.dtd">\n')
